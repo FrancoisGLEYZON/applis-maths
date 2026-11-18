@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loi de Bernoulli en Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: classroom, calm and clear, for 16-year-olds on iPads
+   IDEA: a math notebook page beside a Python editor (Thonny-like)
+   PICTURE: the die itself, then the editor + console, then a matplotlib-style figure with a side histogram
+   COLOUR and TYPE: deep ink blue band, white paper, red for "Succès" (the 1 face); Atkinson Hyperlegible + JetBrains Mono
+   LAYOUT: sticky stepper band, one step per screen, code and console side by side on landscape iPad */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#0f1530);--ink:light-dark(#18213f,#e7eaf6);--mut:light-dark(#5b6382,#a3a9c4);--line:light-dark(#dfe3ef,#273058);--card:light-dark(#f4f6fb,#161e40);--blue:#1f3a93;--band:light-dark(#1f3a93,#0a0f24);--red:#d7322a;--ok:#1f77b4;--code:#141a2e;--codeink:#e6e9f5}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 "Atkinson Hyperlegible",system-ui,sans-serif;overflow-x:clip}
+header{background:var(--band);color:#fff;position:sticky;top:0;z-index:5;padding:12px max(4vw,14px)}
+header h1{font-size:18px;margin:0 0 8px;font-weight:700;letter-spacing:0}
+nav{display:flex;gap:6px;overflow-x:auto}
+nav a{flex:none;color:#cfd7f7;text-decoration:none;padding:9px 13px;border-radius:999px;font-size:15px;border:1px solid #ffffff30;min-height:40px;display:flex;align-items:center;gap:6px}
+nav a b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#ffffff22;font-size:13px}
+nav a.on{background:#fff;color:#1f3a93;font-weight:700}nav a.on b{background:var(--red);color:#fff}
+main{max-width:1240px;margin:0 auto;padding:clamp(18px,3vw,40px) max(4vw,14px) 110px}
+section{display:none}section.on{display:block;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+h2{font-size:clamp(26px,4vw,40px);line-height:1.08;margin:0 0 8px;text-wrap:balance}
+.lead{color:var(--mut);margin:0 0 22px;max-width:70ch}
+.task{border-left:4px solid var(--red);background:var(--card);padding:14px 18px;border-radius:0 12px 12px 0;margin:22px 0 0;max-width:80ch}
+.task h3{margin:0 0 6px;font-size:17px}.task ol,.task ul{margin:0;padding-left:22px}
+button{font:inherit;cursor:pointer;border-radius:12px;border:0;min-height:44px;padding:0 18px}
+button:focus-visible,input:focus-visible,nav a:focus-visible{outline:3px solid #f5b300;outline-offset:2px}
+.primary{background:var(--red);color:#fff;font-weight:700}
+.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+/* die */
+.dice{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:clamp(18px,4vw,48px);align-items:center}
+.diebox{display:grid;justify-items:center;gap:18px;padding:28px;background:var(--card);border-radius:24px}
+#die{width:min(220px,55vw);height:auto;filter:drop-shadow(0 14px 18px #0003)}
+#die.roll{animation:shake .5s ease}
+@keyframes shake{20%{transform:rotate(-14deg) translateY(-14px)}50%{transform:rotate(12deg) translateY(-6px)}80%{transform:rotate(-5deg)}}
+#rollBtn{font-size:20px;padding:0 34px;min-height:56px}
+.count{font-size:15px;color:var(--mut)}
+.grid20{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;margin-bottom:18px}
+.grid20 span{aspect-ratio:1;border-radius:9px;border:1.5px dashed var(--line);display:grid;place-items:center;font:600 18px "JetBrains Mono",monospace;color:var(--mut)}
+.grid20 span.f{border-style:solid;color:var(--ink);background:var(--bg)}
+.grid20 span.s{background:var(--red);border-color:var(--red);color:#fff}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid var(--line);padding:10px 12px;text-align:center}
+th{background:var(--card);font-weight:700}
+.big{font:700 28px "JetBrains Mono",monospace}
+.done{margin-top:14px;padding:12px 16px;border-radius:12px;background:light-dark(#fdeceb,#3a1616);display:none}
+/* editor */
+.work{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+.ed{background:var(--code);color:var(--codeink);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px #0b10302a}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px 8px 16px;background:#0c1122;font:14px "JetBrains Mono",monospace;color:#9aa3c7}
+.run{background:#2fb36a;color:#fff;font-weight:700;font-family:"Atkinson Hyperlegible",sans-serif}
+pre{margin:0;overflow-x:auto;font:15px/1.75 "JetBrains Mono",monospace;padding:14px 0}
+.ln{display:block;padding:0 16px 0 0;white-space:pre}
+.ln::before{content:attr(data-n);display:inline-block;width:3em;padding-right:1em;text-align:right;color:#56608a}
+.k{color:#ff8fb1}.b{color:#7dd3fc}.fn{color:#ffd166}.nu{color:#c4b5fd}.st{color:#a7f3a0}.cm{color:#6b7499}
+input.v{font:600 16px "JetBrains Mono",monospace;width:7ch;background:#f5b300;color:#141a2e;border:0;border-radius:6px;padding:2px 6px;text-align:center;-moz-appearance:textfield}
+input.v::-webkit-inner-spin-button{display:none}
+.knobs{padding:12px 16px 16px;border-top:1px solid #ffffff14;display:grid;gap:10px}
+.knob{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;font:15px "JetBrains Mono",monospace}
+input[type=range]{width:100%;accent-color:#f5b300;height:32px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{min-height:36px;font-size:14px;padding:0 12px;background:#ffffff14;color:#e6e9f5;border-radius:999px}
+.con{background:light-dark(#fbfcff,#0b1024);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.con .bar{background:var(--card);color:var(--mut);font-family:"Atkinson Hyperlegible",sans-serif}
+.con .bar button{min-height:36px;font-size:14px}
+.out{font:15px/1.6 "JetBrains Mono",monospace;padding:12px 16px;max-height:420px;min-height:160px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.out .p{color:var(--mut)}.out .e{color:var(--red)}.out .empty{color:var(--mut);font-family:"Atkinson Hyperlegible",sans-serif}
+.out div{margin-bottom:6px}
+/* figure */
+.figwrap{margin-top:18px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.figwrap .bar{background:#eceef3;color:#333;font-family:"Atkinson Hyperlegible",sans-serif}
+.fig{position:relative;height:clamp(340px,55vh,560px)}.fig canvas{position:absolute;inset:0;width:100%;height:100%}
+.opts{display:flex;flex-wrap:wrap;gap:8px 16px;margin:14px 0}
+.opts label{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:999px;font-size:15px;cursor:pointer}
+.opts input{width:20px;height:20px;accent-color:var(--blue)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:6px}
+.stats div{background:var(--card);border-radius:12px;padding:10px 14px}.stats small{display:block;color:var(--mut);font-size:13px}.stats strong{font:600 20px "JetBrains Mono",monospace;white-space:nowrap}
+.foot{position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;padding:10px max(4vw,14px) calc(10px + env(safe-area-inset-bottom))}
+.foot button{min-width:130px;font-size:17px}
+.foot .primary:disabled,.foot .ghost:disabled{opacity:.35}
+@media(max-width:860px){.work,.dice{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:520px){nav a span{display:none}pre{font-size:13.5px}}
+@media(prefers-reduced-motion:reduce){section.on,#die.roll{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Chapitre 3 · Loi de Bernoulli avec Python</h1>
+  <nav id="nav"></nav>
+</header>
+<main>
+<section id="s1">
+  <h2>Lance le dé 20 fois</h2>
+  <p class="lead">Succès = le dé tombe sur la face 1. Échec = n'importe quelle autre face. Appuie sur « Lancer » pour chaque lancer.</p>
+  <div class="dice">
+    <div class="diebox">
+      <svg id="die" viewBox="0 0 100 100" aria-label="Dé"></svg>
+      <button class="primary" id="rollBtn">Lancer le dé</button>
+      <div class="count" id="count">Lancer 0 / 20</div>
+    </div>
+    <div>
+      <div class="grid20" id="g20"></div>
+      <table>
+        <tr><th>Résultat</th><th>S (obtenir 1)</th><th>E (ne pas obtenir 1)</th></tr>
+        <tr><th>Nombre d'apparitions</th><td class="big" id="nS">0</td><td class="big" id="nE">0</td></tr>
+      </table>
+      <div class="done" id="done"></div>
+      <p><button class="ghost" id="reset">Recommencer les 20 lancers</button></p>
+    </div>
+  </div>
+  <div class="task"><h3>Sur ta feuille</h3>Complète le tableau d'effectifs, puis calcule ta fréquence de succès sur 20 lancers.</div>
+</section>
+
+<section id="s2">
+  <h2>Premier programme : la liste des résultats</h2>
+  <p class="lead">Change la valeur jaune (ou utilise le curseur), puis appuie sur ▶ Exécuter. La console affiche ce que Python renvoie.</p>
+  <div class="work" data-p="0"></div>
+  <div class="task"><h3>Sur ta feuille</h3><ol><li>Que contient la variable L au départ (ligne 4) ?</li><li>Que fait la commande <code>random.randint(1, 6)</code> ?</li><li>À quoi sert la boucle <code>for i in range(n)</code> ?</li><li>Exécute avec n = 10 : combien de fois as-tu obtenu le Succès (la face 1) ?</li></ol></div>
+</section>
+
+<section id="s3">
+  <h2>Deuxième programme : la fréquence du Succès</h2>
+  <p class="lead">Le programme ne renvoie plus la liste, mais directement la fréquence de la face 1. Essaie n = 10, puis 100… Tu peux aussi taper de très grandes valeurs dans la case jaune (jusqu'à 10 000 000).</p>
+  <div class="work" data-p="1"></div>
+  <div class="task"><h3>Sur ta feuille</h3><ul><li>Rôle de la variable c (initialisée à 0) ?</li><li>Que traduit la condition <code>if x == 1:</code> ?</li><li>Pourquoi la fonction renvoie-t-elle <code>c / n</code> ?</li><li>Que remarques-tu quand n devient très grand ?</li></ul></div>
+</section>
+
+<section id="s4">
+  <h2>Troisième programme : plusieurs échantillons</h2>
+  <p class="lead">simulation(N, n) répète N fois l'expérience « lancer n dés ». Modifie N et n séparément pour voir ce que change chacun.</p>
+  <div class="work" data-p="2"></div>
+  <div class="task"><h3>Sur ta feuille</h3><ol><li>Que représente n dans simulation(N, n) ?</li><li>Que représente N ?</li><li>Que contient la liste renvoyée ?</li><li>Compare simulation(10, 50) et simulation(10, 1000) : que devient la fluctuation ?</li></ol></div>
+</section>
+
+<section id="s5">
+  <h2>Le nuage de points : fluctuation et dispersion</h2>
+  <p class="lead">Chaque point est la fréquence de succès d'un échantillon de taille n. La vue de côté empile les points : on voit apparaître la courbe en cloche (courbe de Gauss).</p>
+  <div class="work" data-p="3"></div>
+  <div class="opts">
+    <label><input type="checkbox" id="oSide" checked> Vue de côté</label>
+    <label><input type="checkbox" id="oGauss"> Courbe de Gauss</label>
+    <label><input type="checkbox" id="oP"> Droite p = 1/6</label>
+    <label><input type="checkbox" id="oBand"> Intervalles p ± s, p ± 2s, p ± 3s</label>
+    <label><input type="checkbox" id="oFix" checked> Échelle fixe (0 à 0,6)</label>
+  </div>
+  <div class="figwrap"><div class="bar"><span>Figure 1</span><span id="figInfo"></span></div><div class="fig"><canvas id="cv"></canvas></div></div>
+  <div class="stats" id="stats"></div>
+  <div class="task"><h3>À observer</h3><ul><li>Garde n = 10 et augmente N : qu'est-ce qui change ? Qu'est-ce qui ne change pas ?</li><li>Garde N = 100 et augmente n (10, 50, 100, 1000) : que devient la dispersion des points ?</li><li>Avec N = 400 et n = 50 : entre quelles valeurs les fréquences fluctuent-elles ?</li><li>Coche les intervalles : quel pourcentage des fréquences est dans [p − 2s ; p + 2s] ?</li></ul></div>
+</section>
+</main>
+<div class="foot"><button class="ghost" id="prev">← Précédent</button><button class="primary" id="next">Suivant →</button></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const P=1/6, rnd=()=>1+Math.floor(Math.random()*6);
+const STEPS=['Le dé','La liste','La fréquence','La simulation','Le graphique'];
+let cur=1;
+
+/* ---------- navigation ---------- */
+$('nav').innerHTML=STEPS.map((t,i)=>`<a href="#etape-${i+1}" id="t${i+1}"><b>${i+1}</b><span>${t}</span></a>`).join('');
+function show(){
+  const m=/^#etape-([1-5])$/.exec(location.hash); cur=m?+m[1]:1;
+  for(let i=1;i<=5;i++){$('s'+i).classList.toggle('on',i===cur);$('t'+i).classList.toggle('on',i===cur)}
+  $('prev').disabled=cur===1;$('next').disabled=cur===5;
+  $('t'+cur).scrollIntoView({inline:'center',block:'nearest'});
+  window.scrollTo(0,0); if(cur===5) draw();
+}
+$('prev').onclick=()=>{location.hash='etape-'+(cur-1)};
+$('next').onclick=()=>{location.hash='etape-'+(cur+1)};
+addEventListener('hashchange',show);
+
+/* ---------- die ---------- */
+const PIPS={1:[[50,50]],2:[[28,28],[72,72]],3:[[28,28],[50,50],[72,72]],4:[[28,28],[72,28],[28,72],[72,72]],5:[[28,28],[72,28],[50,50],[28,72],[72,72]],6:[[28,26],[28,50],[28,74],[72,26],[72,50],[72,74]]};
+function face(v){
+  $('die').innerHTML=`<defs><linearGradient id="dg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#dfe3ee"/></linearGradient></defs><rect x="4" y="4" width="92" height="92" rx="18" fill="url(#dg)" stroke="#c4cadb" stroke-width="2"/>`+
+  PIPS[v].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="${v===1?12:8.5}" fill="${v===1?'#d7322a':'#18213f'}"/>`).join('');
+}
+let rolls=[];
+try{rolls=JSON.parse(localStorage.getItem('bern-rolls')||'[]')}catch(e){}
+function renderDie(){
+  $('g20').innerHTML=Array.from({length:20},(_,i)=>{const r=rolls[i];return `<span class="${r?'f':''}${r===1?' s':''}">${r||i+1}</span>`}).join('');
+  const s=rolls.filter(r=>r===1).length;
+  $('nS').textContent=s;$('nE').textContent=rolls.length-s;
+  $('count').textContent=`Lancer ${rolls.length} / 20`;
+  $('rollBtn').disabled=rolls.length>=20;
+  const d=$('done');
+  if(rolls.length>=20){d.style.display='block';d.innerHTML=`<strong>Terminé !</strong> Note sur ta feuille : ${s} succès et ${20-s} échecs.`}else d.style.display='none';
+  try{localStorage.setItem('bern-rolls',JSON.stringify(rolls))}catch(e){}
+}
+let rolling=false;
+$('rollBtn').onclick=()=>{
+  if(rolling||rolls.length>=20)return; rolling=true;
+  const v=rnd(), die=$('die'), t0=Date.now();
+  die.classList.remove('roll');void die.offsetWidth;die.classList.add('roll');
+  const iv=setInterval(()=>{face(rnd());if(Date.now()-t0>450){clearInterval(iv);face(v);rolls.push(v);renderDie();rolling=false}},60);
+};
+$('reset').onclick=()=>{rolls=[];face(1);renderDie()};
+face(rolls.length?rolls[rolls.length-1]:1);renderDie();
+
+/* ---------- Python emulation ---------- */
+const pyf=x=>Number.isInteger(x)?x.toFixed(1):String(x);
+const ZDE='Traceback (most recent call last):\n  File "<stdin>", line 1, in <module>\n  File "<stdin>", line 9, in echantillon\nZeroDivisionError: division by zero';
+const echL=n=>{const L=[];for(let i=0;i<n;i++)L.push(rnd());return L};
+const echF=n=>{let c=0;for(let i=0;i<n;i++)if(Math.random()<P)c++;if(n===0)throw ZDE;return c/n};
+const sim=(N,n)=>{const L=[];for(let i=0;i<N;i++)L.push(echF(n));return L};
+
+const DEF1=`import random
+
+def echantillon(n):
+    L = []
+    for i in range(n):
+        x = random.randint(1, 6)
+        L.append(x)
+    return L`;
+const DEF2=`import random
+
+def echantillon(n):
+    c = 0
+    for i in range(n):
+        x = random.randint(1, 6)
+        if x == 1:
+            c = c + 1
+    return c / n`;
+const DEF3=DEF2+`
+
+def simulation(N, n):
+    L = []
+    for i in range(N):
+        L.append(echantillon(n))
+    return L`;
+const PROGS=[
+ {file:'programme1.py',code:DEF1+'\n\nprint(echantillon(§A§))',par:{A:{lab:'n',min:0,max:10000,v:10,smax:100}},
+  chips:[], run:v=>({cmd:`print(echantillon(${v.A}))`,out:'['+echL(v.A).join(', ')+']'})},
+ {file:'programme2.py',code:DEF2+'\n\nprint(echantillon(§A§))',par:{A:{lab:'n',min:0,max:10000000,v:10,smax:100}},
+  chips:[['n = 10',{A:10}],['n = 100',{A:100}],['n = 1000',{A:1000}],['n = 10 000 000',{A:10000000}]],
+  run:v=>({cmd:`print(echantillon(${v.A}))`,out:pyf(echF(v.A))})},
+ {file:'programme3.py',code:DEF3+'\n\nprint(simulation(§B§, §A§))',par:{B:{lab:'N',min:0,max:200,v:10,smax:100},A:{lab:'n',min:0,max:100000,v:50,smax:1000}},
+  chips:[['N=10, n=50',{B:10,A:50}],['N=10, n=1000',{B:10,A:1000}],['N=30, n=10',{B:30,A:10}]],
+  run:v=>({cmd:`print(simulation(${v.B}, ${v.A}))`,out:'['+sim(v.B,v.A).map(pyf).join(', ')+']'})},
+ {file:'graphique.py',code:DEF3.replace('import random','import random\nimport matplotlib.pyplot as plt')+`
+
+resultat = simulation(§B§, §A§)
+print(resultat)
+
+# Affichage du graphique
+plt.plot(resultat, 'o')  # 'o' pour afficher des points
+plt.grid()
+plt.show()`,par:{B:{lab:'N',min:1,max:2000,v:100,smax:1000},A:{lab:'n',min:1,max:10000,v:10,smax:1000}},
+  chips:[['N=100, n=10',{B:100,A:10}],['N=100, n=100',{B:100,A:100}],['N=100, n=1000',{B:100,A:1000}],['N=400, n=50',{B:400,A:50}],['N=1000, n=50',{B:1000,A:50}]],
+  run:v=>{const r=sim(v.B,v.A);plotData={r,n:v.A,N:v.B,t0:performance.now()};draw(true);return {cmd:`resultat = simulation(${v.B}, ${v.A})\n>>> print(resultat)`,out:'['+r.map(pyf).join(', ')+']'}}}
+];
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const TOK=/(#.*$)|('[^']*')|\b(def)(\s+)(\w+)|\b(import|def|for|in|if|return|as)\b|\b(range|print)\b|\b(\d+)\b|§([A-Z])§/gm;
+function hl(line,pi){
+  return esc(line).replace(TOK,(m,cm,st,d,sp,fn,k,b,nu,ph)=>cm?`<span class="cm">${cm}</span>`:st?`<span class="st">${st}</span>`:d?`<span class="k">def</span>${sp}<span class="fn">${fn}</span>`:k?`<span class="k">${k}</span>`:b?`<span class="b">${b}</span>`:nu?`<span class="nu">${nu}</span>`:
+   `<input class="v" type="number" inputmode="numeric" id="p${pi}${ph}" aria-label="${PROGS[pi].par[ph].lab}">`);
+}
+PROGS.forEach((pg,pi)=>{
+  const w=document.querySelector(`.work[data-p="${pi}"]`);
+  const lines=pg.code.split('\n').map((l,i)=>`<span class="ln" data-n="${i+1}">${hl(l,pi)||' '}</span>`).join('');
+  const keys=Object.keys(pg.par);
+  w.innerHTML=`<div class="ed"><div class="bar"><span>${pg.file}</span><button class="run" id="run${pi}">▶ Exécuter</button></div><pre>${lines}</pre>
+   <div class="knobs">${keys.map(k=>`<div class="knob"><span>${pg.par[k].lab} =</span><input type="range" id="r${pi}${k}" min="${pg.par[k].min}" max="${pg.par[k].smax}" step="1"><span id="l${pi}${k}"></span></div>`).join('')}
+   ${pg.chips.length?`<div class="chips">${pg.chips.map((c,ci)=>`<button data-c="${ci}">${c[0]}</button>`).join('')}</div>`:''}</div></div>
+   <div class="con"><div class="bar"><span>Console Python</span><button class="ghost" id="clr${pi}">Effacer</button></div><div class="out" id="out${pi}"><div class="empty">Appuie sur ▶ Exécuter pour lancer le programme.</div></div></div>`;
+  const set=(k,val)=>{const p=pg.par[k];let x=Math.round(+val);if(!isFinite(x))x=p.v;x=Math.max(p.min,Math.min(p.max,x));p.v=x;$(`p${pi}${k}`).value=x;$(`r${pi}${k}`).value=Math.min(x,p.smax);$(`l${pi}${k}`).textContent=x.toLocaleString('fr-FR')};
+  keys.forEach(k=>{set(k,pg.par[k].v);$(`p${pi}${k}`).onchange=e=>set(k,e.target.value);$(`p${pi}${k}`).onkeydown=e=>{if(e.key==='Enter'){set(k,e.target.value);exec()}};$(`r${pi}${k}`).oninput=e=>set(k,e.target.value)});
+  w.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const c=pg.chips[+b.dataset.c][1];for(const k in c)set(k,c[k]);exec()});
+  const out=$('out'+pi);
+  function exec(){
+    keys.forEach(k=>set(k,$(`p${pi}${k}`).value));
+    const v={};keys.forEach(k=>v[k]=pg.par[k].v);
+    let r;try{r=pg.run(v)}catch(e){r={cmd:cmdOf(pi,v),out:String(e),err:true}}
+    if(out.querySelector('.empty'))out.innerHTML='';
+    const d=document.createElement('div');
+    d.innerHTML=`<span class="p">&gt;&gt;&gt; ${esc(r.cmd)}</span>\n<span class="${r.err?'e':''}">${esc(r.out)}</span>`;
+    out.appendChild(d);while(out.children.length>25)out.firstChild.remove();
+    out.scrollTop=out.scrollHeight;
+  }
+  $('run'+pi).onclick=exec;
+  $('clr'+pi).onclick=()=>{out.innerHTML='<div class="empty">Console vide.</div>'};
+});
+function cmdOf(pi,v){return pi<2?`print(echantillon(${v.A}))`:pi===2?`print(simulation(${v.B}, ${v.A}))`:`resultat = simulation(${v.B}, ${v.A})`}
+
+/* ---------- figure ---------- */
+let plotData=null;
+const cv=$('cv'), ctx=cv.getContext('2d');
+['oSide','oGauss','oP','oBand','oFix'].forEach(id=>$(id).onchange=()=>draw());
+const fr=(x,d=3)=>x.toLocaleString('fr-FR',{maximumFractionDigits:d,minimumFractionDigits:d});
+function stats(r){
+  const N=r.length,m=r.reduce((a,b)=>a+b,0)/N,s=Math.sqrt(r.reduce((a,b)=>a+(b-m)**2,0)/N);
+  const pin=k=>100*r.filter(f=>Math.abs(f-P)<=k*s+1e-12).length/N;
+  return {N,m,s,min:Math.min(...r),max:Math.max(...r),p1:pin(1),p2:pin(2),p3:pin(3)};
+}
+function draw(anim){
+  const W=cv.clientWidth,H=cv.clientHeight;if(!W)return;
+  const dpr=devicePixelRatio||1;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.font='13px "Atkinson Hyperlegible",sans-serif';
+  if(!plotData){ctx.fillStyle='#667';ctx.textAlign='center';ctx.fillText('Appuie sur ▶ Exécuter pour afficher le graphique',W/2,H/2);$('stats').innerHTML='';$('figInfo').textContent='';return}
+  const {r,n,N}=plotData, st=stats(r), side=$('oSide').checked, sig=Math.sqrt(P*(1-P)/n);
+  let y0=0,y1=0.6;
+  if(!$('oFix').checked){const lo=Math.min(st.min,P-3.5*sig),hi=Math.max(st.max,P+3.5*sig),pd=(hi-lo)*0.06;y0=Math.max(0,lo-pd);y1=Math.min(1,hi+pd)}
+  const L=52,T=16,B=36,R=14, gap=side?18:0, sw=side?Math.max(90,(W-L-R)*0.26):0;
+  const pw=W-L-R-gap-sw, ph=H-T-B, X=i=>L+(N<=1?pw/2:i/(N-1)*pw*0.96+pw*0.02), Y=f=>T+ph-(f-y0)/(y1-y0)*ph;
+  // ticks
+  const span=y1-y0, step=[0.005,0.01,0.02,0.05,0.1].find(s=>span/s<=8)||0.2;
+  ctx.strokeStyle='#d9d9d9';ctx.lineWidth=1;ctx.fillStyle='#333';ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let v=Math.ceil(y0/step)*step;v<=y1+1e-9;v+=step){const y=Y(v);ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(L+pw,y);if(side){ctx.moveTo(L+pw+gap,y);ctx.lineTo(W-R,y)}ctx.stroke();ctx.fillText(v.toFixed(step<0.01?3:2),L-6,y)}
+  const xs=[0.1,0.2,0.25,0.5,1,2,5,10,20,25,50,100,200,250,500].find(s=>N/s<=8)||1000;
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let i=0;i<N;i+=xs){const x=X(i);ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();if(W>520||i%(xs*2)===0)ctx.fillText(i,x,T+ph+6)}
+  // bands
+  if($('oBand').checked){[[3,'#1f77b412'],[2,'#1f77b41c'],[1,'#1f77b42a']].forEach(([k,c])=>{ctx.fillStyle=c;const a=Y(Math.min(y1,P+k*st.s)),b=Y(Math.max(y0,P-k*st.s));ctx.fillRect(L,a,pw,b-a);if(side)ctx.fillRect(L+pw+gap,a,sw,b-a)})}
+  if($('oP').checked){ctx.strokeStyle='#d7322a';ctx.setLineDash([6,4]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(L,Y(P));ctx.lineTo(W-R,Y(P));ctx.stroke();ctx.setLineDash([]);ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillStyle='#fff';ctx.fillRect(L+2,Y(P)-20,56,17);ctx.fillStyle='#d7322a';ctx.fillText('p = 1/6',L+6,Y(P)-4)}
+  // frame
+  ctx.strokeStyle='#222';ctx.lineWidth=1;ctx.strokeRect(L,T,pw,ph);if(side)ctx.strokeRect(L+pw+gap,T,sw,ph);
+  // points (progressive)
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prog=anim&&!reduce?Math.min(1,(performance.now()-plotData.t0)/700):1, shown=Math.ceil(N*prog), rad=N<=100?4:N<=500?3:2.2;
+  ctx.save();ctx.beginPath();ctx.rect(L,T,pw,ph);ctx.clip();ctx.fillStyle='#1f77b4';
+  for(let i=0;i<shown;i++){ctx.beginPath();ctx.arc(X(i),Y(r[i]),rad,0,7);ctx.fill()}ctx.restore();
+  // side histogram
+  if(side){
+    const k=Math.max(1,Math.ceil(n*sig/3)), w=k/n, bins=new Map();
+    for(let i=0;i<shown;i++){const b=Math.floor((r[i]*n+0.5)/k);bins.set(b,(bins.get(b)||0)+1)}
+    const pdf=y=>Math.exp(-((y-P)**2)/(2*sig*sig))/(sig*Math.sqrt(2*Math.PI));
+    const peak=N*w*pdf(P);let mx=Math.max(1,...bins.values());if($('oGauss').checked)mx=Math.max(mx,peak);mx*=1.1;
+    const x0=L+pw+gap, Xc=c=>x0+c/mx*sw;
+    ctx.save();ctx.beginPath();ctx.rect(x0,T,sw,ph);ctx.clip();ctx.fillStyle='#ff7f0e';ctx.strokeStyle='#fff';
+    for(const [b,c] of bins){const lo=(b*k-0.5)/n,hi=lo+w,a=Y(hi),bb=Y(lo);ctx.fillRect(x0,a,Xc(c)-x0,Math.max(1,bb-a));ctx.strokeRect(x0,a,Xc(c)-x0,Math.max(1,bb-a))}
+    if($('oGauss').checked){ctx.strokeStyle='#222';ctx.lineWidth=2.5;ctx.beginPath();for(let py=T;py<=T+ph;py+=2){const f=y0+(T+ph-py)/ph*(y1-y0),x=Xc(N*w*pdf(f));py===T?ctx.moveTo(x,py):ctx.lineTo(x,py)}ctx.stroke()}
+    ctx.restore();ctx.fillStyle='#333';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('nombre de points',x0+sw/2,T+ph+6);
+  }
+  ctx.save();ctx.translate(14,T+ph/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#333';ctx.fillText('fréquence de succès',0,0);ctx.restore();
+  if(prog<1)requestAnimationFrame(()=>draw(true));
+  $('figInfo').textContent=`N = ${N.toLocaleString('fr-FR')} échantillons · n = ${n.toLocaleString('fr-FR')} lancers chacun`;
+  $('stats').innerHTML=[['Fréquence moyenne',fr(st.m)],['Plus petite fréquence',fr(st.min)],['Plus grande fréquence',fr(st.max)],['Écart-type s de la série',fr(st.s,4)],['Valeur de la fiche 1/(2√n)',fr(1/(2*Math.sqrt(n)),4)],['Dans [p − s ; p + s]',fr(st.p1,0)+' %'],['Dans [p − 2s ; p + 2s]',fr(st.p2,0)+' %'],['Dans [p − 3s ; p + 3s]',fr(st.p3,0)+' %']].map(([a,b])=>`<div><small>${a}</small><strong>${b}</strong></div>`).join('');
+}
+new ResizeObserver(()=>{if(cur===5)draw()}).observe(cv);
+show();
+}
+</script>
+</body>
+</html>

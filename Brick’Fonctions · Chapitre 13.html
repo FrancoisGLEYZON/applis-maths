@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brick’Fonctions · Chapitre 13</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
+<style>/*
+VOICE: chantier de jeu, joyeux mais lisible, pensé pour des tablettes en classe.
+IDEA: une boîte de briques — cartes-plans pour le chef, briques à assembler pour le constructeur.
+PICTURE: la carte (courbe sur quadrillage / plan de signes) au centre, briques colorées autour.
+COLOUR and TYPE: jaune chantier dominant, encre noire, briques verte/bleue/rouge ; Baloo 2 + Atkinson Hyperlegible.
+LAYOUT: barre chantier en haut, carte puis outils en colonne, mur de briques (score) en bas.
+*/
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#15161a);--panel:light-dark(#f6f6f3,#202228);--ink:light-dark(#1b1b19,#f2f1ec);--soft:light-dark(#5d5d58,#b5b4ad);
+--line:light-dark(#d9d8d2,#3a3c44);--y:#ffcf00;--yd:#e0a800;--v:#1f9d55;--b:#1f6fd8;--r:#d4302a;--grid:light-dark(#e6e5df,#2c2e35);--axis:light-dark(#1b1b19,#e8e7e1)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 "Atkinson Hyperlegible",Verdana,Arial,sans-serif;overflow-x:clip}
+body.big{font-size:20px}
+h1,h2,h3,.disp{font-family:"Baloo 2","Trebuchet MS",sans-serif;line-height:1.05;margin:0}
+h1{font-size:clamp(34px,6vw,50px)}h2{font-size:28px}h3{font-size:21px}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--b);outline-offset:2px}
+.top{background:var(--y);color:#1b1b19;padding:10px max(3vw,12px);display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;position:sticky;top:0;z-index:5;box-shadow:0 3px 0 var(--yd)}
+.top .ttl{font-family:"Baloo 2",sans-serif;font-size:22px;font-weight:700;margin-right:auto}
+.tb{min-height:44px;padding:6px 14px;border-radius:10px;border:2px solid #1b1b19;background:#fff;color:#1b1b19;font-weight:700}
+.tb.dark{background:#1b1b19;color:#fff}
+.wrap{max-width:1000px;margin:0 auto;padding:18px max(3vw,12px) 40px}
+.hero{background:var(--y);color:#1b1b19;padding:clamp(24px,5vw,56px) max(5vw,16px);display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:center}
+.hero p{font-size:18px;max-width:34em}
+@media(max-width:700px){.hero{grid-template-columns:1fr}}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tile{display:block;border:3px solid var(--line);border-radius:14px;padding:14px;background:var(--bg);text-align:left;min-height:44px;width:100%}
+.tile.on{border-color:var(--ink);box-shadow:0 4px 0 var(--ink)}
+.tile b{font-family:"Baloo 2",sans-serif;font-size:21px;display:block}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg button{min-height:44px;padding:8px 16px;border:2px solid var(--ink);background:var(--bg);border-radius:10px;font-weight:700}
+.seg button.on{background:var(--ink);color:var(--bg)}
+input[type=text]{min-height:44px;font-size:18px;padding:6px 12px;border:2px solid var(--ink);border-radius:10px;background:var(--bg);width:9em}
+.go{min-height:56px;padding:10px 28px;border:0;border-radius:14px;background:var(--r);color:#fff;font-family:"Baloo 2",sans-serif;font-size:24px;font-weight:700;box-shadow:0 5px 0 #8e1d19}
+.go:active{transform:translateY(3px);box-shadow:0 2px 0 #8e1d19}
+.go.alt{background:var(--b);box-shadow:0 5px 0 #13468a}
+.go.ok{background:var(--v);box-shadow:0 5px 0 #11653a}
+.go[disabled]{opacity:.45}
+.brick{display:inline-flex;align-items:center;gap:4px;padding:4px 10px 4px 6px;border-radius:7px;color:#fff;font-weight:700;position:relative;vertical-align:middle}
+.brick i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.35);box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+.L0{background:var(--v)}.L1{background:var(--b)}.L2{background:var(--r)}
+.role{padding:6px 12px;border-radius:999px;font-weight:700;background:#1b1b19;color:var(--y)}
+.banner{border-radius:14px;padding:12px 16px;font-weight:700;margin:12px 0;border:3px dashed var(--ink)}
+.fig{max-width:520px;margin:0 auto}.fig svg{width:100%;height:auto;display:block;background:var(--bg);border-radius:12px;border:2px solid var(--line)}
+body.big .fig{max-width:640px}
+.gl{stroke:var(--grid);stroke-width:1}.ax{stroke:var(--axis);stroke-width:2}
+.tk{fill:var(--soft);font-size:12px;font-family:Arial,sans-serif}
+.cv{fill:none;stroke:var(--b);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.cv.g{stroke:var(--r)}.cv.try{stroke:var(--r);stroke-dasharray:8 7;stroke-width:3}
+.dot{fill:var(--b);stroke:var(--bg);stroke-width:2}.dot.g{fill:var(--r)}
+.hl{stroke:var(--r);stroke-width:2.5;stroke-dasharray:7 5}
+.sol{stroke:var(--v);stroke-width:7;stroke-linecap:butt}.solp{fill:var(--v)}.solo{fill:var(--bg);stroke:var(--v);stroke-width:3}
+.lab{font-family:"Baloo 2",sans-serif;font-size:18px;font-weight:700;fill:var(--b)}.lab.g{fill:var(--r)}
+.expr{font-size:clamp(26px,5vw,40px);font-family:"Cambria Math","Times New Roman",serif;text-align:center;padding:10px 0}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px}
+.frac>span:first-child{border-bottom:2px solid currentColor;padding:0 4px}.frac>span{line-height:1.15;font-size:.9em}
+.rad>span{border-top:2px solid currentColor;padding:0 2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{padding:6px 10px;border-radius:999px;border:2px solid var(--line);font-size:.9em}
+.chip.no{border-color:var(--r);color:var(--r);text-decoration:line-through;text-decoration-thickness:1px}
+.eq{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;font-size:22px;font-family:"Cambria Math","Times New Roman",serif}
+.pick{display:flex;flex-direction:column;gap:3px;font:600 13px/1.2 "Atkinson Hyperlegible",Arial,sans-serif;color:var(--soft)}
+.pick select,.ib select{min-height:48px;font-size:20px;padding:4px 10px;border-radius:9px;border:0;color:#fff;font-weight:700;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+.pick.a select{background:var(--b)}.pick.f select{background:var(--r)}.pick.h select{background:#7a4cc2}.pick.k select{background:var(--v)}
+.pick select option,.ib select option{color:#111;background:#fff}
+.ib{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0;padding:8px;border-radius:12px;background:var(--bg);border:2px solid var(--line)}
+.ib select{background:var(--b);min-height:44px;font-size:18px}
+.ib select.br{background:#1b1b19;width:3.2em}
+.x{min-width:44px;min-height:44px;border-radius:10px;border:2px solid var(--line);background:var(--bg);font-weight:700}
+.small{min-height:44px;padding:6px 14px;border-radius:10px;border:2px solid var(--ink);background:var(--bg);font-weight:700}
+.small.on{background:var(--ink);color:var(--bg)}
+.msg{padding:12px 14px;border-radius:12px;margin:10px 0;font-weight:700}
+.msg.bad{background:light-dark(#fde8e7,#3c1e1d);border:2px solid var(--r)}
+.msg.good{background:light-dark(#e3f5ea,#183224);border:2px solid var(--v)}
+.msg.info{background:light-dark(#fff6cc,#33301a);border:2px solid var(--yd)}
+.preview{font-size:24px;font-family:"Cambria Math","Times New Roman",serif;margin:10px 0}
+.vals{display:flex;flex-wrap:wrap;gap:6px}
+.vals button{min-width:48px;min-height:44px;border-radius:9px;border:2px solid var(--line);background:var(--bg);font-weight:700}
+.vals button.on{background:var(--b);color:#fff;border-color:var(--b)}
+.scroll{overflow-x:auto}
+table.st{border-collapse:collapse;margin:8px 0;font-size:18px}
+table.st th,table.st td{border:2px solid var(--ink);padding:0;text-align:center}
+table.st th:first-child,table.st td:first-child{padding:6px 10px;text-align:left;white-space:nowrap;font-weight:700}
+table.st .iv{min-width:58px}table.st .cvc{min-width:40px;border-left:0;border-right:0;background:linear-gradient(var(--ink),var(--ink)) center/2px 100% no-repeat}
+table.st thead .cvc{background:none}
+table.st button{width:100%;min-height:46px;border:0;background:transparent;font-size:22px;font-weight:700}
+table.st .cvc button span{background:var(--panel);padding:0 3px}
+table.st .dbl{background:linear-gradient(90deg,transparent calc(50% - 5px),var(--ink) calc(50% - 5px),var(--ink) calc(50% - 3px),transparent calc(50% - 3px),transparent calc(50% + 3px),var(--ink) calc(50% + 3px),var(--ink) calc(50% + 5px),transparent calc(50% + 5px))!important}
+.hd{display:flex;justify-content:space-between;padding:6px 8px;font-weight:700}
+.tower{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-height:30px}
+.tower .brick{padding:4px 6px}
+.nav{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-top:16px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;z-index:20;overflow:auto}
+.modal .box{background:var(--bg);border-radius:18px;max-width:820px;width:100%;padding:20px;border:3px solid var(--ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.box ul{padding-left:1.2em}.box li{margin:4px 0}
+.mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.mini .fig svg{border-width:1px}
+.mini div p{margin:4px 0;font-size:14px}
+.clock{font-family:"Baloo 2",sans-serif;font-size:clamp(70px,16vw,150px);font-weight:700;text-align:center;line-height:1}
+.hidecard{min-height:120px;display:flex;align-items:center;justify-content:center;border:3px dashed var(--ink);border-radius:14px;background:var(--panel);width:100%;font-weight:700;font-size:20px}
+.res button{margin:4px}
+.muted{color:var(--soft);font-size:.92em}
+@media (prefers-reduced-motion:no-preference){.pop{animation:pop .35s ease-out}@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}}
+@media(max-width:600px){.top .ttl{font-size:18px;width:100%}.eq{font-size:19px}}
+</style></head><body><div id="app"></div>
+<script>{
+/* ===== LOGIQUE PURE (testable) ===== */
+const MINUS = '−';
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,r){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function fnum(v){ // nombre au format français
+  if(v===Infinity)return '+∞'; if(v===-Infinity)return MINUS+'∞';
+  const s=(Math.round(v*100)/100).toString().replace('.',',');return s.replace('-',MINUS);}
+
+/* --- Fonctions de référence : f(x) = a·base(x − h) + k --- */
+const BASES={
+  lin:{nom:'x (affine)',f:u=>u},
+  sq:{nom:'x²',f:u=>u*u},
+  cube:{nom:'x³',f:u=>u*u*u},
+  sqrt:{nom:'√x',f:u=>u>=0?Math.sqrt(u):NaN},
+  inv:{nom:'1/x',f:u=>u!==0?1/u:NaN}
+};
+function evalP(p,x){const v=BASES[p.base].f(x-p.h);return isNaN(v)?NaN:p.a*v+p.k;}
+function inner(h){return h===0?'x':(h>0?'x '+MINUS+' '+h:'x + '+(-h));}
+function coefStr(a){return a===1?'':a===-1?MINUS:fnum(a);}
+function exprHTML(p){
+  const X=inner(p.h);let t;
+  if(p.base==='lin'){t=p.h===0?coefStr(p.a)+'x':coefStr(p.a)+'('+X+')';}
+  else if(p.base==='sq'){t=coefStr(p.a)+(p.h===0?'x<sup>2</sup>':'('+X+')<sup>2</sup>');}
+  else if(p.base==='cube'){t=coefStr(p.a)+(p.h===0?'x<sup>3</sup>':'('+X+')<sup>3</sup>');}
+  else if(p.base==='sqrt'){t=coefStr(p.a)+'<span class="rad">√<span>'+X+'</span></span>';}
+  else {const num=Math.abs(p.a)===1?'1':fnum(Math.abs(p.a));t=(p.a<0?MINUS:'')+'<span class="frac"><span>'+num+'</span><span>'+X+'</span></span>';}
+  if(p.k>0)t+=' + '+p.k; else if(p.k<0)t+=' '+MINUS+' '+(-p.k);
+  return t;}
+function sameFunction(p,q){
+  for(let x=-5;x<=5.0001;x+=0.25){const u=evalP(p,x),v=evalP(q,x);
+    if(isNaN(u)!==isNaN(v))return 'domaine'; if(!isNaN(u)&&Math.abs(u-v)>1e-7)return 'valeur';}
+  return 'ok';}
+
+const M1POOL=[
+ [ {a:1,base:'sq',h:0,k:0},{a:1,base:'cube',h:0,k:0},{a:1,base:'sqrt',h:0,k:0},{a:1,base:'inv',h:0,k:0},
+   {a:2,base:'lin',h:0,k:1},{a:-1,base:'lin',h:0,k:3},{a:1,base:'lin',h:0,k:-2},{a:-2,base:'lin',h:0,k:-1},{a:0.5,base:'lin',h:0,k:1},{a:3,base:'lin',h:0,k:-2} ],
+ [ {a:2,base:'sq',h:0,k:0},{a:-1,base:'sq',h:0,k:0},{a:1,base:'sq',h:0,k:-3},{a:-1,base:'sq',h:0,k:4},{a:1,base:'cube',h:0,k:1},
+   {a:-1,base:'cube',h:0,k:0},{a:2,base:'sqrt',h:0,k:0},{a:1,base:'sqrt',h:0,k:1},{a:-1,base:'sqrt',h:0,k:0},{a:1,base:'inv',h:0,k:1},
+   {a:-1,base:'inv',h:0,k:0},{a:2,base:'inv',h:0,k:0},{a:1,base:'cube',h:0,k:-2},{a:1,base:'sq',h:0,k:1} ],
+ [ {a:1,base:'sq',h:1,k:0},{a:1,base:'sq',h:-2,k:0},{a:1,base:'sq',h:2,k:-3},{a:-1,base:'sq',h:1,k:4},{a:1,base:'sqrt',h:-2,k:0},
+   {a:1,base:'sqrt',h:1,k:1},{a:1,base:'inv',h:2,k:0},{a:1,base:'inv',h:-1,k:-2},{a:1,base:'cube',h:1,k:0},{a:-1,base:'sqrt',h:0,k:2},{a:2,base:'sq',h:0,k:-4} ]
+];
+
+/* --- Interpolation monotone (Fritsch–Carlson) pour les courbes de la manche 2 --- */
+function spline(x0,ys){
+  const n=ys.length,d=[],m=new Array(n);
+  for(let i=0;i<n-1;i++)d.push(ys[i+1]-ys[i]);
+  m[0]=d[0];m[n-1]=d[n-2];
+  for(let i=1;i<n-1;i++)m[i]=(d[i-1]*d[i]<=0)?0:(d[i-1]+d[i])/2;
+  for(let i=0;i<n-1;i++){const al=m[i]/d[i],be=m[i+1]/d[i],s=al*al+be*be;if(s>9){const t=3/Math.sqrt(s);m[i]=t*al*d[i];m[i+1]=t*be*d[i];}}
+  const x1=x0+n-1;
+  return function(x){
+    if(x<x0-1e-9||x>x1+1e-9)return NaN;
+    let i=Math.floor(x-x0);if(i>=n-1)i=n-2;if(i<0)i=0;
+    const t=x-x0-i;if(t===0)return ys[i];
+    const t2=t*t,t3=t2*t;
+    return (2*t3-3*t2+1)*ys[i]+(t3-2*t2+t)*m[i]+(-2*t3+3*t2)*ys[i+1]+(t3-t2)*m[i+1];};
+}
+const M2CURVES=[
+ {x0:-4,ys:[3,1,-1,1,3,2,1,0,-2]},{x0:-3,ys:[-2,0,2,4,2,0,-1,0,1]},{x0:-4,ys:[4,2,0,-2,-3,-2,0,2,3]},
+ {x0:-2,ys:[0,2,3,2,0,-2,0,1]},{x0:-5,ys:[-1,1,2,1,-1,-3,-1,1,3]},{x0:-3,ys:[1,3,1,-1,-3,-1,1,2]}
+];
+// Deux courbes : g affine, f = g + H (H s'annule seulement aux noeuds)
+const M2PAIRS=[
+ {x0:-3,hs:[-2,0,2,1,0,-1,-2,-1],m:-1,p:1},
+ {x0:-2,hs:[2,0,-2,-1,0,1,0,-1],m:1,p:-1},
+ {x0:-4,hs:[1,0,-1,-2,-1,0,2,3],m:-1,p:-1}
+];
+function validKs(ys){const r=[];for(let k=-5;k<=5;k++){if(k<Math.min(...ys)||k>Math.max(...ys))continue;
+  let ok=true;for(let i=0;i<ys.length-1;i++){const a=ys[i],b=ys[i+1];if(Math.min(a,b)<k&&k<Math.max(a,b))ok=false;}if(ok)r.push(k);}return r;}
+function cmp(op,u,v){const e=1e-7;switch(op){case '=':return Math.abs(u-v)<e;case '≥':return u>v-e;case '>':return u>v+e;case '≤':return u<v+e;case '<':return u<v-e;}}
+
+/* --- Ensembles de solutions --- */
+// pièce : {t:'pt',a} ou {t:'int',lb:'['|']',a,b,rb}
+function inSet(pieces,x){return pieces.some(p=>{
+  if(p.t==='pt')return Math.abs(x-p.a)<1e-9;
+  const L=p.a===-Infinity?true:(p.lb==='['?x>=p.a-1e-9:x>p.a+1e-9);
+  const R=p.b===Infinity?true:(p.rb===']'?x<=p.b+1e-9:x<p.b-1e-9);return L&&R;});}
+function setProblems(pieces){const pb=[];
+  pieces.forEach(p=>{if(p.t!=='int')return;
+    if(p.a===undefined||p.b===undefined||p.a===null||p.b===null){pb.push('Une borne n’est pas choisie.');return;}
+    if(p.a>=p.b)pb.push('Dans un intervalle, la borne de gauche doit être plus petite que celle de droite.');
+    if((p.a===-Infinity&&p.lb==='[')||(p.b===Infinity&&p.rb===']'))pb.push('Le crochet est toujours ouvert du côté de l’infini.');
+    if(p.a===Infinity||p.b===-Infinity)pb.push('−∞ se place à gauche, +∞ à droite.');});
+  return [...new Set(pb)];}
+function sameSet(pieces,truth,lo,hi){for(let x=lo;x<=hi+1e-9;x+=0.25){if(inSet(pieces,x)!==truth(x))return false;}return true;}
+// Reconstruit l'écriture d'un ensemble (bornes entières) par balayage
+function solPieces(truth,lo,hi,infLo,infHi){
+  const xs=[];for(let x=lo;x<=hi+1e-9;x+=0.25)xs.push(Math.round(x*4)/4);
+  const res=[];let i=0;
+  while(i<xs.length){if(!truth(xs[i])){i++;continue;}let j=i;while(j+1<xs.length&&truth(xs[j+1]))j++;
+    const s=xs[i],e=xs[j];
+    let a,lb,b,rb;
+    if(infLo&&i===0){a=-Infinity;lb=']';}else if(Number.isInteger(s)){a=s;lb='[';}else{a=Math.floor(s);lb=']';}
+    if(infHi&&j===xs.length-1){b=Infinity;rb='[';}else if(Number.isInteger(e)){b=e;rb=']';}else{b=Math.ceil(e);rb='[';}
+    if(a===b&&lb==='['&&rb===']')res.push({t:'pt',a});else res.push({t:'int',lb,a,b,rb});
+    i=j+1;}
+  return res;}
+function setStr(pieces,empty){
+  if(empty||!pieces.length)return 'S = ∅';
+  const pts=pieces.filter(p=>p.t==='pt'),ints=pieces.filter(p=>p.t==='int');
+  const parts=ints.map(p=>p.lb+' '+fnum(p.a)+' ; '+fnum(p.b)+' '+p.rb);
+  if(pts.length)parts.push('{ '+pts.map(p=>p.a).sort((u,v)=>u-v).map(fnum).join(' ; ')+' }');
+  return 'S = '+parts.join(' ∪ ');}
+
+/* --- Manche 3 : facteurs affines [a,b] = ax + b --- */
+function affHTML(a,b){let s=a===1?'x':a===-1?MINUS+'x':a===0.5?'½x':fnum(a)+'x';
+  if(b>0)s+=' + '+b;else if(b<0)s+=' '+MINUS+' '+(-b);return s;}
+function par(f){return (f[1]===0&&f[0]>0&&f[0]!==0.5)?affHTML(f[0],0):'('+affHTML(f[0],f[1])+')';}
+function m3HTML(c){
+  if(c.kind==='one')return affHTML(c.f[0][0],c.f[0][1]);
+  if(c.kind==='prod')return par(c.f[0])+par(c.f[1]);
+  return '<span class="frac"><span>'+affHTML(c.f[0][0],c.f[0][1])+'</span><span>'+affHTML(c.f[1][0],c.f[1][1])+'</span></span>';}
+const M3POOL=[
+ [[[-3,6]],[[2,4]],[[-5,-15]],[[0.5,1]],[[-1,0]],[[4,-8]],[[-2,-6]],[[1,3]]],
+ [[[2,-4],[-1,5]],[[1,3],[1,-1]],[[-1,2],[3,3]],[[-2,-4],[-1,1]],[[1,0],[-1,4]],[[3,-6],[1,2]],[[-5,-15],[2,-8]]],
+ [[[1,3],[1,-2]],[[-1,3],[1,-1]],[[2,4],[-1,1]],[[1,-4],[1,1]],[[-2,2],[1,3]],[[3,-3],[-1,-2]]]
+];
+function root(f){return -f[1]/f[0];}
+function sgn(v){return v>0?'+':MINUS;}
+function m3Truth(c){
+  const vals=[...new Set(c.f.map(root))].sort((a,b)=>a-b),m=vals.length;
+  const tp=j=>j===0?vals[0]-1:j===m?vals[m-1]+1:(vals[j-1]+vals[j])/2;
+  const frow=f=>({iv:Array.from({length:m+1},(_,j)=>sgn(f[0]*tp(j)+f[1])),cv:vals.map(v=>Math.abs(root(f)-v)<1e-9?'0':'')});
+  const E=x=>c.kind==='quot'?(c.f[0][0]*x+c.f[0][1])/(c.f[1][0]*x+c.f[1][1]):c.f.reduce((s,f)=>s*(f[0]*x+f[1]),1);
+  const fin={iv:Array.from({length:m+1},(_,j)=>sgn(E(tp(j)))),cv:vals.map(v=>(c.kind==='quot'&&Math.abs(root(c.f[1])-v)<1e-9)?'||':'0')};
+  return {vals,factors:c.f.length>1?c.f.map(frow):[],fin,E};}
+function rowEq(r,t){return r.iv.join()===t.iv.join()&&r.cv.join()===t.cv.join();}
+function m3Truthset(c){const T=m3Truth(c);return x=>{
+  if(c.kind==='quot'&&Math.abs(c.f[1][0]*x+c.f[1][1])<1e-12)return false;return cmp(c.op,T.E(x),0);};}
+
+/* --- Paquet de cartes déterministe (synchronise 2 tablettes) --- */
+const MOTS=['Renard','Castor','Hibou','Loutre','Panda','Koala','Lynx','Morse','Zèbre','Bison','Puma','Tapir','Gecko','Héron','Lama','Phoque','Orque','Blaireau','Marmotte','Chamois','Pélican','Iguane','Faucon','Hérisson'];
+function level(i){return i<2?0:i<4?1:2;}
+function rankIn(i){return i<2?i:i<4?i-2:i-4;}
+function makeCard(code,manche,i){
+  const L=level(i),key=code+'|'+manche,r=rng(hashStr(key+'|'+i));
+  const mot=MOTS[hashStr(key+'#'+i)%MOTS.length];
+  const pick=(pool)=>{const sh=shuffle(pool.map((_,j)=>j),rng(hashStr(key+'|L'+L)));return pool[sh[rankIn(i)%pool.length]];};
+  const base={i,L,mot,manche};
+  if(manche===1)return Object.assign(base,{p:pick(M1POOL[L])});
+  if(manche===2){
+    if(L<2){const c=pick(M2CURVES),ks=validKs(c.ys);
+      const k=ks[Math.floor(r()*ks.length)];
+      const op=L===0?'=':['≥','>','≤','<'][Math.floor(r()*4)];
+      const f=spline(c.x0,c.ys);
+      return Object.assign(base,{two:false,x0:c.x0,x1:c.x0+c.ys.length-1,ys:c.ys,k,op,f,truth:x=>{const v=f(x);return !isNaN(v)&&cmp(op,v,k);}});}
+    const c=pick(M2PAIRS),H=spline(c.x0,c.hs),g=x=>c.m*x+c.p,x1=c.x0+c.hs.length-1;
+    const f=x=>{const h=H(x);return isNaN(h)?NaN:g(x)+h;};
+    const op=['=','≥','<','≤','>'][Math.floor(r()*5)];
+    return Object.assign(base,{two:true,x0:c.x0,x1,f,g:x=>(x<c.x0-1e-9||x>x1+1e-9)?NaN:g(x),m:c.m,pp:c.p,op,
+      nodes:c.hs.map((h,j)=>[c.x0+j,g(c.x0+j)+h]),truth:x=>{const v=f(x);return !isNaN(v)&&cmp(op,v,g(x));}});}
+  const fl=pick(M3POOL[L]),kind=L===0?'one':L===1?'prod':'quot';
+  const c={kind,f:fl,op:L===2?['≥','>','≤','<'][Math.floor(r()*4)]:null};
+  return Object.assign(base,c);
+}
+if(typeof module!=='undefined'&&typeof window==='undefined')module.exports={makeCard,sameFunction,evalP,exprHTML,solPieces,setStr,sameSet,inSet,setProblems,m3Truth,m3Truthset,m3HTML,validKs,M1POOL,M2CURVES,M2PAIRS,M3POOL,spline,rowEq};
+
+/* ===== INTERFACE ===== */
+const $=s=>document.querySelector(s);
+const MANCHES={
+ 1:{nom:'Qui suis-je ?',but:'Retrouver l’expression f(x) à partir de la courbe.'},
+ 2:{nom:'Lecture de plan',but:'Résoudre graphiquement équations et inéquations.'},
+ 3:{nom:'Le plan de signes',but:'Dresser un tableau de signes (puis résoudre au niveau rouge).'}
+};
+const NIV=['verte','bleue','rouge'];
+let S={view:'home',manche:1,code:'',mode:'2',start:'chef',big:false,i:0,res:{},ui:{},peek:false};
+let modal=null;
+const store={get(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+function key(){return 'bf2:'+S.code+':'+S.manche+':'+S.mode+':'+S.start;}
+function save(){if(S.view==='game')store.set(key(),{i:S.i,res:S.res,ui:S.ui});store.set('bf2:last',{manche:S.manche,code:S.code,mode:S.mode,start:S.start,big:S.big});}
+const last=store.get('bf2:last');if(last)Object.assign(S,last);
+
+function brick(L,pts,txt){return '<span class="brick L'+L+'">'+'<i></i>'.repeat(pts||L+1)+(txt?'&nbsp;'+txt:'')+'</span>';}
+function role(i){if(S.mode==='1')return 'both';const o=S.start==='chef'?'cons':'chef';return i%2===0?S.start:o;}
+const cardCache={};
+function card(i){const k=S.code+'|'+S.manche+'|'+i;return cardCache[k]||(cardCache[k]=makeCard(S.code,S.manche,i));}
+function U(i){return S.ui[i]||(S.ui[i]={tries:0,done:false,ok:false,msg:'',mk:''});}
+
+/* ---------- Graphique SVG ---------- */
+function graph(o){
+  const W=o.w||440,H=W,pad=W<300?14:26,xm=o.xmin,xM=o.xmax,ym=o.ymin,yM=o.ymax;
+  const X=x=>pad+(x-xm)/(xM-xm)*(W-2*pad),Y=y=>H-pad-(y-ym)/(yM-ym)*(H-2*pad);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+(o.aria||'courbe')+'"><defs><clipPath id="cp'+W+'"><rect x="'+pad+'" y="'+pad+'" width="'+(W-2*pad)+'" height="'+(H-2*pad)+'"/></clipPath></defs>';
+  for(let x=Math.ceil(xm);x<=xM;x++)s+='<line class="gl" x1="'+X(x)+'" x2="'+X(x)+'" y1="'+pad+'" y2="'+(H-pad)+'"/>';
+  for(let y=Math.ceil(ym);y<=yM;y++)s+='<line class="gl" y1="'+Y(y)+'" y2="'+Y(y)+'" x1="'+pad+'" x2="'+(W-pad)+'"/>';
+  s+='<line class="ax" x1="'+pad+'" x2="'+(W-pad)+'" y1="'+Y(0)+'" y2="'+Y(0)+'"/><line class="ax" x1="'+X(0)+'" x2="'+X(0)+'" y1="'+pad+'" y2="'+(H-pad)+'"/>';
+  if(!o.noTicks){for(let x=Math.ceil(xm);x<=xM;x++)if(x!==0)s+='<text class="tk" x="'+X(x)+'" y="'+(Y(0)+15)+'" text-anchor="middle">'+fnum(x)+'</text>';
+    for(let y=Math.ceil(ym);y<=yM;y++)if(y!==0)s+='<text class="tk" x="'+(X(0)-6)+'" y="'+(Y(y)+4)+'" text-anchor="end">'+fnum(y)+'</text>';
+    s+='<text class="tk" x="'+(X(0)-6)+'" y="'+(Y(0)+15)+'" text-anchor="end">0</text>';}
+  if(o.hline!==undefined)s+='<line class="hl" x1="'+pad+'" x2="'+(W-pad)+'" y1="'+Y(o.hline)+'" y2="'+Y(o.hline)+'"/><text class="lab g" x="'+(W-pad-4)+'" y="'+(Y(o.hline)-6)+'" text-anchor="end">y = '+fnum(o.hline)+'</text>';
+  s+='<g clip-path="url(#cp'+W+')">';
+  (o.curves||[]).forEach(c=>{let d='',pen=false,py=null;const N=700;
+    for(let j=0;j<=N;j++){const x=xm+(xM-xm)*j/N,y=c.f(x);
+      if(isNaN(y)||Math.abs(y)>40||(py!==null&&Math.abs(y-py)>6)){pen=false;py=isNaN(y)?null:y;if(isNaN(y)||Math.abs(y)>40)continue;}
+      d+=(pen?'L':'M')+X(x).toFixed(1)+' '+Y(y).toFixed(1);pen=true;py=y;}
+    s+='<path class="cv '+(c.cls||'')+'" d="'+d+'"/>';});
+  s+='</g>';
+  (o.dots||[]).forEach(p=>{if(p[1]>=ym&&p[1]<=yM)s+='<circle class="dot '+(p[2]||'')+'" cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r="'+(W<300?3.5:5.5)+'"/>';});
+  (o.labels||[]).forEach(l=>{s+='<text class="lab '+(l.cls||'')+'" x="'+X(l.x)+'" y="'+Y(l.y)+'">'+l.t+'</text>';});
+  if(o.sol){const y0=Y(0);o.sol.forEach(p=>{
+    if(p.t==='pt'){s+='<circle class="solp" cx="'+X(p.a)+'" cy="'+y0+'" r="7"/>';return;}
+    const a=Math.max(p.a,xm),b=Math.min(p.b,xM);s+='<line class="sol" x1="'+X(a)+'" x2="'+X(b)+'" y1="'+y0+'" y2="'+y0+'"/>';
+    if(isFinite(p.a))s+='<circle class="'+(p.lb==='['?'solp':'solo')+'" cx="'+X(p.a)+'" cy="'+y0+'" r="7"/>';
+    if(isFinite(p.b))s+='<circle class="'+(p.rb===']'?'solp':'solo')+'" cx="'+X(p.b)+'" cy="'+y0+'" r="7"/>';});}
+  return '<div class="fig">'+s+'</svg></div>';}
+function m1Graph(p,extra){const f=x=>evalP(p,x),dots=[];
+  for(let x=-5;x<=5;x++){const y=f(x);if(Number.isInteger(Math.round(y*1e9)/1e9)&&Math.abs(y)<=5)dots.push([x,Math.round(y)]);}
+  const curves=[{f}];if(extra)curves.push({f:x=>evalP(extra,x),cls:'try'});
+  return graph({xmin:-5,xmax:5,ymin:-5,ymax:5,curves,dots,aria:'courbe de la carte'});}
+function m2Graph(c,show){
+  const o={xmin:c.x0-1,xmax:c.x1+1,ymin:-5,ymax:5,curves:[{f:c.f}],aria:'courbe de la carte'};
+  if(c.two){o.curves.push({f:c.g,cls:'g'});o.dots=c.nodes.map(n=>[n[0],n[1]]);
+    o.labels=[{x:c.x1+0.15,y:c.f(c.x1)+0.4,t:'Cf'},{x:c.x1+0.15,y:c.g(c.x1)-0.5,t:'Cg',cls:'g'}];}
+  else{o.dots=c.ys.map((y,j)=>[c.x0+j,y]);o.labels=[{x:c.x1+0.1,y:c.ys[c.ys.length-1]+0.5,t:'Cf'}];}
+  if(show){if(!c.two)o.hline=c.k;o.sol=solPieces(c.truth,c.x0,c.x1,false,false);}
+  return graph(o);}
+function m2Question(c){return c.two?'f(x) '+c.op+' g(x)':'f(x) '+c.op+' '+fnum(c.k);}
+
+/* ---------- Composant : ensemble de solutions ---------- */
+function numOpts(vals,sel){return '<option value="">?</option>'+vals.map(v=>{const s=v===Infinity?'inf':v===-Infinity?'-inf':String(v);
+  return '<option value="'+s+'"'+(sel===v?' selected':'')+'>'+fnum(v)+'</option>';}).join('');}
+function parseV(s){return s===''?null:s==='inf'?Infinity:s==='-inf'?-Infinity:Number(s);}
+function setBuilder(u,vals,dis){
+  const D=dis?' disabled':'';u.pieces=u.pieces||[];
+  let h='<div class="muted">Assemble l’ensemble des solutions avec des briques « intervalle » ou « valeur isolée ».</div>';
+  u.pieces.forEach((p,j)=>{h+='<div class="ib">';
+    if(p.t==='int')h+='<select class="br" data-pc="'+j+'" data-fd="lb" aria-label="crochet gauche"'+D+'><option'+(p.lb==='['?' selected':'')+'>[</option><option'+(p.lb===']'?' selected':'')+'>]</option></select>'
+      +'<select data-pc="'+j+'" data-fd="a" aria-label="borne gauche"'+D+'>'+numOpts(vals,p.a)+'</select> ; <select data-pc="'+j+'" data-fd="b" aria-label="borne droite"'+D+'>'+numOpts(vals,p.b)+'</select>'
+      +'<select class="br" data-pc="'+j+'" data-fd="rb" aria-label="crochet droit"'+D+'><option'+(p.rb===']'?' selected':'')+'>]</option><option'+(p.rb==='['?' selected':'')+'>[</option></select>';
+    else h+='valeur isolée : <select data-pc="'+j+'" data-fd="a" aria-label="valeur"'+D+'>'+numOpts(vals.filter(isFinite),p.a)+'</select>';
+    h+=dis?'':'<button class="x" data-act="del" data-j="'+j+'" aria-label="retirer">✕</button>';h+='</div>';});
+  if(!dis)h+='<div class="row"><button class="small" data-act="addInt">+ intervalle</button><button class="small" data-act="addPt">+ valeur isolée</button><button class="small'+(u.empty?' on':'')+'" data-act="empty">∅ aucune solution</button></div>';
+  h+='<div class="preview">'+(u.empty?'S = ∅':u.pieces.length?setStr(u.pieces.filter(p=>p.a!==null&&(p.t==='pt'||p.b!==null))):'S = …')+'</div>';
+  return h;}
+
+/* ---------- Textes des rôles ---------- */
+const CAN={
+ 1:['« La courbe passe par le point (… ; …) »','« Elle n’existe que pour x ≥ … »','« Elle n’est pas définie en … »','« Elle monte / descend quand x augmente »','« Elle est symétrique par rapport à l’axe des ordonnées »','« Elle coupe l’axe des abscisses en … »'],
+ 2:['Répondre aux questions de lecture du constructeur, et seulement à elles','Donner une image : « l’image de 2 est … »','Donner des antécédents : « … a pour antécédents … et … »','Donner l’ensemble de définition','(2 courbes) Dire en quelles abscisses Cf et Cg se coupent'],
+ 3:['« C’est un produit / un quotient de … facteurs »','« Le facteur du haut / du bas… »','« Un facteur s’annule en x = … » (à calculer !)','« Son coefficient devant x est positif / négatif »','(rouge) « On cherche où l’expression est positive / négative… »']};
+const NO={
+ 1:['carré','cube','racine','inverse','affine','parabole','hyperbole','droite','lire l’expression','mimer ou dessiner la courbe','montrer l’écran'],
+ 2:['donner la réponse','dire « au-dessus de y = … » sans question','montrer l’écran'],
+ 3:['lire l’expression telle quelle','dire les signes du tableau','montrer l’écran']};
+const ASK2=['« Sur quel intervalle f est-elle définie ? »','« Quelle est l’image de … ? »','« Quels sont les antécédents de … ? »'];
+function chips(a,no){return '<div class="chips">'+a.map(t=>'<span class="chip'+(no?' no':'')+'">'+t+'</span>').join('')+'</div>';}
+
+/* ---------- Vue CHEF ---------- */
+function chefContent(c){
+  if(S.manche===1)return '<h3>Ta carte : la courbe Cf</h3>'+m1Graph(c.p);
+  if(S.manche===2)return '<h3>Ta carte : '+(c.two?'les courbes Cf et Cg':'la courbe Cf')+'</h3>'+m2Graph(c,false)+'<p class="muted">Tu ne connais pas la question : réponds seulement aux questions de lecture.</p>';
+  return '<h3>Ta carte : l’expression</h3><div class="expr">E(x) = '+m3HTML(c)+'</div>'+(c.op?'<div class="msg info">Question posée au constructeur : résoudre E(x) '+c.op+' 0</div>':'')
+    +'<p class="muted">Au brouillon, pour chaque facteur ax + b : résous ax + b = 0, puis repère le signe de a.</p>';}
+function chefView(c,u){
+  let h='<div class="banner" style="background:var(--panel)">Tu es le CHEF DE CHANTIER. Ton écran reste caché : tu guides avec des mots.</div>';
+  h+='<div class="card">'+chefContent(c)+'</div>';
+  h+='<div class="card"><h3>Tu peux dire</h3>'+chips(CAN[S.manche])+'<h3 style="margin-top:10px">Interdit</h3>'+chips(NO[S.manche],true)+'</div>';
+  const r=S.res[c.i];
+  if(S.mode==='2'){
+    h+='<div class="card res"><h3>Quand ton constructeur a validé, indique le résultat</h3>';
+    if(!r)h+='<button class="small" data-act="cres" data-v="ok1">Réussi du 1er coup</button><button class="small" data-act="cres" data-v="ok2">Réussi au 2e essai</button><button class="small" data-act="cres" data-v="ko">Pas réussi</button>';
+    else h+='<p>Résultat noté : '+resTxt(r)+'</p>'+reveal(c);
+    h+='</div>';}
+  return h;}
+function reveal(c){
+  if(S.manche===1)return '<div class="msg good">Expression de la carte : f(x) = '+exprHTML(c.p)+'</div>';
+  if(S.manche===2)return '<div class="msg good">Question : résoudre '+m2Question(c)+' — '+setStr(solPieces(c.truth,c.x0,c.x1,false,false))+'</div>'+m2Graph(c,true);
+  return '<div class="msg good">Tableau attendu :</div>'+tableRO(c)+(c.op?'<div class="msg good">E(x) '+c.op+' 0 : '+setStr(solPieces(m3Truthset(c),-9,9,true,true))+'</div>':'');}
+function resTxt(r){return r.st==='pass'?'carte passée':r.pts?brick(level(+r.i),r.pts,r.pts+' tenon'+(r.pts>1?'s':'')):'pas de brique cette fois';}
+
+/* ---------- Vue CONSTRUCTEUR ---------- */
+function consView(c,u){
+  let h='';
+  if(S.mode==='2')h+='<div class="banner" style="background:var(--panel)">Tu es le CONSTRUCTEUR. Écoute le chef, pose-lui des questions, assemble les briques.</div>';
+  if(S.manche===1)h+=m1Builder(c,u);else if(S.manche===2)h+=m2Builder(c,u);else h+=m3Builder(c,u);
+  if(u.msg)h+='<div class="msg '+u.mk+' pop">'+u.msg+'</div>';
+  if(!u.done)h+='<div class="row"><button class="go ok" data-act="check">Valider</button><span class="muted">Essai '+(u.tries+1)+' sur 2</span></div>';
+  else h+='<div class="card"><h3>Correction</h3>'+consCorrection(c,u)+'</div>';
+  return h;}
+function m1Builder(c,u){
+  if(!u.p)u.p={a:1,base:'',h:0,k:0};const p=u.p,D=u.done?' disabled':'';
+  const o=(arr,cur,lab)=>arr.map(v=>'<option value="'+v+'"'+(String(cur)===String(v)?' selected':'')+'>'+lab(v)+'</option>').join('');
+  let h='<div class="card"><h3>Assemble f(x)</h3><div class="eq" style="margin-top:10px"><span>f(x) =</span>'
+   +'<label class="pick a">coefficient<select data-m1="a"'+D+'>'+o([-3,-2,-1,-0.5,0.5,1,2,3],p.a,v=>v===1?'1 (rien)':fnum(v))+'</select></label>'
+   +'<label class="pick f">fonction<select data-m1="base"'+D+'><option value="">choisir…</option>'+o(['lin','sq','cube','sqrt','inv'],p.base,v=>BASES[v].nom)+'</select></label>';
+  if(c.L===2)h+='<label class="pick h">x devient<select data-m1="h"'+D+'>'+o([-3,-2,-1,0,1,2,3],p.h,v=>v===0?'x (rien)':inner(v))+'</select></label>';
+  h+='<label class="pick k">on ajoute<select data-m1="k"'+D+'>'+o([-5,-4,-3,-2,-1,0,1,2,3,4,5],p.k,v=>v===0?'0 (rien)':(v>0?'+ ':MINUS+' ')+Math.abs(v))+'</select></label></div>';
+  h+='<div class="preview">Ton expression : '+(p.base?'f(x) = '+exprHTML(p):'choisis une fonction')+'</div>';
+  if(c.L===2)h+='<p class="muted">Brique violette débloquée : remplacer x par x − 1, x + 2…</p>';
+  return h+'</div>';}
+function m2Builder(c,u){
+  const vals=[];for(let x=c.x0-1;x<=c.x1+1;x++)vals.push(x);
+  return '<div class="card"><h3>Ta mission : résoudre '+m2Question(c)+'</h3><p class="muted">Ne lis pas la question au chef. Pose-lui des questions de lecture :</p>'+chips(ASK2.concat(c.two?['« Image de … par f ? par g ? »','« Où Cf et Cg se coupent-elles ? »']:[]))
+    +setBuilder(u,vals,u.done)+'</div>';}
+const M3V=[-Infinity,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,Infinity];
+function m3Builder(c,u){
+  const D=u.done;u.vals=u.vals||[];
+  let h='<div class="card"><h3>1. Combien de facteurs le chef annonce-t-il ?</h3><div class="row seg">'
+   +[1,2].map(n=>'<button class="'+(u.nf===n?'on':'')+'" data-act="nf" data-n="'+n+'"'+(D?' disabled':'')+'>'+n+' facteur'+(n>1?'s':'')+'</button>').join('')+'</div>'
+   +'<h3 style="margin-top:14px">2. Valeurs de la ligne x (là où un facteur s’annule)</h3><div class="vals">'
+   +[-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8].map(v=>'<button class="'+(u.vals.includes(v)?'on':'')+'" data-act="val" data-v="'+v+'"'+(D?' disabled':'')+'>'+fnum(v)+'</button>').join('')+'</div>';
+  if(u.nf&&u.vals.length){
+    const m=u.vals.length,nr=u.nf===1?1:3;
+    if(!u.rows||u.rows.length!==nr||u.rows[0].cv.length!==m)u.rows=Array.from({length:nr},()=>({iv:Array(m+1).fill('?'),cv:Array(m).fill('')}));
+    const labs=u.nf===1?['Signe de E(x)']:['Facteur 1','Facteur 2','Signe de E(x)'];
+    h+='<h3 style="margin-top:14px">3. Touche les cases pour remplir le tableau</h3><p class="muted">Case large : ? → + → −. Case sur un trait : rien → 0 → || (valeur interdite).</p>'+tableHTML(u.vals.slice().sort((a,b)=>a-b),u.rows,labs,!D);}
+  if(c.op){h+='<h3 style="margin-top:14px">4. Résoudre E(x) '+c.op+' 0</h3>'+setBuilder(u,M3V,D);}
+  return h+'</div>';}
+function tableHTML(vals,rows,labs,edit){
+  const m=vals.length;let h='<div class="scroll"><table class="st"><thead><tr><th>x</th>';
+  for(let j=0;j<=m;j++){h+='<th class="iv"><div class="hd"><span>'+(j===0?MINUS+'∞':'')+'</span><span>'+(j===m?'+∞':'')+'</span></div></th>';if(j<m)h+='<th class="cvc">'+fnum(vals[j])+'</th>';}
+  h+='</tr></thead><tbody>';
+  rows.forEach((r,ri)=>{h+='<tr><td>'+labs[ri]+'</td>';
+    for(let j=0;j<=m;j++){const v=r.iv[j];h+='<td class="iv">'+(edit?'<button data-act="cell" data-r="'+ri+'" data-t="iv" data-c="'+j+'" aria-label="signe">'+v+'</button>':'<button disabled>'+v+'</button>')+'</td>';
+      if(j<m){const w=r.cv[j];h+='<td class="cvc'+(w==='||'?' dbl':'')+'">'+(edit?'<button data-act="cell" data-r="'+ri+'" data-t="cv" data-c="'+j+'" aria-label="valeur charnière">':'<button disabled>')+(w==='0'?'<span>0</span>':'')+'</button></td>';}}
+    h+='</tr>';});
+  return h+'</tbody></table></div>';}
+function tableRO(c){const T=m3Truth(c);const rows=c.f.length>1?T.factors.concat([T.fin]):[T.fin];
+  const labs=c.f.length>1?[affHTML(...c.f[0]),affHTML(...c.f[1]),'E(x)']:['E(x) = '+affHTML(...c.f[0])];return tableHTML(T.vals,rows,labs,false);}
+function consCorrection(c,u){
+  if(S.manche===1)return '<p>Courbe de la carte (trait plein) '+(u.ok?'':'et ta proposition (pointillés)')+' : f(x) = '+exprHTML(c.p)+'</p>'+m1Graph(c.p,u.ok?null:(u.p.base?u.p:null));
+  return reveal(c);}
+
+/* ---------- Validation ---------- */
+function check(){
+  const c=card(S.i),u=U(S.i);let ok=false,msg='';
+  if(S.manche===1){const p=u.p;
+    if(!p.base){u.msg='Choisis d’abord une brique « fonction ».';u.mk='info';return render();}
+    const r=sameFunction(c.p,p);ok=r==='ok';
+    if(!ok)msg=p.base!==c.p.base?'Ce n’est pas la bonne famille de courbe. Demande au chef où la courbe existe et comment elle évolue.':
+      (r==='domaine'?'Bonne famille, mais l’ensemble de définition ne colle pas : demande au chef où la courbe commence.':'Bonne famille ! Il reste un réglage : prends un point donné par le chef et vérifie que f(a) = b.');}
+  else if(S.manche===2){
+    const pr=setProblems(u.pieces||[]);if(pr.length){u.msg=pr.join(' ');u.mk='info';return render();}
+    const P=u.empty?[]:(u.pieces||[]);if(!u.empty&&!P.length){u.msg='Ajoute au moins une brique, ou choisis ∅.';u.mk='info';return render();}
+    ok=sameSet(P,c.truth,c.x0-1,c.x1+1);
+    if(!ok)msg='L’ensemble ne correspond pas. Vérifie les bornes (antécédents), les crochets (inégalité large ou stricte ?) et l’ensemble de définition.';}
+  else{
+    if(!u.nf||!u.vals.length){u.msg='Choisis le nombre de facteurs et les valeurs de la ligne x.';u.mk='info';return render();}
+    if(c.op){const pr=setProblems(u.pieces||[]);if(pr.length){u.msg=pr.join(' ');u.mk='info';return render();}}
+    const T=m3Truth(c),vs=u.vals.slice().sort((a,b)=>a-b),errs=[];
+    if(u.nf!==c.f.length)errs.push('Le nombre de facteurs ne correspond pas.');
+    else if(vs.join()!==T.vals.join())errs.push('Les valeurs de la ligne x ne sont pas les bonnes : chaque facteur s’annule en x = −b/a.');
+    else{const fin=u.rows[u.rows.length-1];
+      if(c.f.length>1){const fr=u.rows.slice(0,2),tf=T.factors;
+        const okF=(rowEq(fr[0],tf[0])&&rowEq(fr[1],tf[1]))||(rowEq(fr[0],tf[1])&&rowEq(fr[1],tf[0]));
+        if(!okF)errs.push('Une ligne de facteur est fausse : à droite de son zéro, ax + b a le signe de a.');}
+      if(fin.iv.join()!==T.fin.iv.join())errs.push('La dernière ligne a un signe faux : applique la règle des signes.');
+      if(fin.cv.join()!==T.fin.cv.join())errs.push(c.kind==='quot'?'Dernière ligne : 0 pour le numérateur, double barre || pour la valeur interdite.':'Dernière ligne : il manque un 0 (ou il y en a un en trop).');}
+    if(!errs.length&&c.op){const P=u.empty?[]:(u.pieces||[]);if(!sameSet(P,m3Truthset(c),-9,9))errs.push('Le tableau est juste, mais l’ensemble S ne correspond pas (crochets ? valeur interdite ?).');}
+    ok=!errs.length;msg=errs.join(' ');}
+  u.tries++;
+  if(ok){u.done=true;u.ok=true;const pts=Math.max(1,c.L+1-(u.tries-1));u.msg='Bravo ! '+brick(c.L,pts,'+'+pts+' tenon'+(pts>1?'s':''));u.mk='good';
+    if(S.mode==='1'||!S.res[S.i])S.res[S.i]={i:S.i,pts,st:'ok'+u.tries};}
+  else if(u.tries>=2){u.done=true;u.msg='Pas cette fois. Regardez la correction ensemble : où l’information a-t-elle manqué ?';u.mk='bad';if(S.mode==='1'||!S.res[S.i])S.res[S.i]={i:S.i,pts:0,st:'ko'};}
+  else{u.msg=msg+' Il te reste un essai.';u.mk='bad';}
+  save();render();}
+
+/* ---------- Écrans ---------- */
+function topBar(t){return '<div class="top"><span class="ttl">'+t+'</span>'+(S.view!=='home'?'<button class="tb" data-act="home">Accueil</button>':'')
+  +(S.view==='game'?'<button class="tb" data-act="memo">Mémo</button>':'')+'<button class="tb dark" data-act="help">? Aide</button>'
+  +'<button class="tb" data-act="big" aria-pressed="'+S.big+'">A+</button></div>';}
+function home(){
+  return topBar('Brick’Fonctions · chapitre 13')+'<section class="hero"><div><h1>Le chantier des fonctions</h1><p>Le chef de chantier a le plan, le constructeur a les briques. Ensemble, vous retrouvez l’expression, l’ensemble des solutions ou le tableau de signes caché sur la carte.</p>'
+   +'<div class="row">'+brick(0,1,'verte')+brick(1,2,'bleue')+brick(2,3,'rouge')+'</div></div>'
+   +'<div>'+graph({xmin:-3,xmax:3,ymin:-1,ymax:5,w:300,noTicks:true,curves:[{f:x=>x*x},{f:x=>x>=0?Math.sqrt(x)*2:NaN,cls:'g'}],aria:'illustration'})+'</div></section>'
+   +'<div class="wrap"><div class="card"><h2>1. Choisissez la manche</h2><div class="grid3" style="margin-top:10px">'
+   +[1,2,3].map(m=>'<button class="tile'+(S.manche===m?' on':'')+'" data-act="man" data-m="'+m+'"><b>Manche '+m+' · '+MANCHES[m].nom+'</b>'+MANCHES[m].but+'</button>').join('')+'</div></div>'
+   +'<div class="card"><h2>2. Réglages du binôme</h2><div class="row" style="margin-top:10px"><label>Code du binôme (le même sur vos deux tablettes) : <input type="text" id="code" value="'+S.code.replace(/"/g,'')+'" placeholder="ex. 3A" maxlength="8"></label></div>'
+   +'<p>Nombre de tablettes :</p><div class="row seg"><button class="'+(S.mode==='2'?'on':'')+'" data-act="mode" data-v="2">2 tablettes (recommandé)</button><button class="'+(S.mode==='1'?'on':'')+'" data-act="mode" data-v="1">1 tablette</button></div>'
+   +(S.mode==='2'?'<p>Sur CETTE tablette, je commence en tant que :</p><div class="row seg"><button class="'+(S.start==='chef'?'on':'')+'" data-act="start" data-v="chef">Chef de chantier</button><button class="'+(S.start==='cons'?'on':'')+'" data-act="start" data-v="cons">Constructeur</button></div><p class="muted">L’autre tablette choisit l’autre rôle. Les rôles s’échangent automatiquement à chaque carte.</p>':'<p class="muted">Une seule tablette : la carte du chef est cachée, il appuie pour la voir pendant que le constructeur détourne les yeux.</p>')
+   +'</div><div class="row"><button class="go" data-act="play">Ouvrir le chantier</button><button class="go alt" data-act="prof">Écran professeur</button></div></div>';}
+function game(){
+  const c=card(S.i),u=U(S.i),rl=role(S.i);
+  let h=topBar('Manche '+S.manche+' · '+MANCHES[S.manche].nom);
+  h+='<div class="wrap"><div class="row" style="justify-content:space-between"><div class="row">'+brick(c.L,0,'Carte '+(S.i+1)+' · brique '+NIV[c.L])+'<span class="chip">Mot de contrôle : <b>'+c.mot+'</b></span></div>'
+    +(rl!=='both'?'<span class="role">'+(rl==='chef'?'Chef de chantier':'Constructeur')+'</span>':'')+'</div>';
+  if(S.mode==='2')h+='<p class="muted">Vérifiez que vos deux tablettes affichent la même carte et le même mot.</p>';
+  if(rl==='chef')h+=chefView(c,u);
+  else if(rl==='cons')h+=consView(c,u);
+  else{h+='<div class="card"><h3>Carte du chef</h3>'+(S.peek?chefContent(c)+'<button class="small" data-act="peek">Cacher la carte</button>':'<button class="hidecard" data-act="peek">Chef : touche ici pour voir la carte (le constructeur détourne les yeux)</button>')+'</div>'
+    +'<div class="card"><h3>Le chef peut dire</h3>'+chips(CAN[S.manche])+'<h3>Interdit</h3>'+chips(NO[S.manche],true)+'</div>'+consView(c,u);}
+  const tot=Object.values(S.res).reduce((s,r)=>s+(r.pts||0),0);
+  h+='<div class="card"><div class="row" style="justify-content:space-between"><h3>Notre mur : '+tot+' tenon'+(tot>1?'s':'')+'</h3><span class="muted">'+(S.mode==='2'?'Le même mur s’affiche sur les deux tablettes.':'')+'</span></div><div class="tower">'
+    +Object.values(S.res).sort((a,b)=>a.i-b.i).filter(r=>r.pts).map(r=>brick(level(r.i),r.pts)).join('')+'</div></div>';
+  const done=S.res[S.i]||u.done;
+  h+='<div class="nav"><button class="small" data-act="prev"'+(S.i===0?' disabled':'')+'>← Carte précédente</button>'
+   +'<button class="go'+(done?' ok':' alt')+'" data-act="next">'+(done?'Carte suivante →':(S.passing?'Sûr ? Passer sans brique':'Passer la carte'))+'</button></div></div>';
+  return h;}
+function prof(){
+  const t=S.clock||{left:12*60,run:false};S.clock=t;
+  const mm=String(Math.floor(t.left/60)).padStart(2,'0'),ss=String(t.left%60).padStart(2,'0');
+  return topBar('Écran professeur')+'<div class="wrap"><div class="card"><div class="clock" id="clk">'+mm+':'+ss+'</div><div class="row" style="justify-content:center">'
+   +'<button class="small" data-act="clk" data-v="go">'+(t.run?'Pause':'Démarrer')+'</button>'+[10,12,15].map(n=>'<button class="small" data-act="clk" data-v="'+n+'">'+n+' min</button>').join('')+'</div></div>'
+   +'<div class="tabs">'+['Règles','Démo','Bilan'].map(n=>'<button class="small'+((S.ptab||'Règles')===n?' on':'')+'" data-act="ptab" data-v="'+n+'">'+n+'</button>').join('')+'</div>'
+   +'<div class="card">'+profTab(S.ptab||'Règles')+'</div></div>';}
+function profTab(n){
+  if(n==='Règles')return helpText('Principe')+helpText('Points');
+  if(n==='Démo')return '<h2>Carte démo (à projeter)</h2><p>Le prof joue le chef, la classe joue le constructeur.</p>'+m1Graph({a:1,base:'sq',h:0,k:-1})
+   +'<ul><li>Chef : « Ma courbe passe par (0 ; −1), (1 ; 0) et (−1 ; 0). Elle est symétrique par rapport à l’axe des ordonnées. »</li><li>Constructeur : « Est-ce qu’elle passe par (2 ; 3) ? » — Chef : « Oui. »</li><li>Constructeur teste : f(2) = 2² − 1 = 3 ✓ → f(x) = x² − 1.</li></ul><p class="muted">Insister : tester un point, c’est la Méthode 2 du cours (A(a ; b) ∈ Cf ⟺ f(a) = b).</p>';
+  return '<h2>Institutionnaliser (5 à 10 min)</h2><h3>Questions à poser à la classe</h3><ul><li>Quelle information du chef était la plus utile pour reconnaître une fonction ? (points, ensemble de définition, symétrie)</li><li>Combien de points faut-il au minimum pour être sûr ?</li><li>Manche 2 : quelles questions vous ont permis de résoudre sans voir la courbe ?</li><li>Manche 3 : qu’est-ce que le chef devait calculer ? qu’est-ce que le constructeur devait savoir ?</li></ul>'
+   +'<h3>Carte d’identité des fonctions de référence</h3>'+refCards()
+   +'<h3>À retenir pour le contrôle</h3><ul><li>A(a ; b) ∈ Cf ⟺ f(a) = b.</li><li>f(x) = k : abscisses des points de Cf d’ordonnée k. f(x) ≥ k : abscisses des points de Cf sur ou au-dessus de la droite y = k.</li><li>f(x) ≥ g(x) : Cf est au-dessus de Cg (ou la coupe).</li><li>ax + b s’annule en −b/a ; à droite du zéro, il a le signe de a.</li><li>Règle des signes ; double barre || pour une valeur interdite, toujours exclue de S.</li><li>Crochet toujours ouvert en −∞ et +∞ ; large (≥, ≤) → crochet fermé, strict (>, <) → crochet ouvert.</li></ul>';}
+function refCards(){const R=[['x','Affine f(x) = ax + b','ℝ','droite'],['sq','Carré x²','ℝ','(0;0) (1;1) (−1;1) (2;4)'],['cube','Cube x³','ℝ','(0;0) (1;1) (−1;−1) (2;8)'],['sqrt','Racine √x','[0 ; +∞[','(0;0) (1;1) (4;2)'],['inv','Inverse 1/x','ℝ*','(1;1) (−1;−1) (2;0,5)']];
+  return '<div class="mini">'+R.map(r=>{const p=r[0]==='x'?{a:1,base:'lin',h:0,k:1}:{a:1,base:r[0],h:0,k:0};
+    return '<div>'+graph({xmin:-3,xmax:3,ymin:-3,ymax:3,w:200,noTicks:true,curves:[{f:x=>evalP(p,x)}],aria:r[1]})+'<p><b>'+r[1]+'</b></p><p>D = '+r[2]+'</p><p>'+r[3]+'</p></div>';}).join('')+'</div>';}
+
+/* ---------- Aide & mémo ---------- */
+function helpText(t){
+  const T={
+  Principe:'<h2>Le principe</h2><ul><li>Vous jouez en <b>binôme</b> : un <b>chef de chantier</b> et un <b>constructeur</b>.</li><li>Le chef voit la carte (courbe ou expression), <b>sans la montrer</b>. Il guide uniquement avec des mots et des nombres.</li><li>Le constructeur ne voit pas la carte. Il pose des questions et assemble des briques (expression, intervalles ou tableau de signes) puis appuie sur <b>Valider</b>.</li><li>Les rôles s’échangent à <b>chaque carte</b> : tout le monde est chef, tout le monde construit.</li><li>Le bouton <b>Mémo</b> est autorisé à tout moment, sans pénalité.</li></ul>',
+  Points:'<h2>Briques et tenons</h2><ul><li>Les cartes montent en escalier : 2 '+brick(0,1,'vertes')+' puis 2 '+brick(1,2,'bleues')+' puis '+brick(2,3,'rouges')+' (bonus à l’infini).</li><li>Réussi du 1er coup : la brique vaut ses tenons (1, 2 ou 3). Au 2e essai : un tenon de moins (minimum 1). 2 essais ratés : pas de brique, mais la correction s’affiche — prenez le temps de comprendre.</li><li>On ne compare pas les binômes : on construit le mur de la classe en additionnant tous les tenons.</li><li>« Passer la carte » est permis : on n’a pas de brique, on continue.</li></ul>',
+  M1:'<h2>Manche 1 · Qui suis-je ?</h2><p><b>Chef</b> : tu vois une courbe. Fais retrouver son expression.</p>'+chips(CAN[1])+'<p>Interdit :</p>'+chips(NO[1],true)+'<p><b>Constructeur</b> : choisis le coefficient, la fonction, ce qu’on ajoute (et au niveau rouge, par quoi on remplace x). Astuce : demande un point (a ; b) et vérifie que f(a) = b.</p>',
+  M2:'<h2>Manche 2 · Lecture de plan</h2><p><b>Chef</b> : tu vois la courbe, mais tu ne connais pas la question. Réponds seulement aux questions de lecture.</p>'+chips(CAN[2])+'<p><b>Constructeur</b> : tu as la question (ex. résoudre f(x) ≥ 1) mais pas la courbe. Ne lis pas la question à voix haute : pose des questions de lecture, puis assemble S.</p>'+chips(ASK2),
+  M3:'<h2>Manche 3 · Le plan de signes</h2><p><b>Chef</b> : tu vois l’expression E(x). Annonce le nombre de facteurs, produit ou quotient, et pour chaque facteur : où il s’annule (à calculer) et le signe de son coefficient devant x.</p><p>Interdit :</p>'+chips(NO[3],true)+'<p><b>Constructeur</b> : choisis le nombre de facteurs, les valeurs de la ligne x, puis touche les cases du tableau. Au niveau rouge, résous aussi l’inéquation affichée.</p>',
+  Tablettes:'<h2>Deux tablettes</h2><ul><li>Tapez le <b>même code</b> sur les deux tablettes (ex. 3A pour la table 3, binôme A), la même manche, et des rôles de départ différents.</li><li>Les deux tablettes affichent la même carte et le même <b>mot de contrôle</b>. Si les mots sont différents, utilisez « Carte précédente » ou revenez à l’accueil.</li><li>Appuyez tous les deux sur « Carte suivante » en même temps.</li><li>Le chef indique le résultat annoncé par le constructeur : ainsi le même mur s’affiche des deux côtés.</li></ul>'};
+  return T[t]||'';}
+function openHelp(tab){modal={k:'help',tab:tab||(S.view==='game'?'M'+S.manche:'Principe')};renderModal();}
+function renderModal(){
+  let el=$('#modal');if(!modal){if(el)el.remove();return;}
+  if(!el){el=document.createElement('div');el.id='modal';el.className='modal';document.body.appendChild(el);}
+  let h='<div class="box" role="dialog" aria-modal="true"><div class="row" style="justify-content:space-between"><h2>'+(modal.k==='help'?'Aide · règles du jeu':'Mémo · manche '+S.manche)+'</h2><button class="tb dark" data-act="close">Fermer</button></div>';
+  if(modal.k==='help'){const tabs=[['Principe','Principe'],['M1','Manche 1'],['M2','Manche 2'],['M3','Manche 3'],['Points','Points'],['Tablettes','2 tablettes']];
+    h+='<div class="tabs">'+tabs.map(t=>'<button class="small'+(modal.tab===t[0]?' on':'')+'" data-act="htab" data-v="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>'+helpText(modal.tab);}
+  else h+=memo();
+  el.innerHTML=h+'</div>';}
+function memo(){
+  if(S.manche===1)return refCards()+'<h3>Stratégies</h3><ul><li>Un point (a ; b) est sur Cf si et seulement si f(a) = b : teste chaque point annoncé.</li><li>Où commence la courbe ? Pas de point pour x < 0 → racine. Pas de point en x = 0 → inverse.</li><li>Observations (niveaux bleu et rouge) : « + k » monte la courbe de k ; un coefficient négatif la retourne ; remplacer x par x − 1 la décale de 1 vers la droite.</li></ul>';
+  if(S.manche===2)return '<ul><li>f(x) = k : les solutions sont les abscisses des points de Cf d’ordonnée k → demande « les antécédents de k ».</li><li>f(x) ≥ k : abscisses des points de Cf sur ou au-dessus de la droite y = k. Demande une image entre deux antécédents pour savoir si la courbe est au-dessus ou en dessous.</li><li>N’oublie pas les bornes de l’ensemble de définition.</li><li>Large (≥, ≤) → crochet fermé ; strict (>, <) → crochet ouvert.</li><li>f(x) ≥ g(x) : Cf au-dessus de Cg. Les bornes sont les abscisses des points d’intersection.</li></ul>';
+  return '<ul><li>ax + b s’annule en x = −b/a.</li><li>Ligne d’un facteur : signe de −a à gauche du zéro, signe de a à droite.</li><li>Règle des signes : deux signes identiques → +, différents → −.</li><li>Quotient : la valeur qui annule le dénominateur est interdite → double barre || dans la dernière ligne, et toujours exclue de S.</li><li>Crochet toujours ouvert en −∞ et +∞.</li></ul>'+tableHTML([2],[{iv:['−','+'],cv:['0']}],['2x − 4 (a = 2 > 0)'],false);}
+
+/* ---------- Rendu & événements ---------- */
+function render(){document.body.classList.toggle('big',!!S.big);
+  $('#app').innerHTML=S.view==='home'?home():S.view==='game'?game():prof();renderModal();}
+let tick=null;
+function setClock(){const t=S.clock;clearInterval(tick);if(t.run)tick=setInterval(()=>{t.left=Math.max(0,t.left-1);if(!t.left)t.run=false;const el=$('#clk');
+  if(el)el.textContent=String(Math.floor(t.left/60)).padStart(2,'0')+':'+String(t.left%60).padStart(2,'0');if(!t.run){clearInterval(tick);render();}},1000);}
+function startGame(){const el=$('#code');S.code=(el&&el.value.trim().toUpperCase())||'CLASSE';const sv=store.get(key());
+  S.i=sv?sv.i:0;S.res=sv?sv.res:{};S.ui=sv?sv.ui:{};S.view='game';S.peek=false;S.passing=false;save();render();scrollTo(0,0);}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const a=b.dataset.act,v=b.dataset.v;
+  const keepCode=()=>{const el=$('#code');if(el)S.code=el.value.trim().toUpperCase();};
+  if(a!=='next')S.passing=false;
+  const u=S.view==='game'?U(S.i):null;
+  switch(a){
+   case 'help':openHelp();return;case 'memo':modal={k:'memo'};renderModal();return;case 'close':modal=null;renderModal();return;
+   case 'htab':modal.tab=v;renderModal();return;
+   case 'big':S.big=!S.big;save();break;
+   case 'home':S.view='home';break;case 'prof':keepCode();S.view='prof';break;
+   case 'man':keepCode();S.manche=+b.dataset.m;break;case 'mode':keepCode();S.mode=v;break;case 'start':keepCode();S.start=v;break;
+   case 'play':startGame();return;
+   case 'peek':S.peek=!S.peek;break;
+   case 'prev':if(S.i>0)S.i--;S.peek=false;save();break;
+   case 'next':if(!(S.res[S.i]||u.done)){if(!S.passing){S.passing=true;break;}S.res[S.i]={i:S.i,pts:0,st:'pass'};}
+     S.passing=false;S.i++;S.peek=false;save();render();scrollTo(0,0);return;
+   case 'cres':{const c=card(S.i),pts=v==='ok1'?c.L+1:v==='ok2'?Math.max(1,c.L):0;S.res[S.i]={i:S.i,pts,st:v};save();break;}
+   case 'check':check();return;
+   case 'addInt':u.empty=false;u.pieces.push({t:'int',lb:'[',a:null,b:null,rb:']'});break;
+   case 'addPt':u.empty=false;u.pieces.push({t:'pt',a:null});break;
+   case 'empty':u.empty=!u.empty;if(u.empty)u.pieces=[];break;
+   case 'del':u.pieces.splice(+b.dataset.j,1);break;
+   case 'nf':u.nf=+b.dataset.n;u.rows=null;break;
+   case 'val':{const n=+v,ix=u.vals.indexOf(n);if(ix>=0)u.vals.splice(ix,1);else u.vals.push(n);u.rows=null;break;}
+   case 'cell':{const r=u.rows[+b.dataset.r],j=+b.dataset.c;
+     if(b.dataset.t==='iv'){const cyc={'?':'+','+':MINUS,[MINUS]:'+'};r.iv[j]=cyc[r.iv[j]];}
+     else{const cyc={'':'0','0':'||','||':''};r.cv[j]=cyc[r.cv[j]];}break;}
+   case 'clk':if(v==='go')S.clock.run=!S.clock.run;else{S.clock={left:+v*60,run:false};}setClock();break;
+   case 'ptab':S.ptab=v;break;
+  }
+  if(S.view==='game')save();render();});
+document.addEventListener('change',e=>{const t=e.target;if(S.view!=='game')return;const u=U(S.i);
+  if(t.dataset.m1){const f=t.dataset.m1;u.p[f]=f==='base'?t.value:Number(t.value);save();render();}
+  if(t.dataset.pc!==undefined){const p=u.pieces[+t.dataset.pc],f=t.dataset.fd;p[f]=(f==='lb'||f==='rb')?t.value:parseV(t.value);save();render();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal){modal=null;renderModal();}});
+render();
+
+}</script></body></html>

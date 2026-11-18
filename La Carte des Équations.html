@@ -1,0 +1,195 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Carte des Équations</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3f8;--card:#fff;--ink:#1d2530;--mute:#5d6b7c;--line:#d3dde8;--plaine:#2e9e57;--foret:#d97000;--volcan:#d03a2c;--okbg:#e3f5ea;--badbg:#fde7e4;--hintbg:#fff4d6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13181f;--card:#1c2430;--ink:#e8edf3;--mute:#9aa8b9;--line:#34425a;--okbg:#17382a;--badbg:#44221f;--hintbg:#40371a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#13181f;--card:#1c2430;--ink:#e8edf3;--mute:#9aa8b9;--line:#34425a;--okbg:#17382a;--badbg:#44221f;--hintbg:#40371a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Fredoka",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:18px;line-height:1.45}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.9rem;margin:.2em 0 .1em;font-weight:600}
+h2{margin:0}
+p{margin:.4em 0}
+.mute{color:var(--mute)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--rc,#3b82f6);outline-offset:2px}
+.routes{display:grid;gap:12px;margin-top:18px}
+.rcard{display:flex;gap:14px;align-items:center;text-align:left;background:var(--card);border:3px solid var(--rc);border-radius:18px;padding:14px 16px}
+.rcard:hover{transform:translateY(-2px)}
+.rcard .em{font-size:2.4rem}
+.rcard b{font-size:1.25rem;color:var(--rc)}
+.top{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+.rt{font-weight:600;color:#fff;background:var(--rc);padding:4px 14px;border-radius:99px}
+.sw{font-size:.85rem;color:var(--mute);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sw button{border:2px solid var(--c);background:transparent;border-radius:99px;padding:2px 10px;font-size:.85rem}
+.map{list-style:none;display:flex;align-items:center;margin:18px 4px;padding:0}
+.map li{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:.95rem;background:var(--card);border:3px solid var(--line);color:var(--mute)}
+.map li.done{background:var(--rc);border-color:var(--rc);color:#fff}
+.map li.cur{border-color:var(--rc);color:var(--rc);box-shadow:0 0 0 4px color-mix(in srgb,var(--rc) 25%,transparent);transform:scale(1.15)}
+.map li.cs{border:0;background:none;font-size:1.7rem;width:40px}
+.map .bar{flex:1 1 0;height:6px;background:var(--line);border-radius:3px;min-width:6px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:18px}
+.row{font-size:.85rem;color:var(--rc);font-weight:600;margin:0}
+.q{font-size:1.45rem;font-weight:500;margin:.3em 0 .8em;line-height:1.7}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.opts{grid-template-columns:1fr}}
+.opt{background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:12px;font-size:1.15rem;min-height:56px}
+.opt:hover:not(:disabled){border-color:var(--rc)}
+.opt.bad{background:var(--badbg);border-color:var(--volcan);text-decoration:line-through;opacity:.8}
+.opt.ok{background:var(--okbg);border-color:var(--plaine);font-weight:600}
+.opt:disabled{cursor:default}
+.fb{margin-top:14px;padding:12px 14px;border-radius:12px;font-size:1rem}
+.fb.hint{background:var(--hintbg)}
+.fb.good{background:var(--okbg)}
+.fb.sol{background:var(--badbg)}
+.nx{margin-top:14px;background:var(--rc);color:#fff;border:0;border-radius:12px;padding:10px 20px;font-weight:600}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .2em;font-size:.92em;line-height:1.25}
+.fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .25em}
+.fr>span:last-child{padding:0 .25em}
+.end{text-align:center}
+.end .big{font-size:3.2rem}
+.tr{margin-top:18px;font-size:.85rem}
+.tr button{background:none;border:0;color:var(--mute);text-decoration:underline}
+:root{--ciel:#2f7de1;--terre:#a8723a}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));z-index:10}
+.md{background:var(--card);border-radius:18px;padding:20px;max-width:460px;border:3px solid var(--ciel)}
+.md ul{padding-left:1.2em;margin:.3em 0}
+.u{display:grid;grid-template-columns:1fr 250px;gap:14px;align-items:start;margin-top:14px}
+@media (max-width:620px){.u{grid-template-columns:1fr}}
+.back{background:none;border:2px solid var(--rc);border-radius:99px;padding:2px 12px;font-size:.9rem}
+.nx.alt{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;transform:none!important}}
+</style></head>
+<body><main id="app"></main>
+<script>
+const ROUTES=[
+{n:"Plaine",e:"🌱",c:"var(--plaine)",d:"Je reprends doucement et je valide les méthodes types."},
+{n:"Forêt",e:"🌲",c:"var(--foret)",d:"Je vérifie les méthodes et je vais un peu plus loin."},
+{n:"Volcan",e:"🌋",c:"var(--volcan)",d:"Les méthodes sont acquises : je cherche plus loin."}];
+const ROWS=["Équation x² = a","Fractions","Équation du 1er degré","Identité a² − b²","Produit nul","Quotient nul"];
+const Q=[
+[
+{r:0,t:"Résous dans ℝ : x² = 64",o:["S = {8}","S = {−8 ; 8}","S = {32}","Pas de solution"],c:1,h:"Si a > 0, l’équation x² = a a deux solutions : −√a et √a.",s:"64 > 0, donc x = √64 = 8 ou x = −√64 = −8. S = {−8 ; 8}."},
+{r:1,t:"Calcule : [1|2] − [5|7]",o:["[−3|14]","[3|14]","[4|5]","[−2|7]"],c:0,h:"Mets au même dénominateur (ici 14), puis soustrais les numérateurs.",s:"[1|2] = [7|14] et [5|7] = [10|14]. Donc [7|14] − [10|14] = [−3|14]."},
+{r:1,t:"Réduis (x ≠ 0) : [3x|6] − [1|x]",o:["[x² − 2|2x]","[x − 2|2x]","[x² − 1|2x]","[3x − 1|6 − x]"],c:0,h:"Simplifie d’abord [3x|6] = [x|2], puis mets au même dénominateur 2x.",s:"[3x|6] = [x|2] = [x²|2x] et [1|x] = [2|2x]. Donc [x²|2x] − [2|2x] = [x² − 2|2x]."},
+{r:2,t:"Résous : 3x + 6 = 2x − 1",o:["x = 7","x = −7","x = 5","x = −5"],c:1,h:"Regroupe les x d’un côté et les nombres de l’autre.",s:"3x − 2x = −1 − 6, donc x = −7."},
+{r:3,t:"Factorise : x² − 16",o:["(x − 8)(x + 8)","(x − 4)²","(x − 4)(x + 4)","(x − 16)(x + 1)"],c:2,h:"a² − b² = (a − b)(a + b). Ici a = x ; trouve b tel que b² = 16.",s:"16 = 4², donc x² − 16 = x² − 4² = (x − 4)(x + 4)."},
+{r:4,t:"Résous : (x + 1)(2x − 6) = 0",o:["S = {1 ; −3}","S = {−1 ; 3}","S = {−1 ; 6}","S = {−1 ; −3}"],c:1,h:"Un produit est nul si l’un des facteurs est nul : x + 1 = 0 ou 2x − 6 = 0.",s:"x + 1 = 0 donne x = −1. 2x − 6 = 0 donne 2x = 6, donc x = 3. S = {−1 ; 3}."},
+{r:5,t:"Donne la valeur interdite et la ou les solutions de l’équation : [3x|x + 1] = 0",o:["Valeur interdite : x = 0<br>S = {−1}","Valeur interdite : x = −1<br>S = {0 ; −1}","Valeur interdite : x = −1<br>S = {0}","Valeur interdite : x = −1<br>pas de solution"],c:2,h:"Valeur interdite : x + 1 = 0. Ensuite, un quotient est nul si son numérateur est nul.",s:"Valeur interdite : x = −1. 3x = 0 donne x = 0, qui n’est pas interdit. S = {0}."}
+],[
+{r:0,t:"Résous dans ℝ : (x + 1)² = 25",o:["S = {4}","S = {−6 ; 4}","S = {24}","S = {−4 ; 6}"],c:1,h:"Pose X = x + 1 : X² = 25 a deux solutions, X = 5 ou X = −5.",s:"x + 1 = 5 donne x = 4. x + 1 = −5 donne x = −6. S = {−6 ; 4}."},
+{r:1,t:"Réduis (x ≠ 3 et x ≠ −3) : [x + 1|x − 3] + [2x − 6|x + 3]",o:["[3x² − 8x + 21|x² − 9]","[3x − 5|x² − 9]","[3x² + 8x + 21|x² − 9]","[3x − 5|2x]"],c:0,h:"Dénominateur commun : (x − 3)(x + 3). N’oublie pas de multiplier aussi les numérateurs.",s:"[(x+1)(x+3) + (2x−6)(x−3)|(x−3)(x+3)] = [x² + 4x + 3 + 2x² − 12x + 18|x² − 9] = [3x² − 8x + 21|x² − 9]."},
+{r:2,t:"Résous : 4(x + 1) = 6(2x + 1)",o:["x = [1|4]","x = [−1|4]","x = [−5|8]","x = [5|4]"],c:1,h:"Développe chaque membre, puis regroupe les x.",s:"4x + 4 = 12x + 6, donc 4x − 12x = 6 − 4, soit −8x = 2 et x = [−1|4]."},
+{r:3,t:"Factorise : (x + 1)² − (2x + 3)²",o:["(−x − 2)(3x + 4)","(−x + 4)(3x + 4)","(−x − 2)(3x + 2)","(x − 2)(3x + 4)"],c:0,h:"a² − b² = (a − b)(a + b) avec a = x + 1 et b = 2x + 3. Mets des parenthèses pour a − b !",s:"a − b = (x + 1) − (2x + 3) = −x − 2 et a + b = (x + 1) + (2x + 3) = 3x + 4. Donc (−x − 2)(3x + 4)."},
+{r:4,t:"Résous : 5x − 10x² = 0",o:["S = {[1|2]}","S = {0 ; 2}","S = {0 ; [1|2]}","S = {0 ; [−1|2]}"],c:2,h:"Factorise par 5x, puis utilise la règle du produit nul.",s:"5x − 10x² = 5x(1 − 2x) = 0. 5x = 0 donne x = 0 ; 1 − 2x = 0 donne x = [1|2]. S = {0 ; [1|2]}."},
+{r:5,t:"Donne la valeur interdite et la ou les solutions de l’équation : [2x − 7|3x + 2] = 0",o:["Valeur interdite : x = [−2|3]<br>S = {[7|2] ; [−2|3]}","Valeur interdite : x = [2|3]<br>S = {[7|2]}","Valeur interdite : x = [−2|3]<br>S = {[7|2]}","Valeur interdite : x = [7|2]<br>S = {[−2|3]}"],c:2,h:"Cherche la valeur interdite (dénominateur = 0), puis annule le numérateur.",s:"Valeur interdite : 3x + 2 = 0, donc x = [−2|3]. 2x − 7 = 0 donne x = [7|2], qui n’est pas interdit. S = {[7|2]}."}
+],[
+{r:0,t:"Résous dans ℝ : (2x − 7)² = 16",o:["S = {[11|2]}","S = {[−3|2] ; [−11|2]}","S = {[3|2] ; [−11|2]}","S = {[3|2] ; [11|2]}"],c:3,h:"Deux cas : 2x − 7 = 4 ou 2x − 7 = −4.",s:"2x − 7 = 4 donne x = [11|2]. 2x − 7 = −4 donne 2x = 3, donc x = [3|2]."},
+{r:1,t:"Réduis (x ≠ 1 et x ≠ 2) : [2x|x − 1] − [x + 3|x − 2]",o:["[x² − 6x − 3|(x − 1)(x − 2)]","x − 3","[x² − 2x + 3|(x − 1)(x − 2)]","[x² − 6x + 3|(x − 1)(x − 2)]"],c:3,h:"Dénominateur commun (x − 1)(x − 2). Le signe − s’applique à tout le numérateur de la 2ᵉ fraction.",s:"[2x(x − 2) − (x + 3)(x − 1)|(x − 1)(x − 2)] = [2x² − 4x − (x² + 2x − 3)|(x − 1)(x − 2)] = [x² − 6x + 3|(x − 1)(x − 2)]."},
+{r:2,t:"Résous : [x − 7|6] = [x + 7|3]",o:["x = 21","x = −7","x = −21","x = 7"],c:2,h:"Multiplie les deux membres par le dénominateur commun (6) pour supprimer les dénominateurs, puis résous l’équation obtenue.",s:"On multiplie les deux membres par 6 : 6 × [x − 7|6] = 6 × [x + 7|3], soit x − 7 = 2(x + 7). On développe : x − 7 = 2x + 14, donc x − 2x = 14 + 7, d’où x = −21."},
+{r:3,t:"Factorise : (6x − 7)² − (8x + 9)²",o:["(−2x + 2)(14x + 16)","(−2x − 16)(14x + 2)","(−2x − 16)(14x − 2)","(−2x − 16)(14x + 16)"],c:1,h:"a = 6x − 7 et b = 8x + 9. Calcule a − b (avec des parenthèses), puis a + b.",s:"a − b = 6x − 7 − 8x − 9 = −2x − 16 et a + b = 6x − 7 + 8x + 9 = 14x + 2."},
+{r:4,t:"Résous : (6x − 7)² − (8x + 9)² = 0",o:["S = {1 ; [−8|7]}","S = {−8 ; [1|7]}","S = {−8 ; [−1|7]}","S = {8 ; [−1|7]}"],c:2,h:"Reprends la factorisation de l’exercice précédent, puis la règle du produit nul.",s:"(−2x − 16)(14x + 2) = 0. −2x − 16 = 0 donne x = −8. 14x + 2 = 0 donne x = [−1|7]."},
+{r:5,t:"Donne la valeur interdite et la ou les solutions de l’équation : [3x + 1|6x − 2] = 2",o:["Valeur interdite : x = [1|3]<br>S = {[5|9]}","Valeur interdite : x = [−1|3]<br>S = {[5|9]}","Valeur interdite : x = [1|3]<br>S = {[1|3]}","Valeur interdite : x = [1|3]<br>S = {[−5|9]}"],c:0,h:"Valeur interdite : 6x − 2 = 0. Puis multiplie les deux membres par 6x − 2 pour supprimer le dénominateur.",s:"Valeur interdite : 6x − 2 = 0 donne x = [1|3]. On multiplie les deux membres par 6x − 2 : 3x + 1 = 2(6x − 2). On développe : 3x + 1 = 12x − 4, donc −9x = −5 et x = [5|9]. Cette valeur n’est pas interdite : S = {[5|9]}."}
+]];
+ROWS.push("Mission 1 · Distance de freinage","Mission 2 · Seuil de rentabilité");
+ROUTES.push({n:"Ciel",e:"☁️",c:"var(--ciel)",d:""});
+Q.push([
+{r:6,t:"Mission 1 · Factorise d(x) par x.",o:["x(0,05x + 0,8)","x(0,05x² + 0,8)","0,05x(x + 0,8)","0,8x(0,05x + 1)"],c:0,h:"Mets x en facteur : x² = x × x.",s:"0,05x² + 0,8x = x × 0,05x + x × 0,8 = x(0,05x + 0,8)."},
+{r:6,t:"Mission 1 · Donne la ou les solutions de l’équation d(x) = 0 (dans ℝ).",o:["S = {0 ; 16}","S = {0 ; −16}","S = {−16}","S = {0 ; −0,8}"],c:1,h:"Utilise la forme factorisée x(0,05x + 0,8) = 0 et la règle du produit nul.",s:"x = 0 ou 0,05x + 0,8 = 0. La 2ᵉ équation donne 0,05x = −0,8, donc x = −16. S = {0 ; −16}."},
+{r:6,t:"Mission 1 · Une des solutions est impossible. Laquelle, et que signifie l’autre ?",o:["x = −16 est impossible (une vitesse n’est pas négative). x = 0 : à l’arrêt, la distance de freinage est nulle.","x = 0 est impossible. x = −16 signifie que le véhicule roule à 16 m/s.","Les deux sont possibles : le véhicule peut rouler à −16 m/s.","x = −16 est impossible. x = 0 signifie que le véhicule freine sur 16 m."],c:0,h:"Une vitesse peut-elle être négative ? Que vaut la distance de freinage d’un véhicule à l’arrêt ?",s:"La vitesse x est positive ou nulle : −16 est rejetée. Pour x = 0 le véhicule est à l’arrêt, donc d(0) = 0 : il ne parcourt aucune distance de freinage."},
+{r:7,t:"Mission 2 · Quelle est la valeur interdite de B(x) ? Pose-t-elle problème ici ?",o:["x = −5 ; aucun problème, car x > 0","x = 5 ; elle pose problème","x = 25 ; elle pose problème","x = −5 ; elle pose problème car x > 0"],c:0,h:"Résous x + 5 = 0, puis compare avec la condition x > 0.",s:"x + 5 = 0 donne x = −5. Comme x > 0, la valeur −5 n’est jamais atteinte : elle ne pose pas de problème."},
+{r:7,t:"Mission 2 · Donne la valeur interdite et la ou les solutions de l’équation B(x) = 0.",o:["Valeur interdite : x = −5<br>S = {25}","Valeur interdite : x = −5<br>S = {−5 ; 25}","Valeur interdite : x = 5<br>S = {25}","Valeur interdite : x = −5<br>S = {−25}"],c:0,h:"Un quotient est nul si son numérateur est nul et son dénominateur non nul.",s:"4x − 100 = 0 donne x = 25, qui n’est pas la valeur interdite −5. S = {25}."},
+{r:7,t:"Mission 2 · Combien de pièces faut-il produire et vendre pour atteindre le seuil de rentabilité (B(x) = 0) ?",o:["25 pièces","100 pièces","5 pièces","Aucune : pas de solution positive"],c:0,h:"Reprends ta solution de B(x) = 0 et vérifie qu’elle respecte x > 0.",s:"Le seuil correspond à B(x) = 0, soit x = 25, et 25 > 0 convient. Il faut produire et vendre 25 pièces."}
+]);
+const ORDER=[1,2,3,4,0,5];
+for(let k=0;k<3;k++)Q[k]=ORDER.flatMap(o=>Q[k].filter(x=>x.r===o));
+Q.slice(0,3).forEach(L=>L.forEach(x=>{if(x.r===0||x.r===4)x.t=x.t.replace(/^Résous( dans ℝ)? ?: /,"Donne la ou les solutions de l’équation (dans ℝ) : ");}));
+const ENONCE={6:"Route détrempée. La distance de freinage (en m) d’un véhicule roulant à x m/s est d(x) = 0,05x² + 0,8x.",7:"Une entreprise fabrique des pièces pour l’aéronautique. Pour x pièces produites (x > 0), le bénéfice moyen par pièce (en dizaines d’euros) est B(x) = [4x − 100|x + 5]. Le seuil de rentabilité est le nombre de pièces pour lequel B(x) = 0."};
+const METH=[
+"• Si a < 0 : pas de solution.<br>• Si a = 0 : une solution, 0.<br>• Si a > 0 : deux solutions, −√a et √a.<br>• Pour (ax + b)² = c : résous ax + b = √c ou ax + b = −√c.",
+"• Valeurs interdites : celles qui annulent un dénominateur.<br>• Simplifier : factorise, puis barre le facteur commun.<br>• Additionner ou soustraire : même dénominateur, puis combine les numérateurs (le signe − porte sur toute la parenthèse).",
+"• Développe si besoin.<br>• Les x d’un côté, les nombres de l’autre.<br>• Divise par le coefficient de x.<br>• Avec des fractions : multiplie les deux membres par le dénominateur commun pour supprimer les dénominateurs, puis résous.",
+"a² − b² = (a − b)(a + b).<br>1. Repère a et b (chaque terme est un carré).<br>2. Calcule a − b et a + b, avec des parenthèses.<br>3. Réduis chaque facteur.",
+"Un produit est nul si l’un de ses facteurs est nul.<br>1. Mets l’équation sous la forme A(x) × B(x) = 0 (factorise : facteur commun ou a² − b²).<br>2. Résous A(x) = 0, puis B(x) = 0.",
+"1. Valeurs interdites : dénominateur = 0.<br>2. [A|B] = 0 équivaut à A = 0 (avec B ≠ 0).<br>3. Vérifie que la solution n’est pas interdite.<br>4. Si [A|B] = k : multiplie les deux membres par B pour supprimer le dénominateur, puis résous A = kB."];
+const $=document.getElementById("app");
+let S={r:null,i:0,t:0,bad:[],st:"q",res:{},w:null,modal:null,unlocked:false,q:null,row:0,mshow:false};
+try{S.unlocked=localStorage.getItem("ceq")==="1"}catch(e){}
+const EXTRA=`<button class="rcard" style="--rc:var(--ciel)" data-world="c"><span class="em">☁️</span><span><b>Monde du ciel</b><br>Un exercice d’application, comme dans le cours.</span></button><button class="rcard" style="--rc:var(--terre)" data-world="u"><span class="em">⛏️</span><span><b>Monde sous la terre</b><br>Je cible une méthode et je m’entraîne.</span></button>`;
+const modalHTML=()=>S.modal?`<div class="ov"><div class="md" role="dialog" aria-modal="true"><h2>🏆 ${S.modal.t}</h2><p>${S.modal.s}</p><p>Tu peux maintenant :</p><ul><li>tenter un nouveau monde (une autre route) ;</li><li>te lancer dans un exercice appliqué : le monde du ciel ;</li><li>cibler tes révisions : le monde sous la terre.</li></ul><button class="nx" data-close autofocus>Fermer</button></div></div>`:"";
+function finish(){
+ const v=Object.values(S.res),good=v.reduce((a,b)=>a+b,0),n=v.length,p=n?good/n:0,r=S.r;
+ const msg=r===3?"":p>=.8&&r<2?`Très bonne maîtrise : tente la route ${ROUTES[r+1].n} !`:p<.5&&r>0?`Reprends les méthodes sur la route ${ROUTES[r-1].n}, c’est une bonne idée.`:"Relis les solutions des questions où tu as hésité.";
+ S.modal={t:r===3?"Mission accomplie !":"Monde terminé !",s:`${good} question${good>1?"s":""} sur ${n} réussie${good>1?"s":""} du premier coup. ${msg}`};
+ S.unlocked=true;try{localStorage.setItem("ceq","1")}catch(e){}
+ S.r=null;S.st="q";}
+function pickU(prev){const pool=Q.slice(0,3).flatMap(L=>L.filter(x=>x.r===S.row)).filter(x=>x!==prev);S.q=pool[Math.floor(Math.random()*pool.length)];S.t=0;S.bad=[];S.st="q";}
+function renderU(){
+ if(S.w==="m"){
+  $.innerHTML=`<div style="--rc:var(--terre)"><div class="top"><span class="rt">⛏️ Monde sous la terre</span><button class="back" data-quit>← Retour à la carte</button></div><p class="mute">Choisis la méthode à travailler : un exercice type s’affiche, avec la méthode à portée de main.</p><div class="routes">${ORDER.map(r=>`<button class="rcard" style="--rc:var(--terre)" data-um="${r}"><span class="em">⛏️</span><span><b>${ROWS[r]}</b></span></button>`).join("")}</div></div>`;return;}
+ const q=S.q;
+ const opts=q.o.map((o,k)=>{const bad=S.bad.includes(k),ok=S.st!=="q"&&k===q.c;return `<button class="opt ${bad?"bad":""} ${ok?"ok":""}" data-opt="${k}" ${bad||S.st!=="q"?"disabled":""}>${fmt(o)}</button>`}).join("");
+ let fb="";
+ if(S.st==="q"&&S.t===1)fb=`<div class="fb hint">Pas tout à fait. Ouvre la méthode à droite, reprends ton cahier et retente.</div>`;
+ if(S.st==="ok")fb=`<div class="fb good"><b>Bien joué ✓</b></div>`;
+ if(S.st==="rev")fb=`<div class="fb sol"><b>Voici la solution détaillée :</b><br>${fmt(q.s)}</div>`;
+ const acts=S.st!=="q"?`<div class="acts"><button class="nx" data-other>Un autre exercice</button><button class="nx alt" data-quit>Quitter</button></div>`:"";
+ $.innerHTML=`<div style="--rc:var(--terre)"><div class="top"><span class="rt">⛏️ ${ROWS[S.row]}</span><button class="back" data-menu>← Autres méthodes</button></div><div class="u"><section class="card"><p class="row">Exercice type</p><h2 class="q">${fmt(q.t)}</h2><div class="opts">${opts}</div>${fb}${acts}</section><aside class="card"><button class="nx" style="margin:0" data-meth>${S.mshow?"Masquer la méthode":"Redonne-moi la méthode"}</button>${S.mshow?`<div class="fb hint">${fmt(METH[S.row])}</div>`:""}</aside></div></div>`;}
+const fmt=s=>s.replace(/\[([^\[\]|]+)\|([^\[\]|]+)\]/g,'<span class="fr"><span>$1</span><span>$2</span></span>');
+function go(r,i){S.r=r;S.i=i;S.t=0;S.bad=[];S.st="q";}
+function render(){
+ if(S.w)return renderU();
+ if(S.r===null){
+  $.innerHTML='<h1>La Carte des Équations</h1><p class="mute">Choisis ta route. Tu pourras en changer à tout moment, sans pénalité.</p><div class="routes">'+
+  ROUTES.slice(0,3).map((R,k)=>`<button class="rcard" style="--rc:${R.c}" data-route="${k}"><span class="em">${R.e}</span><span><b>Route ${R.n}</b><br>${R.d}</span></button>`).join("")+(S.unlocked&&!S.modal?EXTRA:"")+'</div>'+modalHTML();
+  return;}
+ const R=ROUTES[S.r],L=Q[S.r];
+ if(S.st==="end"){
+  const v=Object.values(S.res),good=v.reduce((a,b)=>a+b,0),n=v.length,p=n?good/n:0;
+  let msg=p>=.8&&S.r<2?`Très bonne maîtrise : tente la route ${ROUTES[S.r+1].n} !`:p<.5&&S.r>0?`Reprends les méthodes sur la route ${ROUTES[S.r-1].n}, c’est une bonne idée.`:"Bien joué, relis les solutions des questions où tu as hésité.";
+  $.innerHTML=`<div class="card end" style="--rc:${R.c}"><div class="big">🏰</div><h1>Château atteint !</h1><p>${good} question${good>1?"s":""} sur ${n} réussie${good>1?"s":""} du premier coup.</p><p>${msg}</p><button class="nx" data-restart>Choisir une autre route</button></div>`;
+  return;}
+ const q=L[S.i],last=S.i===L.length-1;
+ const sw=S.r===3?"":ROUTES.slice(0,3).map((x,k)=>k===S.r?"":`<button style="--c:${x.c}" data-switch="${k}">${x.e} ${x.n}</button>`).join("");
+ const map=L.map((x,j)=>`<li class="${S.res[x.t]!==undefined?"done":""} ${j===S.i?"cur":""}">${S.res[x.t]!==undefined?"✓":j+1}</li>`).join('<span class="bar"></span>')+'<span class="bar"></span><li class="cs">🏰</li>';
+ const opts=q.o.map((o,k)=>{const bad=S.bad.includes(k),ok=S.st!=="q"&&k===q.c;
+  return `<button class="opt ${bad?"bad":""} ${ok?"ok":""}" data-opt="${k}" ${bad||S.st!=="q"?"disabled":""}>${fmt(o)}</button>`}).join("");
+ let fb="";
+ if(S.st==="q"&&S.t===1)fb=`<div class="fb hint"><b>Un indice : la méthode.</b><br>${fmt(q.h)}<br><span class="mute">Reprends l’exercice sur ton cahier avec cette méthode, puis retente (dernier essai).</span></div>`;
+ if(S.st==="ok")fb=`<div class="fb good"><b>Bien joué ✓</b>${S.t===0?" Du premier coup !":""}</div><button class="nx" data-next>${last?"Voir mon résultat":"Question suivante"}</button>`;
+ if(S.st==="rev")fb=`<div class="fb sol"><b>Pas de panique, voici la solution détaillée :</b><br>${fmt(q.s)}</div><button class="nx" data-next>${last?"Voir mon résultat":"Question suivante"}</button>`;
+ $.innerHTML=`<div style="--rc:${R.c}"><div class="top"><span class="rt">${R.e} Route ${R.n}</span><span class="sw">${sw?"Passerelle : "+sw:""}</span></div><ol class="map">${map}</ol>
+ ${S.r===3?`<div class="card" style="margin-bottom:12px"><p class="row">Énoncé</p>${fmt(ENONCE[q.r])}</div>`:""}<section class="card"><p class="row">${ROWS[q.r]} · essai ${Math.min(S.t+1,2)}/2</p><h2 class="q">${fmt(q.t)}</h2><div class="opts">${opts}</div>${fb}</section>
+ <div class="tr"><button data-restart>Recommencer depuis le début</button></div></div>`;
+}
+$.addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.route!==undefined){S.res={};go(+b.dataset.route,0);}
+ else if(b.dataset.world==="c"){S.res={};go(3,0);}
+ else if(b.dataset.world==="u"||b.dataset.menu!==undefined){S.w="m";}
+ else if(b.dataset.close!==undefined){S.modal=null;}
+ else if(b.dataset.um!==undefined){S.w="p";S.row=+b.dataset.um;S.mshow=false;pickU(null);}
+ else if(b.dataset.other!==undefined){pickU(S.q);}
+ else if(b.dataset.quit!==undefined){S.w=null;}
+ else if(b.dataset.meth!==undefined){S.mshow=!S.mshow;}
+ else if(b.dataset.restart!==undefined){S.r=null;S.w=null;}
+ else if(b.dataset.switch!==undefined){const row=Q[S.r][S.i].r,nr=+b.dataset.switch;go(nr,Q[nr].findIndex(x=>x.r===row));}
+ else if(b.dataset.next!==undefined){if(S.i+1>=Q[S.r].length)finish();else go(S.r,S.i+1);}
+ else if(b.dataset.opt!==undefined&&S.st==="q"){
+  const q=S.w==="p"?S.q:Q[S.r][S.i],k=+b.dataset.opt;
+  if(k===q.c){S.res[q.t]=S.t===0?1:0;S.st="ok";}
+  else{S.bad.push(k);S.t++;if(S.t>=2){S.res[q.t]=0;S.st="rev";}}
+ }
+ render();window.scrollTo({top:0});
+});
+render();
+</script></body></html>
+
+</body></html>

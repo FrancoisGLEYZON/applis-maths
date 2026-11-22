@@ -7,58 +7,196 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 40px auto;
             padding: 0 20px;
             color: #333;
-            line-height: 1.6;
+            line-height: 1.5;
             background-color: #f4f7f6;
         }
-        h1 { color: #2c3e50; }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .intro {
+            margin-top: 0;
+            margin-bottom: 28px;
+            color: #555;
+        }
+        .columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .columns {
+                grid-template-columns: 1fr;
+            }
+        }
+        .level-box {
+            background: #eef2f5;
+            border: 1px solid #d5dce2;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .level-box h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 1.25em;
+            color: #1f2d3d;
+            border-bottom: 2px solid #cbd5e0;
+            padding-bottom: 8px;
+        }
         .app-list {
             list-style: none;
             padding: 0;
+            margin: 0;
         }
         .app-list li {
-            margin: 15px 0;
+            margin: 12px 0;
+        }
+        .app-list li:last-child {
+            margin-bottom: 0;
         }
         .app-list a {
-            display: block;
-            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
             background: #ffffff;
             border: 1px solid #dcdde1;
             border-radius: 8px;
             text-decoration: none;
             color: #007bff;
-            font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: background 0.2s, transform 0.1s;
+            transition: background 0.2s, transform 0.1s, border-color 0.2s;
         }
         .app-list a:hover {
-            background: #f1f2f6;
+            background: #f8f9fa;
+            border-color: #b8c2cc;
             color: #0056b3;
             transform: translateY(-2px);
+        }
+        .emoji {
+            font-size: 1.5em;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .app-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .app-title {
+            font-weight: bold;
+            font-size: 1em;
+        }
+        .app-chapter {
+            font-style: italic;
+            font-size: 0.85em;
+            color: #666;
+            font-weight: normal;
+            margin-top: 3px;
         }
     </style>
 </head>
 <body>
 
     <h1>Portail des applications de maths</h1>
-    <p>Sélectionne une activité ci-dessous pour t'entraîner :</p>
+    <p class="intro">Sélectionne ton niveau puis une activité ci-dessous pour t'entraîner :</p>
 
-    <ul class="app-list">
-        <li><a href="Brick’Fonctions · Chapitre 13.html">👉 Brick’Fonctions · Chapitre 13</a></li>
-        <li><a href="Duel de vecteurs – roue, cartes et chrono.html">👉 Duel de vecteurs – roue, cartes et chrono</a></li>
-        <li><a href="La Carte des Équations.html">👉 La Carte des Équations</a></li>
-        <li><a href="Loi de Bernoulli en Python.html">👉 Loi de Bernoulli en Python</a></li>
-        <li><a href="Odyssée Maths 1re ST2S.html">👉 Odyssée Maths 1re ST2S</a></li>
-        <li><a href="arithmia/index.html">👉 Arithmia — Chapitre 9</a></li>
-    </ul>
+    <div class="columns">
+        <!-- Bloc gauche : 2nde générale (trié par chapitre : Ch. 2, Ch. 6, Ch. 7, Ch. 9, Ch. 13) -->
+        <section class="level-box">
+            <h2>2nde générale</h2>
+            <ul class="app-list">
+                <li>
+                    <a href="Loi de Bernoulli en Python.html">
+                        <span class="emoji">🐍</span>
+                        <span class="app-info">
+                            <span class="app-title">Loi de Bernoulli en Python</span>
+                            <span class="app-chapter">Chapitre 2. Variables aléatoires</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="La Carte des Équations.html">
+                        <span class="emoji">🗺️</span>
+                        <span class="app-info">
+                            <span class="app-title">La Carte des Équations</span>
+                            <span class="app-chapter">Chapitre 6. Equations</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="Duel de vecteurs – roue, cartes et chrono.html">
+                        <span class="emoji">🏹</span>
+                        <span class="app-info">
+                            <span class="app-title">Duel de vecteurs</span>
+                            <span class="app-chapter">Chapitre 7.Vecteurs dans une base orthonormée</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="spider.html">
+                        <span class="emoji">🕸️</span>
+                        <span class="app-info">
+                            <span class="app-title">Spider-vecteur</span>
+                            <span class="app-chapter">Chapitre 7.Vecteurs dans une base orthonormée</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="arithmia/index.html">
+                        <span class="emoji">🔢</span>
+                        <span class="app-info">
+                            <span class="app-title">Arithmia</span>
+                            <span class="app-chapter">Chapitre 9.Arithmétique et ensembles de nombres</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="Brick’Fonctions · Chapitre 13.html">
+                        <span class="emoji">🧱</span>
+                        <span class="app-info">
+                            <span class="app-title">Brick'Fonctions</span>
+                            <span class="app-chapter">Chapitre 13.Généralités sur les fonctions</span>
+                        </span>
+                    </a>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Bloc droit : 1re technologique (trié par chapitre : Ch. 2, puis Année entière) -->
+        <section class="level-box">
+            <h2>1re technologique</h2>
+            <ul class="app-list">
+                <li>
+                    <a href="Loi de Bernoulli en Python.html">
+                        <span class="emoji">🎲</span>
+                        <span class="app-info">
+                            <span class="app-title">Loi de Bernoulli en Python</span>
+                            <span class="app-chapter">Chapitre 2. Variables aléatoires</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="Odyssée Maths 1re ST2S.html">
+                        <span class="emoji">🧭</span>
+                        <span class="app-info">
+                            <span class="app-title">Odyssée Maths 1re ST2S</span>
+                            <span class="app-chapter">Année entière</span>
+                        </span>
+                    </a>
+                </li>
+            </ul>
+        </section>
+    </div>
+
     <!-- Pied de page / Copyright -->
     <footer style="margin-top: 50px; text-align: center; font-size: 0.85em; color: #666; border-top: 1px solid #eaeaea; padding-top: 20px;">
         <p>© 2026 François Gleyzon — Tous droits réservés. Usage pédagogique autorisé.</p>
     </footer>
-
 
     <!-- Petit compteur de visites discret en bas à droite -->
     <div style="position: fixed; bottom: 10px; right: 15px; background: rgba(255, 255, 255, 0.85); padding: 5px 10px; border-radius: 6px; font-size: 0.75em; color: #666; border: 1px solid #e1e4e8; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 9999;">
@@ -78,6 +216,6 @@
                 document.currentScript.previousElementSibling.style.display = 'none';
             });
     </script>
-    
+
 </body>
 </html>

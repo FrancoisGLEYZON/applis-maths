@@ -106,19 +106,10 @@
     <p class="intro">Sélectionne ton niveau puis une activité ci-dessous pour t'entraîner :</p>
 
     <div class="columns">
-        <!-- Bloc gauche : 2nde générale (trié par chapitre : Ch. 2, Ch. 6, Ch. 7, Ch. 9, Ch. 13) -->
+        <!-- Bloc gauche : 2nde générale (trié par chapitre : Ch. 6, Ch. 7, Ch. 9, Ch. 13) -->
         <section class="level-box">
             <h2>2nde générale</h2>
             <ul class="app-list">
-                <li>
-                    <a href="Loi de Bernoulli en Python.html">
-                        <span class="emoji">🐍</span>
-                        <span class="app-info">
-                            <span class="app-title">Loi de Bernoulli en Python</span>
-                            <span class="app-chapter">Chapitre 2. Variables aléatoires</span>
-                        </span>
-                    </a>
-                </li>
                 <li>
                     <a href="La Carte des Équations.html">
                         <span class="emoji">🗺️</span>
@@ -198,23 +189,23 @@
         <p>© 2026 François Gleyzon — Tous droits réservés. Usage pédagogique autorisé.</p>
     </footer>
 
-    <!-- Petit compteur de visites discret en bas à droite -->
-    <div style="position: fixed; bottom: 10px; right: 15px; background: rgba(255, 255, 255, 0.85); padding: 5px 10px; border-radius: 6px; font-size: 0.75em; color: #666; border: 1px solid #e1e4e8; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 9999;">
-        Visites : <span id="visitor-count">...</span>
+    <!-- Compteur local sans cookie (évite l'API countapi.xyz souvent indisponible ou bloquée) -->
+    <div id="visitor-box" style="position: fixed; bottom: 10px; right: 15px; background: rgba(255, 255, 255, 0.85); padding: 5px 10px; border-radius: 6px; font-size: 0.75em; color: #666; border: 1px solid #e1e4e8; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 9999;">
+        Ouvertures (ce poste) : <span id="visitor-count">1</span>
     </div>
 
-    <!-- Script anonyme pour récupérer et afficher le nombre de visites -->
     <script>
-        // Utilisation d'un compteur API open-source anonyme (sans cookies)
-        fetch('https://api.countapi.xyz/hit/francoisgleyzon-applis-maths/visits')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('visitor-count').textContent = data.value;
-            })
-            .catch(error => {
-                // En cas de blocage par un bloqueur de pub, on cache le bloc proprement
-                document.currentScript.previousElementSibling.style.display = 'none';
-            });
+        (function () {
+            try {
+                const key = 'portail_maths_visites_gleyzon';
+                const current = parseInt(localStorage.getItem(key) || '0', 10) + 1;
+                localStorage.setItem(key, String(current));
+                document.getElementById('visitor-count').textContent = current;
+            } catch (e) {
+                const box = document.getElementById('visitor-box');
+                if (box) box.style.display = 'none';
+            }
+        })();
     </script>
 
 </body>

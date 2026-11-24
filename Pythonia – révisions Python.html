@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pythonia – révisions Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+2:wght@600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>
+window.MathJax = { tex: { inlineMath: [['$', '$']] }, svg: { fontCache: 'global' }, options: { skipHtmlTags: ['pre', 'code', 'textarea', 'script', 'style'] }, startup: { typeset: false } };
+</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+<style>
+/* VOICE  : aventure nocturne, chaleureuse, jamais punitive — un jeu d'archipel pour réviser.
+   IDEA   : une carte d'archipel à rallumer ; chaque bonne réponse rallume des lucioles.
+   PICTURE: îles dessinées en SVG sur une mer de nuit, lucioles, gardiens-boss.
+   COLOUR : mer de nuit #0c2a33 dominante, sable #f6ecd2, luciole #d8ff5e ; une couleur par île.
+   TYPE   : Baloo 2 (titres), Atkinson Hyperlegible (lisible, pensé pour les élèves dys), JetBrains Mono (code). */
+:root{--sea:#0c2a33;--sea2:#123844;--sea3:#1b4a57;--ink:#f6f1e3;--mute:#a9c3c6;--sand:#f6ecd2;--glow:#d8ff5e;--bad:#ff6b6b;--ok:#5ee6a0;--warn:#ffb84d;--card:#fbf7ec;--cink:#1d2a2e;--isl:#ff8a5b;--isld:#b84a2a;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{font-size:17px}html.big{font-size:20px}
+body{margin:0;background:var(--sea);color:var(--ink);font:1rem/1.5 'Atkinson Hyperlegible',system-ui,sans-serif;overflow-x:clip;min-height:100vh;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:'Baloo 2',system-ui,sans-serif;line-height:1.05;margin:0;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--glow);outline-offset:2px}
+code,pre,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.screen{display:none;min-height:100vh}.screen.on{display:block}
+.wrap{max-width:1000px;margin:0 auto;padding:16px max(3vw,14px) 40px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border-radius:14px;font-weight:700;background:var(--glow);color:#1b2a10;box-shadow:0 4px 0 #8fae2a;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8fae2a}
+.btn.ghost{background:var(--sea3);color:var(--ink);box-shadow:0 4px 0 #0a2027}
+.btn.isl{background:var(--isl);color:#1d1208;box-shadow:0 4px 0 var(--isld)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.icon{width:22px;height:22px;flex:none}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px max(3vw,14px);background:#0a232b;position:sticky;top:0;z-index:5}
+.top .grow{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--sea2);font-weight:700;font-size:.9rem;white-space:nowrap}
+.chip.xp{color:var(--glow)}
+.ib{width:44px;height:44px;border-radius:12px;background:var(--sea2);display:inline-grid;place-items:center;font-weight:800}
+/* Accueil */
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:center;min-height:100vh;padding:24px max(4vw,16px)}
+.hero h1{font-size:clamp(44px,8vw,84px);color:var(--sand)}
+.hero h1 span{color:var(--glow)}
+.hero p{font-size:1.1rem;color:var(--mute);max-width:36em}
+.namebox{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.namebox input{flex:1 1 220px;min-height:52px;border-radius:14px;border:2px solid var(--sea3);background:var(--sea2);color:var(--ink);font:inherit;font-size:1.1rem;padding:0 16px}
+.heroart svg{width:100%;height:auto;max-height:70vh}
+@media(max-width:720px){.hero{grid-template-columns:1fr;min-height:0}.heroart{order:-1}.heroart svg{max-height:38vh}}
+/* Carte */
+.mapgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:14px}
+.islcard{position:relative;text-align:left;border-radius:24px;padding:14px 16px 16px;background:radial-gradient(120% 90% at 50% 20%,var(--sea3),var(--sea2));border:2px solid #24545f;display:flex;flex-direction:column;gap:6px}
+.islcard svg.art{width:100%;height:150px}
+.islcard h2{font-size:1.6rem;color:var(--c)}
+.islcard .sub{color:var(--mute);font-size:.92rem}
+.bar{height:14px;border-radius:999px;background:#0a2027;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--c,var(--glow));border-radius:999px;transition:width .6s}
+.barlab{display:flex;justify-content:space-between;font-size:.85rem;color:var(--mute)}
+.finalcard{grid-column:1/-1;--c:#b9a8ff}
+.locked{opacity:.55}
+.lockmsg{font-size:.9rem;color:var(--warn);font-weight:700}
+@media(max-width:600px){.mapgrid{grid-template-columns:1fr}}
+.intro{display:flex;gap:14px;align-items:center;background:var(--sea2);border-radius:18px;padding:12px 16px}
+.intro svg{width:64px;height:64px;flex:none}
+/* Île */
+.islhead{border-radius:26px;padding:18px;background:linear-gradient(180deg,var(--isl),var(--isld));color:#1d1208;display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:12px;align-items:center}
+.islhead h1{font-size:clamp(32px,5vw,48px)}
+.islhead .bar{background:rgba(0,0,0,.25)}.islhead .bar>i{background:#fff8e0}
+.islhead svg{width:100%;height:140px}
+@media(max-width:560px){.islhead{grid-template-columns:1fr}.islhead svg{height:110px}}
+.blocks{display:grid;gap:12px;margin-top:16px}
+.blk{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:14px;align-items:center;text-align:left;background:var(--sea2);border-radius:18px;padding:12px 14px;border:2px solid transparent}
+.blk:hover{border-color:var(--isl)}
+.blk .num{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font:800 1.4rem 'Baloo 2';background:var(--isl);color:#1d1208}
+.blk h3{font-size:1.25rem}
+.blk .meta{font-size:.85rem;color:var(--mute)}
+.gauge{margin-top:6px}
+.gauge .bar{height:10px}
+.gl{font-size:.8rem;font-weight:700}
+.tag{font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:999px;background:#0a2027;color:var(--mute)}
+.bossblk{background:linear-gradient(90deg,#2a1830,var(--sea2));border-color:#5a2f52}
+.bossblk .num{background:#2a1830;padding:2px}.bossblk .num svg{width:48px;height:48px}
+/* Jeu */
+.gtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gtop .ttl{flex:1;font:800 1.15rem 'Baloo 2';color:var(--isl)}
+.lives{display:flex;gap:4px}
+.lives svg{width:30px;height:30px}
+.lives .lost{opacity:.18;filter:grayscale(1)}
+.dots{display:flex;gap:6px;margin:12px 0}
+.dots i{flex:1;height:8px;border-radius:9px;background:var(--sea3)}
+.dots i.done{background:var(--isl)}.dots i.half{background:var(--warn)}.dots i.miss{background:var(--bad)}.dots i.cur{background:var(--ink)}
+.qcard{background:var(--card);color:var(--cink);border-radius:22px;padding:18px clamp(14px,3vw,26px) 22px;box-shadow:0 10px 0 rgba(0,0,0,.18)}
+.qprompt{font-size:1.15rem;margin:0 0 12px;display:flex;gap:10px;align-items:flex-start}
+.qprompt .t{flex:1}
+.qprompt code,.mth code,.fb code{background:#ece3cb;padding:1px 6px;border-radius:6px;font-size:.92em;color:#3a2a10}
+pre.py{background:#18262b;color:#e9f1ea;border-radius:14px;padding:12px 16px;font-size:1rem;line-height:1.55;overflow-x:auto;margin:10px 0;white-space:pre}
+.k{color:#ff9a6b;font-weight:700}.s{color:#c9f27a}.n{color:#7fd8ff}.c{color:#7f9a9a;font-style:italic}.b{color:#f7d06b}
+.choices{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.choice{min-height:56px;padding:10px 14px;border-radius:14px;background:#efe6cd;color:var(--cink);text-align:left;border:3px solid transparent;font-size:1.05rem}
+.choice.code{font-family:'JetBrains Mono',monospace;white-space:pre;font-size:.95rem;overflow-x:auto}
+.choice.sel{border-color:#2b7a8a;background:#dff1ef}
+.choice.right{border-color:#1f9d63;background:#d6f5e4}.choice.wrong{border-color:var(--bad);background:#ffe1dc}
+.ans{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ans input{min-height:56px;border-radius:14px;border:3px solid #d9cfb2;background:#fff;font:inherit;font-size:1.3rem;padding:0 14px;color:var(--cink);flex:1 1 200px;max-width:420px}
+.ans input.wrong{border-color:var(--bad)}.ans input.right{border-color:#1f9d63}
+.small{font-size:.88rem;color:#5f6b66}
+table.trace{border-collapse:separate;border-spacing:0;width:100%;max-width:560px;font-size:1.05rem}
+table.trace th{background:#18262b;color:#fff;padding:8px;font-family:'JetBrains Mono',monospace;font-weight:700}
+table.trace th:first-child{border-radius:12px 0 0 0}table.trace th:last-child{border-radius:0 12px 0 0}
+table.trace td{padding:5px 8px;border-bottom:1px solid #e3d9bd;text-align:center;font-family:'JetBrains Mono',monospace}
+table.trace td input{width:100%;max-width:130px;min-height:46px;text-align:center;border-radius:10px;border:3px solid #d9cfb2;font:inherit;font-size:1.1rem}
+table.trace input:disabled,.ans input:disabled{opacity:1;color:var(--cink);-webkit-text-fill-color:var(--cink);background:#eef9f2}
+table.trace input.wrong{border-color:var(--bad);background:#ffe9e5}table.trace input.right{border-color:#1f9d63}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px}
+.pick button{min-height:54px;border-radius:12px;background:#efe6cd;font:700 1.15rem 'JetBrains Mono',monospace;color:var(--cink);border:3px solid transparent}
+.pick button.sel{background:#2b7a8a;color:#fff}
+.pick button.miss{border-color:#1f9d63;border-style:dashed}.pick button.extra{border-color:var(--bad)}
+.fillcode .hole{display:inline-block;min-width:3.2em;min-height:1.6em;padding:0 8px;border-radius:8px;border:2px dashed #7fd8ff;background:#22363d;color:#fff;font:inherit;vertical-align:baseline;line-height:1.5}
+.fillcode .hole.act{border-style:solid;border-color:var(--glow);box-shadow:0 0 0 3px rgba(216,255,94,.3)}
+.fillcode .hole.wrong{border-color:var(--bad);border-style:solid}.fillcode .hole.right{border-color:var(--ok);border-style:solid}
+.tray{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.tile{min-height:48px;padding:6px 14px;border-radius:12px;background:#18262b;color:#f2f2e8;font:700 1rem 'JetBrains Mono',monospace;box-shadow:0 3px 0 #0a1418}
+.tile.used{opacity:.35}
+.ordz{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+.ordz .zone{border-radius:14px;padding:8px;min-height:70px;background:#efe6cd;display:flex;flex-direction:column;gap:6px}
+.ordz .zone.prog{background:#18262b}
+.ordz .lab{font-size:.85rem;font-weight:700;color:#5f6b66}
+.line{text-align:left;min-height:44px;padding:6px 12px;border-radius:10px;background:#fff;color:var(--cink);font:1rem 'JetBrains Mono',monospace;white-space:pre;overflow-x:auto;box-shadow:0 2px 0 #d9cfb2}
+.prog .line{background:#22363d;color:#e9f1ea;box-shadow:none}
+.prog .ph{color:#7f9a9a;font-size:.9rem;padding:8px}
+.editor{display:grid;gap:8px}
+.editor textarea{width:100%;min-height:190px;resize:vertical;border-radius:14px;background:#18262b;color:#e9f1ea;border:3px solid #2c444b;padding:12px 14px;font:1.02rem/1.55 'JetBrains Mono',monospace;tab-size:4;caret-color:var(--glow)}
+.keybar{display:flex;flex-wrap:wrap;gap:6px}
+.keybar button{min-height:44px;min-width:44px;padding:4px 10px;border-radius:10px;background:#e6dcc0;color:var(--cink);font:700 .95rem 'JetBrains Mono',monospace}
+.keybar button.w{background:#2b7a8a;color:#fff}
+.console{background:#0f1a1d;color:#dfe;border-radius:12px;padding:10px 14px;font:.95rem/1.45 'JetBrains Mono',monospace;white-space:pre-wrap;max-height:220px;overflow:auto}
+.console .e{color:#ff9d8f}.console .h{color:#9fb3b3}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px}
+.fb{margin-top:14px;border-radius:16px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.fb svg{width:54px;height:54px;flex:none}
+.fb.ok{background:#d6f5e4}.fb.hint{background:#fff1cf}.fb.ko{background:#ffe1dc}
+.fb h3{font-size:1.25rem;margin-bottom:4px}
+.hintbtn{background:#2b7a8a;color:#fff;box-shadow:0 4px 0 #1a4e58}
+.say{width:40px;height:40px;border-radius:10px;background:#e6dcc0;display:grid;place-items:center;flex:none}
+/* Boss */
+.bossarena{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:center;background:linear-gradient(180deg,#2a1830,#123844);border-radius:20px;padding:10px 14px;margin:10px 0}
+.bossarena svg{width:150px;height:130px}
+.bossarena .hp{height:16px}.bossarena .hp>i{background:linear-gradient(90deg,#ff6b6b,#ffb84d)}
+.bossarena .say2{font-style:italic;color:var(--sand)}
+.hit{animation:hit .5s}
+@keyframes hit{0%,100%{transform:none}25%{transform:translateX(-10px) rotate(-4deg)}60%{transform:translateX(8px) rotate(3deg);filter:brightness(2)}}
+@media(max-width:560px){.bossarena{grid-template-columns:90px minmax(0,1fr)}.bossarena svg{width:90px;height:80px}}
+/* Modales */
+.modal{position:fixed;inset:0;background:rgba(4,16,20,.72);display:none;place-items:center;z-index:20;padding:14px}
+.modal.on{display:grid}
+.mbox{background:var(--card);color:var(--cink);border-radius:24px;max-width:720px;width:100%;max-height:92vh;overflow:auto;padding:20px clamp(16px,3vw,28px)}
+.mbox h2{font-size:1.8rem;color:var(--isld)}
+.mth{font-size:1.05rem}.mth ol,.mth ul{padding-left:1.3em}.mth li{margin:4px 0}
+table.mt{border-collapse:collapse;margin:8px 0}table.mt td{padding:6px 10px;border-bottom:1px solid #e3d9bd}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--isl);color:#1d1208;font-weight:700;font-size:.85rem}
+.res{text-align:center}
+.res svg{width:140px;height:140px}
+.res h1{font-size:clamp(34px,6vw,52px);color:var(--sand);margin:6px 0}
+.bigpct{font:800 3rem 'Baloo 2';color:var(--glow)}
+.carnet .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid #24545f}
+.carnet h2{margin:20px 0 6px;color:var(--c)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--mute)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:4px;vertical-align:-1px}
+.flies circle{animation:fly 4s ease-in-out infinite alternate}
+@keyframes fly{to{transform:translate(6px,-8px);opacity:.5}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<!-- ACCUEIL -->
+<section class="screen on" id="s-home">
+  <div class="hero">
+    <div>
+      <h1>Pytho<span>nia</span></h1>
+      <h2 style="font-size:1.6rem;color:var(--glow);margin:6px 0 14px">L'archipel des lucioles</h2>
+      <p>La Brume a éteint les lucioles de l'archipel. Pour les rallumer, il faut parler leur langue : <b style="color:var(--ink)">Python</b>. Explore les quatre îles, réussis les épreuves, affronte leurs gardiens… puis la Reine de la Brume.</p>
+      <div class="namebox"><input id="pname" maxlength="24" placeholder="Ton prénom d'explorateur·rice" autocomplete="off"><button class="btn" id="go">Partir à l'aventure</button></div>
+      <p class="small" style="color:var(--mute);margin-top:14px">Ta progression est gardée sur cette tablette.</p>
+    </div>
+    <div class="heroart" id="heroart"></div>
+  </div>
+</section>
+<!-- CARTE -->
+<section class="screen" id="s-map">
+  <div class="top"><b style="font:800 1.3rem 'Baloo 2';color:var(--sand)">Pytho<span style="color:var(--glow)">nia</span></b><span class="grow"></span><span class="chip" id="m-rank"></span><span class="chip xp" id="m-xp"></span><button class="btn ghost" id="b-carnet" style="min-height:44px;padding:6px 14px">Mon carnet</button><button class="ib" id="b-big" aria-label="Agrandir le texte">A+</button></div>
+  <div class="wrap">
+    <div class="intro" id="m-intro"></div>
+    <div class="mapgrid" id="mapgrid"></div>
+  </div>
+</section>
+<!-- ÎLE -->
+<section class="screen" id="s-island">
+  <div class="top"><button class="btn ghost" id="b-back-map" style="min-height:44px;padding:6px 14px">← Carte</button><span class="grow"></span><span class="chip xp" id="i-xp"></span></div>
+  <div class="wrap" id="islwrap"></div>
+</section>
+<!-- JEU -->
+<section class="screen" id="s-game">
+  <div class="wrap" style="max-width:900px">
+    <div class="gtop"><button class="ib" id="b-quit" aria-label="Quitter le niveau">✕</button><span class="ttl" id="g-title"></span><button class="btn hintbtn" id="b-help" style="min-height:44px;padding:6px 16px">Aide</button><div class="lives" id="g-lives"></div></div>
+    <div id="g-boss"></div>
+    <div class="dots" id="g-dots"></div>
+    <div class="qcard" id="g-card"></div>
+  </div>
+</section>
+<!-- RÉSULTAT -->
+<section class="screen" id="s-res"><div class="wrap res" id="reswrap" style="max-width:640px;padding-top:40px"></div></section>
+<!-- CARNET -->
+<section class="screen" id="s-carnet">
+  <div class="top"><button class="btn ghost" id="b-back-map2" style="min-height:44px;padding:6px 14px">← Carte</button><span class="grow"></span><span class="chip xp" id="c-xp"></span></div>
+  <div class="wrap carnet" id="carwrap"></div>
+</section>
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<script>
+// ===== Mini-interpréteur Python (sous-ensemble du programme de 2nde) =====
+const PY = (() => {
+  class PyErr extends Error { constructor(msg, line) { super(msg); this.line = line; } }
+  class F { constructor(v) { this.v = v; } }            // flottant
+  const isF = x => x instanceof F;
+  const num = x => isF(x) ? x.v : (x === true ? 1 : x === false ? 0 : x);
+  const isNum = x => typeof x === 'number' || isF(x) || typeof x === 'boolean';
+  const KW = new Set(['def','return','if','elif','else','for','in','while','and','or','not','True','False','None','pass','break','continue','range']);
+
+  // ---------- Lexer ----------
+  function lex(src) {
+    const lines = src.replace(/\t/g, '    ').replace(/\r/g, '').split('\n');
+    const toks = []; const indents = [0]; let depth = 0;
+    lines.forEach((raw, i) => {
+      const ln = i + 1;
+      let line = raw;
+      if (depth === 0) {
+        if (/^\s*(#.*)?$/.test(line)) return;
+        const ind = line.match(/^ */)[0].length;
+        if (ind > indents[indents.length - 1]) { indents.push(ind); toks.push({ t: 'INDENT', ln }); }
+        else {
+          while (ind < indents[indents.length - 1]) { indents.pop(); toks.push({ t: 'DEDENT', ln }); }
+          if (ind !== indents[indents.length - 1]) throw new PyErr("Problème d'indentation (décalage) : les lignes d'un même bloc doivent être alignées.", ln);
+        }
+      }
+      let p = 0;
+      while (p < line.length) {
+        const c = line[p];
+        if (c === ' ') { p++; continue; }
+        if (c === '#') break;
+        let m;
+        if ((m = line.slice(p).match(/^(\d+\.\d*|\.\d+|\d+)([eE][-+]?\d+)?/))) {
+          const s = m[0];
+          if (/[A-Za-z_(]/.test(line[p + s.length] || '')) throw new PyErr('Il manque le signe * : en Python on écrit ' + s + '*' + (line[p + s.length] === '(' ? '(...)' : line[p + s.length]) + ' (la multiplication doit être écrite).', ln);
+          toks.push({ t: 'NUM', v: /[.eE]/.test(s) ? new F(parseFloat(s)) : parseInt(s, 10), ln }); p += s.length; continue;
+        }
+        if ((m = line.slice(p).match(/^[A-Za-z_À-ÿ][A-Za-z_0-9À-ÿ]*/))) {
+          const s = m[0]; toks.push({ t: KW.has(s) && s !== 'range' ? s : 'NAME', v: s, ln }); p += s.length; continue;
+        }
+        if (c === '"' || c === "'") {
+          let j = p + 1, s = '';
+          while (j < line.length && line[j] !== c) { if (line[j] === '\\' && j + 1 < line.length) { j++; s += line[j] === 'n' ? '\n' : line[j]; } else s += line[j]; j++; }
+          if (j >= line.length) throw new PyErr('Guillemet non fermé : il manque un ' + c + ' à la fin du texte.', ln);
+          toks.push({ t: 'STR', v: s, ln }); p = j + 1; continue;
+        }
+        if ((m = line.slice(p).match(/^(\*\*|\/\/|==|!=|<=|>=|\+=|-=|\*=|\/=|[-+*\/%<>=(),:\[\]])/))) {
+          const s = m[0];
+          if (s === '(' || s === '[') depth++; if (s === ')' || s === ']') depth = Math.max(0, depth - 1);
+          toks.push({ t: s, ln }); p += s.length; continue;
+        }
+        if (c === '^') throw new PyErr("Le symbole ^ n'est pas la puissance en Python : utilise ** (ex : x**2).", ln);
+        if (c === '²') throw new PyErr('Le symbole ² n\'existe pas en Python : écris x**2.', ln);
+        if (c === '×') throw new PyErr('Le symbole × n\'existe pas en Python : utilise *.', ln);
+        throw new PyErr('Caractère inconnu « ' + c + ' ».', ln);
+      }
+      if (depth === 0) toks.push({ t: 'NL', ln });
+    });
+    while (indents.length > 1) { indents.pop(); toks.push({ t: 'DEDENT', ln: lines.length }); }
+    toks.push({ t: 'EOF', ln: lines.length });
+    return toks;
+  }
+
+  // ---------- Parser ----------
+  function parse(src) {
+    const T = lex(src); let i = 0;
+    const pk = () => T[i], nx = () => T[i++];
+    const at = t => T[i].t === t;
+    const eat = (t, msg) => { if (!at(t)) throw new PyErr(msg || ('« ' + t + ' » attendu.'), T[i].ln); return nx(); };
+    const colon = () => eat(':', "Il manque les deux-points « : » à la fin de la ligne.", T[i].ln);
+    function block() {
+      colon(); eat('NL', 'Après « : », il faut aller à la ligne.');
+      if (!at('INDENT')) throw new PyErr('Le bloc doit être indenté (décalé vers la droite) après « : ».', T[i].ln);
+      nx(); const body = [];
+      while (!at('DEDENT') && !at('EOF')) body.push(stmt());
+      if (at('DEDENT')) nx();
+      return body;
+    }
+    function stmt() {
+      const tk = pk(), ln = tk.ln;
+      if (tk.t === 'INDENT') throw new PyErr('Indentation inattendue : cette ligne ne devrait pas être décalée.', ln);
+      if (tk.t === 'def') { nx(); const name = eat('NAME', 'Nom de fonction attendu après def.').v; eat('(', 'Il faut des parenthèses après le nom de la fonction.'); const ps = []; while (!at(')')) { ps.push(eat('NAME', 'Nom de paramètre attendu.').v); if (at(',')) nx(); else break; } eat(')', 'Parenthèse fermante manquante.'); return { k: 'def', name, ps, body: block(), ln }; }
+      if (tk.t === 'if') { nx(); const c = expr(); const body = block(); let orelse = null;
+        if (at('elif')) { orelse = [stmt_elif()]; } else if (at('else')) { nx(); orelse = block(); }
+        return { k: 'if', c, body, orelse, ln }; }
+      if (tk.t === 'elif' || tk.t === 'else') throw new PyErr('« ' + tk.t + ' » sans « if » juste au-dessus (vérifie l\'alignement).', ln);
+      if (tk.t === 'for') { nx(); const v = eat('NAME', 'Nom du compteur attendu après for.').v; eat('in', 'Il manque « in » : for i in range(...)'); const it = expr(); return { k: 'for', v, it, body: block(), ln }; }
+      if (tk.t === 'while') { nx(); const c = expr(); return { k: 'while', c, body: block(), ln }; }
+      let s;
+      if (tk.t === 'return') { nx(); s = { k: 'ret', e: at('NL') ? null : expr(), ln }; }
+      else if (tk.t === 'pass') { nx(); s = { k: 'pass', ln }; }
+      else if (tk.t === 'break') { nx(); s = { k: 'break', ln }; }
+      else if (tk.t === 'continue') { nx(); s = { k: 'cont', ln }; }
+      else if (tk.t === 'NAME' && ['=', '+=', '-=', '*=', '/='].includes(T[i + 1].t)) {
+        const name = nx().v, op = nx().t; s = { k: 'set', name, op, e: expr(), ln };
+      } else { const e = expr(); if (at('=')) throw new PyErr("On ne peut pas affecter une valeur à cette expression (à gauche du = il faut un nom de variable). Pour comparer, utilise ==.", ln); s = { k: 'expr', e, ln }; }
+      if (at(':')) throw new PyErr('Les deux-points « : » ne vont qu\'après if, else, for, while ou def.', ln);
+      if (!at('NL') && !at('EOF')) throw new PyErr('Syntaxe incorrecte sur cette ligne (quelque chose en trop ?).', ln);
+      if (at('NL')) nx();
+      return s;
+    }
+    function stmt_elif() { const ln = nx().ln; const c = expr(); const body = block(); let orelse = null;
+      if (at('elif')) orelse = [stmt_elif()]; else if (at('else')) { nx(); orelse = block(); }
+      return { k: 'if', c, body, orelse, ln }; }
+    function expr() { let l = andE(); while (at('or')) { nx(); l = { k: 'or', l, r: andE() }; } return l; }
+    function andE() { let l = notE(); while (at('and')) { nx(); l = { k: 'and', l, r: notE() }; } return l; }
+    function notE() { if (at('not')) { nx(); return { k: 'not', e: notE() }; } return cmp(); }
+    function cmp() {
+      const first = add(); const ops = [], rs = [];
+      while (['==', '!=', '<', '>', '<=', '>='].includes(pk().t)) { ops.push(nx().t); rs.push(add()); }
+      if (at('=')) throw new PyErr('Pour tester une égalité, il faut écrire == (deux signes égal).', pk().ln);
+      return ops.length ? { k: 'cmp', first, ops, rs } : first;
+    }
+    function add() { let l = mul(); while (at('+') || at('-')) { const op = nx().t; l = { k: 'bin', op, l, r: mul() }; } return l; }
+    function mul() { let l = un(); while (['*', '/', '//', '%'].includes(pk().t)) { const op = nx().t; l = { k: 'bin', op, l, r: un() }; } return l; }
+    function un() { if (at('-') || at('+')) { const op = nx().t; return { k: 'neg', op, e: un() }; } return pw(); }
+    function pw() { const b = call(); if (at('**')) { nx(); return { k: 'bin', op: '**', l: b, r: un() }; } return b; }
+    function call() {
+      let e = atom();
+      while (at('(')) { const ln = nx().ln; const args = [], kw = {};
+        while (!at(')')) { if (at('NAME') && T[i + 1].t === '=') { const n = nx().v; nx(); kw[n] = expr(); } else args.push(expr()); if (at(',')) nx(); else break; }
+        eat(')', 'Parenthèse fermante « ) » manquante.'); e = { k: 'call', f: e, args, kw, ln }; }
+      return e;
+    }
+    function atom() {
+      const tk = nx();
+      if (tk.t === 'NUM') return { k: 'lit', v: tk.v };
+      if (tk.t === 'STR') return { k: 'lit', v: tk.v };
+      if (tk.t === 'True') return { k: 'lit', v: true };
+      if (tk.t === 'False') return { k: 'lit', v: false };
+      if (tk.t === 'None') return { k: 'lit', v: null };
+      if (tk.t === 'NAME') return { k: 'name', n: tk.v, ln: tk.ln };
+      if (tk.t === '(') { const e = expr(); eat(')', 'Parenthèse fermante « ) » manquante.'); return e; }
+      if (tk.t === 'NL' || tk.t === 'EOF') throw new PyErr('La ligne est incomplète : il manque quelque chose à la fin.', tk.ln);
+      throw new PyErr('Expression incorrecte près de « ' + (tk.v || tk.t) + ' ».', tk.ln);
+    }
+    const prog = []; while (!at('EOF')) { if (at('DEDENT')) { nx(); continue; } prog.push(stmt()); }
+    return prog;
+  }
+
+  // ---------- Affichage façon Python ----------
+  function fmtFloat(v) {
+    if (!isFinite(v)) return isNaN(v) ? 'nan' : (v > 0 ? 'inf' : '-inf');
+    if (Number.isInteger(v) && Math.abs(v) < 1e16) return v + '.0';
+    let s = String(v);
+    s = s.replace(/e([+-])(\d)$/, 'e$10$2');
+    return s;
+  }
+  function str(x) {
+    if (x === true) return 'True'; if (x === false) return 'False'; if (x === null || x === undefined) return 'None';
+    if (isF(x)) return fmtFloat(x.v);
+    if (typeof x === 'number') return String(x);
+    if (x && x.range) return 'range(' + x.range[0] + ', ' + x.range[1] + ')';
+    if (x && x.fn) return '<function ' + x.name + '>';
+    return String(x);
+  }
+  const tname = x => typeof x === 'string' ? 'texte (str)' : typeof x === 'boolean' ? 'booléen' : x === null ? 'None' : 'nombre';
+
+  // ---------- Exécution ----------
+  class Ret { constructor(v) { this.v = v; } }
+  const BRK = {}, CNT = {};
+  function run(src, opts = {}) {
+    const out = []; const inputs = (opts.inputs || []).slice(); let steps = 0; const MAX = opts.max || 300000;
+    let cur = '';
+    const glob = Object.create(null);
+    const tick = ln => { if (++steps > MAX) throw new PyErr('Le programme tourne trop longtemps : boucle infinie ? (vérifie que la condition du while finit par devenir fausse)', ln); };
+    function arith(op, a, b, ln) {
+      if (op === '+' && typeof a === 'string' && typeof b === 'string') return a + b;
+      if (op === '*' && typeof a === 'string' && typeof b === 'number') return a.repeat(Math.max(0, b));
+      if (op === '*' && typeof b === 'string' && typeof a === 'number') return b.repeat(Math.max(0, a));
+      if (!isNum(a) || !isNum(b)) {
+        if (op === '+' && (typeof a === 'string' || typeof b === 'string')) throw new PyErr("On ne peut pas additionner un texte (str) et un nombre. Utilise str(...) ou int(...) pour convertir.", ln);
+        throw new PyErr("Opération « " + op + " » impossible entre un " + tname(a) + ' et un ' + tname(b) + '.', ln);
+      }
+      const fl = isF(a) || isF(b); const x = num(a), y = num(b);
+      let r;
+      switch (op) {
+        case '+': r = x + y; break; case '-': r = x - y; break; case '*': r = x * y; break;
+        case '/': if (y === 0) throw new PyErr('Division par zéro impossible !', ln); return new F(x / y);
+        case '//': if (y === 0) throw new PyErr('Division par zéro impossible !', ln); r = Math.floor(x / y); break;
+        case '%': if (y === 0) throw new PyErr('Division par zéro impossible !', ln); r = ((x % y) + y) % y; break;
+        case '**': if (!fl && y < 0) return new F(Math.pow(x, y)); r = Math.pow(x, y); break;
+      }
+      return fl ? new F(r) : r;
+    }
+    function cmp(op, a, b, ln) {
+      if (isNum(a) && isNum(b)) { const x = num(a), y = num(b); return op === '==' ? x === y : op === '!=' ? x !== y : op === '<' ? x < y : op === '>' ? x > y : op === '<=' ? x <= y : x >= y; }
+      if (op === '==') return typeof a === typeof b && a === b;
+      if (op === '!=') return !(typeof a === typeof b && a === b);
+      if (typeof a === 'string' && typeof b === 'string') return op === '<' ? a < b : op === '>' ? a > b : op === '<=' ? a <= b : a >= b;
+      throw new PyErr('Impossible de comparer un ' + tname(a) + ' et un ' + tname(b) + ' avec ' + op + '.', ln);
+    }
+    const truthy = v => !(v === false || v === null || v === 0 || v === '' || (isF(v) && v.v === 0));
+    const builtins = {
+      print: (args, kw) => { const sep = kw.sep !== undefined ? str(kw.sep) : ' ', end = kw.end !== undefined ? str(kw.end) : '\n'; cur += args.map(str).join(sep) + end; const parts = cur.split('\n'); cur = parts.pop(); out.push(...parts); if (out.length > 3000) throw new PyErr('Trop d\'affichages : boucle infinie ?', 0); return null; },
+      range: (a, kw, ln) => { a = a.map(v => { if (isF(v)) throw new PyErr('range(...) n\'accepte que des entiers (pas de nombre à virgule).', ln); return num(v); }); if (a.length === 1) return { range: [0, a[0], 1] }; if (a.length === 2) return { range: [a[0], a[1], 1] }; if (a.length === 3) { if (a[2] === 0) throw new PyErr('Le pas de range ne peut pas être 0.', ln); return { range: a }; } throw new PyErr('range attend 1, 2 ou 3 nombres.', ln); },
+      int: (a, kw, ln) => { const v = a[0]; if (typeof v === 'string') { if (!/^\s*[-+]?\d+\s*$/.test(v)) throw new PyErr('int(...) : « ' + v + ' » n\'est pas un nombre entier.', ln); return parseInt(v, 10); } return Math.trunc(num(v)); },
+      float: (a, kw, ln) => { const v = a[0]; if (typeof v === 'string') { const n = parseFloat(v.replace(',', '.')); if (isNaN(n)) throw new PyErr('float(...) : « ' + v + ' » n\'est pas un nombre.', ln); return new F(n); } return new F(num(v)); },
+      str: a => str(a[0]), abs: a => isF(a[0]) ? new F(Math.abs(a[0].v)) : Math.abs(num(a[0])),
+      round: a => { if (a.length > 1) { const p = Math.pow(10, num(a[1])); return new F(Math.round(num(a[0]) * p) / p); } const x = num(a[0]); const r = Math.round(x); return (Math.abs(x % 1) === 0.5 && r % 2 !== 0) ? r - 1 : r; },
+      len: a => String(a[0]).length,
+      min: a => a.reduce((m, v) => num(v) < num(m) ? v : m), max: a => a.reduce((m, v) => num(v) > num(m) ? v : m),
+      input: (a) => { if (a.length && opts.echo !== false) cur += str(a[0]); const v = inputs.length ? inputs.shift() : '0'; if (opts.echo !== false) cur += String(v) + '\n'; else return String(v); const parts = cur.split('\n'); cur = parts.pop(); out.push(...parts); return String(v); },
+      type: a => { const v = a[0]; return "<class '" + (isF(v) ? 'float' : typeof v === 'number' ? 'int' : typeof v === 'string' ? 'str' : typeof v === 'boolean' ? 'bool' : 'NoneType') + "'>"; },
+    };
+    function ev(e, env) {
+      switch (e.k) {
+        case 'lit': return e.v;
+        case 'name': { if (e.n in env) return env[e.n]; if (e.n in glob) return glob[e.n]; if (e.n in builtins) return { builtin: e.n }; throw new PyErr('La variable « ' + e.n + ' » n\'existe pas (elle n\'a pas encore reçu de valeur, ou faute de frappe ?).', e.ln); }
+        case 'or': { const l = ev(e.l, env); return truthy(l) ? l : ev(e.r, env); }
+        case 'and': { const l = ev(e.l, env); return !truthy(l) ? l : ev(e.r, env); }
+        case 'not': return !truthy(ev(e.e, env));
+        case 'cmp': { let a = ev(e.first, env); for (let j = 0; j < e.ops.length; j++) { const b = ev(e.rs[j], env); if (!cmp(e.ops[j], a, b)) return false; a = b; } return true; }
+        case 'bin': return arith(e.op, ev(e.l, env), ev(e.r, env));
+        case 'neg': { const v = ev(e.e, env); if (!isNum(v)) throw new PyErr('Signe - devant un texte impossible.'); return e.op === '+' ? v : isF(v) ? new F(-v.v) : -num(v); }
+        case 'call': {
+          const f = ev(e.f, env); const args = e.args.map(a => ev(a, env)); const kw = {}; for (const k in e.kw) kw[k] = ev(e.kw[k], env);
+          if (f && f.builtin) return builtins[f.builtin](args, kw, e.ln);
+          if (f && f.fn) {
+            if (args.length !== f.ps.length) throw new PyErr('La fonction ' + f.name + ' attend ' + f.ps.length + ' paramètre(s), mais tu lui en donnes ' + args.length + '.', e.ln);
+            const loc = Object.create(null); f.ps.forEach((p, j) => loc[p] = args[j]);
+            if (++depth > 200) throw new PyErr('Trop d\'appels imbriqués.', e.ln);
+            try { exec(f.body, loc, true); } catch (r) { if (r instanceof Ret) { depth--; return r.v; } depth--; throw r; }
+            depth--; return null;
+          }
+          throw new PyErr('Ceci n\'est pas une fonction : on ne peut pas l\'appeler avec des parenthèses.', e.ln);
+        }
+      }
+    }
+    let depth = 0;
+    function exec(body, env, inFn) {
+      for (const s of body) {
+        tick(s.ln);
+        try {
+          switch (s.k) {
+            case 'set': { let v = ev(s.e, env); if (s.op !== '=') { const old = (s.name in env) ? env[s.name] : (s.name in glob ? glob[s.name] : undefined); if (old === undefined) throw new PyErr('La variable « ' + s.name + ' » n\'existe pas encore.', s.ln); v = arith(s.op[0], old, v); } env[s.name] = v; break; }
+            case 'expr': ev(s.e, env); break;
+            case 'def': env[s.name] = { fn: true, name: s.name, ps: s.ps, body: s.body }; break;
+            case 'if': if (truthy(ev(s.c, env))) exec(s.body, env, inFn); else if (s.orelse) exec(s.orelse, env, inFn); break;
+            case 'while': while (truthy(ev(s.c, env))) { tick(s.ln); try { exec(s.body, env, inFn); } catch (x) { if (x === BRK) break; if (x === CNT) continue; throw x; } } break;
+            case 'for': {
+              const it = ev(s.it, env); let seq;
+              if (it && it.range) { const [a, b, st] = it.range; seq = { [Symbol.iterator]: function* () { if (st > 0) for (let k = a; k < b; k += st) yield k; else for (let k = a; k > b; k += st) yield k; } }; }
+              else if (typeof it === 'string') seq = it;
+              else throw new PyErr('Après « in », il faut un range(...) (ou un texte).', s.ln);
+              for (const v of seq) { tick(s.ln); env[s.v] = v; try { exec(s.body, env, inFn); } catch (x) { if (x === BRK) break; if (x === CNT) continue; throw x; } }
+              break;
+            }
+            case 'ret': if (!inFn) throw new PyErr('« return » ne peut être utilisé que dans une fonction (def).', s.ln); throw new Ret(s.e ? ev(s.e, env) : null);
+            case 'break': throw BRK; case 'cont': throw CNT; case 'pass': break;
+          }
+        } catch (x) { if (x instanceof PyErr && !x.line) x.line = s.ln; throw x; }
+      }
+    }
+    try {
+      const prog = parse(src);
+      exec(prog, glob, false);
+      if (cur) out.push(cur);
+      return { out, env: glob };
+    } catch (x) {
+      if (cur) out.push(cur);
+      if (x instanceof PyErr) return { out, err: x.message, line: x.line };
+      if (x === BRK || x === CNT) return { out, err: 'break/continue en dehors d\'une boucle.' };
+      return { out, err: 'Erreur : ' + x.message };
+    }
+  }
+  return { run, str, F };
+})();
+if (typeof module !== 'undefined') module.exports = PY;
+
+</script>
+<script>
+// ===== Contenu pédagogique : îles, blocs, méthodes, questions =====
+const L = String.raw;
+const R = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pk = a => a[Math.floor(Math.random() * a.length)];
+const out = (c, inputs) => { const r = PY.run(c, { inputs }); if (r.err) throw new Error('Bug contenu: ' + r.err + '\n' + c); return r.out; };
+const out1 = c => out(c).join('\n');
+const VF = (v) => ({ choices: ['True (vraie)', 'False (fausse)'], answer: v ? 0 : 1, noShuffle: true });
+
+const ISLANDS = [
+/* ======================= ÎLE 1 : BASES ======================= */
+{ id: 'bases', name: 'Île des Bases', place: 'Les Récifs Booléens', color: '#ff8a5b', deep: '#b84a2a',
+  story: 'Ici, tout commence : ranger des valeurs dans des variables, calculer, et décider avec if / else.',
+  boss: { name: 'Le Golem Booléen', kind: 'golem', line: 'Je ne laisse passer que ceux qui savent dire True ou False !' },
+  blocks: [
+  { id: 'types', name: 'Les types de variables', skill: 'Représenter',
+    method: L`<p>Une <b>variable</b> est une boîte avec un nom, qui contient une valeur. Chaque valeur a un <b>type</b> :</p>
+<table class="mt"><tr><td><code>int</code></td><td>nombre entier</td><td><code>age = 15</code></td></tr>
+<tr><td><code>float</code></td><td>nombre à virgule (avec un <b>point</b>)</td><td><code>note = 14.5</code></td></tr>
+<tr><td><code>str</code></td><td>texte, <b>entre guillemets</b></td><td><code>nom = "Alice"</code></td></tr>
+<tr><td><code>bool</code></td><td>booléen : <code>True</code> ou <code>False</code></td><td><code>admis = True</code></td></tr></table>
+<p><b>Astuce :</b> des guillemets → <code>str</code> (même <code>"12"</code> !) · un point → <code>float</code> · True/False → <code>bool</code>.</p>
+<p>Sur les textes : <code>"bon" + "jour"</code> donne <code>"bonjour"</code> (concaténation) et <code>2 * "brr"</code> donne <code>"brrbrr"</code> (répétition).</p>`,
+    qs: [
+      () => { const [v, t] = pk([['15', 'int'], ['14.5', 'float'], ['"Alice"', 'str'], ['True', 'bool'], ['"12"', 'str'], ['3.0', 'float'], ['False', 'bool'], ['-7', 'int'], ['"True"', 'str']]);
+        return { type: 'qcm', prompt: 'Quel est le type de la valeur stockée dans <code>x</code> ?', code: 'x = ' + v, choices: ['int', 'float', 'str', 'bool'], answer: ['int', 'float', 'str', 'bool'].indexOf(t), noShuffle: true, cc: true,
+          hint: 'Regarde s\'il y a des guillemets (texte), un point (virgule) ou True/False.', expl: '<code>' + v + '</code> est de type <code>' + t + '</code>.' }; },
+      () => ({ type: 'qcm', prompt: 'Laquelle de ces variables est de type <code>float</code> ?', choices: ['note = 14.5', 'age = 15', 'nom = "Léa"', 'ok = False'], answer: 0, cc: true,
+        hint: 'Un float est un nombre à virgule. En Python, la virgule s\'écrit avec un point.', expl: '<code>14.5</code> a un point : c\'est un nombre à virgule, donc un <code>float</code>.' }),
+      () => { const [a, b] = pk([['"bon"', '"jour"'], ['"pik"', '"ou"'], ['"lu"', '"ciole"']]); const r = (a + b).replace(/""/, '');
+        return { type: 'qcm', prompt: 'Que contient la variable <code>m</code> ?', code: 'm = ' + a + ' + ' + b, choices: [r, a.slice(0, -1) + ' ' + b.slice(1), 'Erreur', a.slice(0, -1) + a.slice(1, -1) + b.slice(1)], answer: 0, cc: true,
+          hint: 'Le + entre deux textes les colle l\'un derrière l\'autre (sans espace).', expl: 'Le <code>+</code> entre deux <code>str</code> est une concaténation : on obtient ' + r + '.' }; },
+      () => { const n = R(2, 4); return { type: 'qcm', prompt: 'Que contient la variable <code>cri</code> ?', code: 'cri = ' + n + ' * "brr"', choices: ['"' + 'brr'.repeat(n) + '"', '"' + n + 'brr"', '"' + Array(n).fill('brr').join(' ') + '"', 'Erreur'], answer: 0, cc: true,
+        hint: 'Un nombre fois un texte : le texte est répété.', expl: '<code>' + n + ' * "brr"</code> répète le texte ' + n + ' fois.' }; },
+      () => { const a = R(2, 9), b = R(2, 9); return { type: 'qcm', prompt: 'Que contient la variable <code>r</code> ? (attention aux guillemets !)', code: 'r = "' + a + '" + "' + b + '"', choices: ['"' + a + b + '"', String(a + b), '"' + (a + b) + '"', 'Erreur'], answer: 0, cc: true,
+        hint: 'Avec des guillemets, ce ne sont pas des nombres mais des textes.', expl: '"' + a + '" et "' + b + '" sont des <code>str</code> : le + les colle → "' + a + b + '".' }; },
+      () => ({ type: 'qcm', prompt: 'Après cette ligne, de quel type est <code>a</code> ?', code: 'a = int(input("Nombre ?"))', choices: ['int', 'float', 'str', 'bool'], answer: 0, noShuffle: true, cc: true,
+        hint: 'input renvoie un texte… mais que fait int(...) autour ?', expl: '<code>int(...)</code> convertit le texte saisi en nombre entier : <code>a</code> est un <code>int</code>.' }),
+      () => { const a = R(2, 5), b = R(2, 4); return { type: 'num', prompt: L`Que vaut <code>p</code> ? (rappel : <code>**</code> est la puissance, $a^b$ s'écrit <code>a**b</code>)`, code: 'p = ' + a + '**' + b, answer: a ** b,
+        hint: L`$${a}^{${b}}$ = ${a} multiplié ${b} fois par lui-même.`, expl: L`$${a}^{${b}} = ${a ** b}$.` }; },
+    ] },
+  { id: 'affect', name: 'Affectation & séquences', skill: 'Calculer',
+    method: L`<p>L'<b>affectation</b> <code>x = 5</code> range la valeur 5 dans la variable <code>x</code> (on note $x \leftarrow 5$ en langage naturel).</p>
+<p><b>Méthode :</b> on lit le programme <b>ligne par ligne</b>, de haut en bas.</p>
+<ol><li>On calcule d'abord la partie <b>à droite</b> du <code>=</code> avec les valeurs actuelles ;</li>
+<li>puis on range le résultat dans la variable <b>à gauche</b> (l'ancienne valeur est écrasée) ;</li>
+<li>on note l'état des variables dans un tableau.</li></ol>
+<pre class="py">x = 4
+x = x + 3    # à droite : 4 + 3 = 7, donc x vaut 7</pre>
+<p>Opérateurs : <code>+ - * /</code> et <code>**</code> pour la puissance. La multiplication s'écrit toujours : $3x$ → <code>3*x</code>.</p>`,
+    qs: [
+      () => { const a = R(2, 6), d = R(1, 5); const c = `a = ${a}\nb = a + ${d}\na = b * 2\nprint(a)`; return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c),
+        hint: 'Ligne 2 : b = a + ' + d + ' avec a = ' + a + '. Ligne 3 : on utilise la NOUVELLE valeur de b.', expl: 'b vaut ' + (a + d) + ', puis a = ' + (a + d) + ' × 2 = ' + out1(c) + '.' }; },
+      () => { const a = R(2, 5), b = R(1, 4); const x1 = a, y1 = x1 + b, x2 = x1 * y1, y2 = y1 - x2;
+        return { type: 'trace', prompt: 'Complète le tableau d\'état des variables après chaque ligne.', code: `x = ${a}\ny = x + ${b}\nx = x * y\ny = y - x`,
+          cols: ['Ligne', 'x', 'y'], rows: [['x = ' + a, String(x1), '—'], ['y = x + ' + b, String(x1), { a: y1 }], ['x = x * y', { a: x2 }, String(y1)], ['y = y - x', String(x2), { a: y2 }]],
+          hint: 'À chaque ligne, une seule variable change. On utilise les valeurs de la ligne précédente.', expl: 'Les valeurs successives : x = ' + x1 + ', y = ' + y1 + ', x = ' + x2 + ', y = ' + y2 + '.' }; },
+      () => { const a = R(2, 6), b = R(7, 12); return { type: 'qcm', prompt: 'À la fin, que valent <code>a</code> et <code>b</code> ?', code: `a = ${a}\nb = ${b}\na = b\nb = a`, choices: [`a = ${b} et b = ${b}`, `a = ${b} et b = ${a}`, `a = ${a} et b = ${b}`, `a = ${a} et b = ${a}`], answer: 0,
+        hint: 'Ligne 3 : a prend la valeur de b. Ligne 4 : b prend la valeur ACTUELLE de a…', expl: 'Après <code>a = b</code>, a vaut ' + b + ' : l\'ancienne valeur ' + a + ' est perdue. Donc b = a donne aussi ' + b + '. (Pour échanger, il faut une variable temporaire.)' }; },
+      () => ({ type: 'fill', prompt: L`Traduis en Python l'aire d'un disque : $A = 3{,}14 \times r^2$.`, code: 'A = 3.14 [[0]] r [[1]] 2', holes: ['*', '**'], tiles: ['*', '**', '^', 'x', '²', '+'],
+        hint: L`Le $\times$ s'écrit * et la puissance s'écrit ** en Python.`, expl: '<code>A = 3.14 * r ** 2</code>' }),
+      () => ({ type: 'qcm', prompt: L`Quelle ligne calcule $y = 3x^2 + 1$ ?`, choices: ['y = 3*x**2 + 1', 'y = 3x**2 + 1', 'y = 3*x^2 + 1', 'y = (3*x)**2 + 1'], answer: 0, cc: true,
+        hint: L`Deux pièges : la multiplication doit être écrite, et ^ n'est pas la puissance.`, expl: L`<code>3*x**2</code> : la puissance est calculée avant la multiplication, comme en maths ($3x^2$). <code>(3*x)**2</code> vaut $9x^2$.` }),
+      () => { const p = R(5, 12), n = R(2, 5), r = R(2, 6); const c = `prix = ${p}\nnb = ${n}\ntotal = prix * nb\ntotal = total - ${r}\nprint(total)`;
+        return { type: 'num', prompt: 'Une place de cinéma coûte ' + p + ' €. On en achète ' + n + ' avec un bon de réduction. Qu\'affiche le programme ?', code: c, answer: +out1(c), hint: 'Calcule d\'abord prix × nb, puis enlève la réduction.', expl: p + ' × ' + n + ' − ' + r + ' = ' + out1(c) + '.' }; },
+    ] },
+  { id: 'etou', name: 'Connecteurs ET / OU', skill: 'Raisonner',
+    method: L`<p><b>ET</b> (<code>and</code>) : <b>toutes</b> les conditions doivent être vraies en même temps.<br>
+<b>OU</b> (<code>or</code>) : il suffit qu'<b>au moins une</b> condition soit vraie (les deux peuvent l'être : le OU mathématique est <b>inclusif</b>).</p>
+<p><b>Méthode :</b> on teste chaque condition séparément (Vrai / Faux), puis on applique ET ou OU.</p>
+<p>Exemple : $3 < x \le 7{,}3$ s'écrit</p><pre class="py">if x > 3 and x <= 7.3:
+    print("Dans l'intervalle !")</pre>
+<p>Pour $x = 6$ : <code>6 > 3</code> Vrai, <code>6 <= 7.3</code> Vrai → Vrai.<br><b>Rappel :</b> <code>n % 2 == 0</code> teste si n est pair (le reste de la division par 2 vaut 0).</p>`,
+    qs: [
+      () => { const x = R(0, 8); const v = x > 2 && x <= 5; return { type: 'qcm', prompt: 'Pour <code>x = ' + x + '</code>, la condition suivante est-elle vraie ?', code: 'x > 2 and x <= 5', ...VF(v), cc: true,
+        hint: 'Teste x > 2, puis x <= 5. Avec and, il faut que les DEUX soient vraies.', expl: `${x} > 2 : ${x > 2 ? 'Vrai' : 'Faux'} ; ${x} <= 5 : ${x <= 5 ? 'Vrai' : 'Faux'}. Avec and → ${v ? 'True' : 'False'}.` }; },
+      () => { const x = R(-3, 6); const v = x < 0 || x > 3; return { type: 'qcm', prompt: 'Pour <code>x = ' + x + '</code>, la condition suivante est-elle vraie ?', code: 'x < 0 or x > 3', ...VF(v), cc: true,
+        hint: 'Avec or, une seule condition vraie suffit.', expl: `${x} < 0 : ${x < 0 ? 'Vrai' : 'Faux'} ; ${x} > 3 : ${x > 3 ? 'Vrai' : 'Faux'}. Avec or → ${v ? 'True' : 'False'}.` }; },
+      () => ({ type: 'pick', prompt: 'Touche tous les entiers de 0 à 20 qui sont <b>pairs ET multiples de 5</b>.', lo: 0, hi: 20, answer: [0, 10, 20],
+        hint: 'Il faut les deux à la fois : liste les multiples de 5, puis garde seulement les pairs. N\'oublie pas 0 !', expl: '0, 10 et 20 sont à la fois pairs et multiples de 5.' }),
+      () => ({ type: 'pick', prompt: 'Touche tous les entiers de 0 à 20 qui sont <b>pairs OU multiples de 5</b>.', lo: 0, hi: 20, answer: [0, 2, 4, 5, 6, 8, 10, 12, 14, 15, 16, 18, 20],
+        hint: 'Il suffit d\'une des deux conditions : tous les pairs, plus les multiples de 5 (5, 15…).', expl: 'Tous les nombres pairs, plus 5 et 15 qui sont multiples de 5.' }),
+      () => ({ type: 'qcm', prompt: L`Quelle condition Python traduit $3 < x \le 7{,}3$ ?`, choices: ['x > 3 and x <= 7.3', 'x > 3 or x <= 7.3', 'x > 3 and x < 7.3', 'x > 3 and x <= 7,3'], answer: 0, cc: true,
+        hint: L`$x$ doit vérifier les deux inégalités en même temps. Et attention à la virgule en Python !`, expl: L`Les deux conditions à la fois → <code>and</code> ; $\le$ s'écrit <code><=</code> ; 7,3 s'écrit <code>7.3</code>.` }),
+      () => { const n = pk([10, 15, 20, 12, 25, 30]); const v = n % 2 === 0 && n % 5 === 0; return { type: 'qcm', prompt: 'Pour <code>n = ' + n + '</code>, que vaut cette condition ?', code: 'n % 2 == 0 and n % 5 == 0', ...VF(v), cc: true,
+        hint: 'n % 2 == 0 veut dire « n est pair », n % 5 == 0 « n est multiple de 5 ».', expl: `${n} est ${n % 2 === 0 ? '' : 'im'}pair et ${n % 5 === 0 ? '' : 'n\'est pas '}multiple de 5 → ${v ? 'True' : 'False'}.` }; },
+      () => { const age = R(19, 25); return { type: 'qcm', prompt: 'Tarif réduit au cinéma : il faut être étudiant <b>OU</b> avoir moins de 18 ans. Léo a ' + age + ' ans et est étudiant. Que vaut la condition ?', code: `age = ${age}\netudiant = True\nage < 18 or etudiant == True`, ...VF(true), cc: true,
+        hint: 'Une des deux conditions est-elle vraie ?', expl: 'age < 18 est faux, mais etudiant == True est vrai : avec or, ça suffit → True.' }; },
+    ] },
+  { id: 'ifelse', name: 'Si… sinon (if / else)', skill: 'Modéliser',
+    method: L`<p>Pour exécuter des instructions <b>sous condition</b> :</p>
+<pre class="py">if condition:
+    # instructions si la condition est vraie
+else:
+    # instructions si elle est fausse</pre>
+<ol><li>On n'oublie pas les <b>deux-points</b> <code>:</code> après la condition et après <code>else</code> ;</li>
+<li>les instructions du bloc sont <b>indentées</b> (décalées vers la droite) ;</li>
+<li>pour comparer : <code>==</code> (égal), <code>!=</code> (différent), <code>&lt; &lt;= &gt; &gt;=</code>. Attention : <code>=</code> seul sert à affecter !</li></ol>
+<p><b>Méthode de lecture :</b> on évalue la condition (True ou False), puis on n'exécute <b>qu'un seul</b> des deux blocs.</p>`,
+    qs: [
+      () => { const n = pk([7, 9.5, 10, 12, 15, 8]); return { type: 'qcm', prompt: 'Qu\'affiche ce programme ?', code: `note = ${n}\nif note >= 10:\n    print("Admis")\nelse:\n    print("Recalé")`, choices: ['Admis', 'Recalé', 'Admis puis Recalé', 'Rien'], answer: n >= 10 ? 0 : 1, noShuffle: true,
+        hint: 'Teste la condition note >= 10 avec la valeur de note.', expl: `${n} >= 10 est ${n >= 10 ? 'vrai' : 'faux'} : on affiche ${n >= 10 ? 'Admis' : 'Recalé'} (un seul des deux blocs est exécuté).` }; },
+      () => { const x = R(3, 15); const c = `x = ${x}\nif x % 2 == 0:\n    y = x // 2\nelse:\n    y = 3*x + 1\nprint(y)`; return { type: 'num', prompt: 'Qu\'affiche ce programme ? (<code>//</code> est la division entière)', code: c, answer: +out1(c),
+        hint: 'Est-ce que ' + x + ' est pair ? Si oui on divise par 2, sinon on calcule 3x + 1.', expl: `${x} est ${x % 2 ? 'impair donc y = 3 × ' + x + ' + 1' : 'pair donc y = ' + x + ' ÷ 2'} = ${out1(c)}.` }; },
+      () => ({ type: 'qcm', prompt: 'Ce programme contient une erreur. Laquelle ?', code: `age = 18\nif age = 18:\n    print("Majeur")`, choices: ['Il faut == pour comparer', 'Il manque les deux-points', 'print doit être aligné avec if', 'age doit être entre guillemets'], answer: 0,
+        hint: 'Un seul = sert à ranger une valeur. Pour tester une égalité…', expl: '<code>=</code> affecte, <code>==</code> compare : il faut écrire <code>if age == 18:</code>.' }),
+      () => ({ type: 'fill', prompt: 'Complète le programme : il affiche « Il gèle » si la température est négative, sinon « Pas de gel ».', code: 'temperature = -4\nif [[0]] [[1]] 0:\n    print("Il gèle")\n[[2]]\n    print("Pas de gel")', holes: ['temperature', '<', 'else:'], tiles: ['temperature', '<', '>', '==', 'else:', 'else', 'if', '"temperature"'],
+        hint: 'Négatif veut dire plus petit que 0. Et else prend aussi les deux-points.', expl: '<code>if temperature < 0:</code> … <code>else:</code>' }),
+      () => ({ type: 'order', prompt: 'Remets les lignes dans l\'ordre : un mineur paie 8 €, un adulte 12 €. Le programme doit afficher 8.', lines: ['age = 16', 'if age >= 18:', '    tarif = 12', 'else:', '    tarif = 8', 'print(tarif)'], distract: ['if age >= 18', '    print(tarif)'],
+        hint: 'D\'abord la variable, puis le test, le bloc « si », le else, le bloc « sinon », et enfin l\'affichage (non indenté).', expl: 'La variable doit exister avant le test ; le print est hors des blocs pour s\'exécuter dans tous les cas.' }),
+      () => { const age = R(10, 30), carte = pk([true, false]); const c = `age = ${age}\ncarte = ${carte ? 'True' : 'False'}\nif age >= 18:\n    tarif = 12\nelse:\n    tarif = 8\nif carte == True:\n    tarif = tarif - 2\nprint(tarif)`;
+        return { type: 'num', prompt: 'Parc d\'attractions : qu\'affiche ce programme ?', code: c, answer: +out1(c), hint: 'Deux tests à la suite : d\'abord l\'âge, puis la carte de fidélité.', expl: `${age >= 18 ? 'Adulte : 12' : 'Mineur : 8'} €${carte ? ', carte : −2 €' : ', pas de carte'} → ${out1(c)} €.` }; },
+    ] },
+  ],
+  bossQs: [
+    () => { const t = R(120, 160), a = R(8, 13); const ok = t >= 140 && a >= 10; return { type: 'qcm', prompt: 'Pour monter dans l\'attraction, il faut mesurer au moins 140 cm <b>ET</b> avoir au moins 10 ans. Qu\'affiche le programme ?', code: `taille = ${t}\nage = ${a}\nif taille >= 140 and age >= 10:\n    print("Bon voyage")\nelse:\n    print("Refusé")`, choices: ['Bon voyage', 'Refusé'], answer: ok ? 0 : 1, noShuffle: true,
+      hint: 'Teste chaque condition séparément, puis applique and.', expl: `${t} >= 140 : ${t >= 140 ? 'V' : 'F'} ; ${a} >= 10 : ${a >= 10 ? 'V' : 'F'} → ${ok ? 'Bon voyage' : 'Refusé'}.` }; },
+    () => ({ type: 'pick', prompt: 'Touche les entiers de 0 à 20 tels que <code>n > 2 and n < 8</code>.', lo: 0, hi: 20, answer: [3, 4, 5, 6, 7], hint: 'Strictement plus grand que 2 et strictement plus petit que 8.', expl: '3, 4, 5, 6 et 7.' }),
+    () => { const n = R(2, 4); return { type: 'qcm', prompt: 'Qu\'affiche ce programme ?', code: `a = "ha"\nprint(${n} * a + "!")`, choices: ['ha'.repeat(n) + '!', 'ha!'.repeat(n), n + 'ha!', 'Erreur'], answer: 0, cc: true,
+      hint: 'La multiplication est faite avant le +.', expl: 'On répète "ha" ' + n + ' fois, puis on colle "!".' }; },
+    () => ({ type: 'fill', prompt: 'Complète la condition : on garde un nombre <b>soit</b> négatif, <b>soit</b> supérieur à 100.', code: 'if x [[0]] 0 [[1]] x [[2]] 100:\n    print("Gardé")', holes: ['<', 'or', '>'], tiles: ['<', '>', 'and', 'or', '==', '<='],
+      hint: '« soit… soit… » : une seule condition suffit.', expl: '<code>if x < 0 or x > 100:</code>' }),
+    () => ({ type: 'code', prompt: 'Écris un programme qui demande un entier <code>n</code> et affiche <code>Pair</code> si n est pair, sinon <code>Impair</code>.', starter: 'n = int(input("n ?"))\n',
+      tests: { ref: 'n = int(input("n ?"))\nif n % 2 == 0:\n    print("Pair")\nelse:\n    print("Impair")', inputs: [['7'], ['10'], ['0']], must: ['if', 'else'] },
+      hint: 'Utilise if n % 2 == 0: puis else:. N\'oublie pas les deux-points et le décalage.', expl: 'On teste le reste de la division par 2.' }),
+    () => ({ type: 'qcm', prompt: 'De quel type est la variable <code>admis</code> ?', code: 'note = 13.5\nadmis = note >= 10', choices: ['bool', 'float', 'int', 'str'], answer: 0, noShuffle: true, cc: true,
+      hint: 'note >= 10 est une comparaison : son résultat est True ou False.', expl: 'Une comparaison donne True ou False : <code>admis</code> est un <code>bool</code> (ici True).' }),
+  ] },
+
+/* ======================= ÎLE 2 : FONCTIONS ======================= */
+{ id: 'fonctions', name: 'Île des Fonctions', place: 'L\'Atelier des Machines', color: '#3fd0c9', deep: '#1a7f7a',
+  story: 'Une fonction est une machine : on lui donne des valeurs, elle travaille, et elle renvoie un résultat.',
+  boss: { name: 'La Machine Gloutonne', kind: 'machine', line: 'Donne-moi des paramètres… si tu sais ce que je renvoie !' },
+  blocks: [
+  { id: 'lire', name: 'Lire une fonction', skill: 'Représenter',
+    method: L`<p>Une <b>fonction</b> regroupe des instructions réutilisables.</p>
+<pre class="py">def prix_total(nb_places, tarif):
+    total = nb_places * tarif
+    return total</pre>
+<ul><li><code>def</code> : on <b>définit</b> la fonction, suivie de son <b>nom</b> ;</li>
+<li>entre parenthèses : les <b>paramètres</b> (les valeurs dont elle a besoin) ;</li>
+<li><code>return</code> : la valeur <b>renvoyée</b> (le résultat).</li></ul>
+<p><b>Appel :</b> <code>p = prix_total(3, 8)</code> → nb_places = 3, tarif = 8, donc <code>p</code> vaut 24.</p>`,
+    qs: [
+      () => ({ type: 'qcm', prompt: 'Dans cette fonction, quels sont les <b>paramètres</b> ?', code: 'def prix_total(nb_places, tarif):\n    total = nb_places * tarif\n    return total', choices: ['nb_places et tarif', 'prix_total', 'total', 'def et return'], answer: 0,
+        hint: 'Les paramètres sont écrits entre parenthèses après le nom.', expl: 'Les paramètres sont <code>nb_places</code> et <code>tarif</code>.' }),
+      () => ({ type: 'qcm', prompt: 'À quoi sert <code>return</code> ?', choices: ['À renvoyer le résultat de la fonction', 'À afficher à l\'écran', 'À revenir au début du programme', 'À créer une variable'], answer: 0,
+        hint: 'C\'est ce que la machine « rend » quand on l\'appelle.', expl: '<code>return</code> renvoie une valeur à celui qui a appelé la fonction (il ne l\'affiche pas).' }),
+      () => { const a = R(2, 6), b = R(5, 12); return { type: 'num', prompt: 'Que vaut <code>p</code> après l\'appel ?', code: `def prix_total(nb_places, tarif):\n    total = nb_places * tarif\n    return total\n\np = prix_total(${a}, ${b})`, answer: a * b,
+        hint: 'nb_places prend la valeur ' + a + ' et tarif la valeur ' + b + '.', expl: a + ' × ' + b + ' = ' + a * b + '.' }; },
+      () => ({ type: 'qcm', prompt: 'Que calcule cette fonction ?', code: 'def mystere(a, b):\n    return (a + b) / 2', choices: ['La moyenne de a et b', 'La somme de a et b', 'La moitié de b, plus a', 'Le produit de a et b'], answer: 0,
+        hint: 'Teste avec a = 10 et b = 20.', expl: L`$\frac{a+b}{2}$ est la moyenne de $a$ et $b$.` }),
+      () => ({ type: 'qcm', prompt: 'Que renvoie cette fonction ?', code: 'def f(x):\n    if x >= 0:\n        return x\n    else:\n        return -x', choices: ['La distance de x à 0 (valeur absolue)', 'Le carré de x', 'L\'opposé de x', 'Toujours x'], answer: 0,
+        hint: 'Teste f(5) et f(-5).', expl: 'f(5) = 5 et f(−5) = 5 : c\'est la valeur absolue, la distance à 0.' }),
+      () => ({ type: 'qcm', prompt: 'Quel appel calcule l\'aire d\'un carré de côté 5 ?', code: 'def aire(c):\n    return c * c', choices: ['aire(5)', 'aire = 5', 'def aire(5)', 'aire(c) = 5'], answer: 0, cc: true,
+        hint: 'On appelle une fonction avec son nom et la valeur entre parenthèses.', expl: '<code>aire(5)</code> renvoie 25.' }),
+    ] },
+  { id: 'appel', name: 'Calculer une image', skill: 'Calculer',
+    method: L`<p><b>Méthode pour évaluer un appel</b> comme <code>f(2)</code> :</p>
+<ol><li>on remplace chaque paramètre par la valeur donnée ;</li><li>on exécute les lignes de la fonction ;</li><li>la valeur après <code>return</code> est le résultat.</li></ol>
+<pre class="py">def g(x):
+    return 3*x**2 - 5</pre>
+<p>$g(2) = 3\times 2^2 - 5 = 3\times 4 - 5 = 7$. C'est l'<b>image</b> de 2 par $g$.</p>
+<p>Attention à l'ordre : la puissance d'abord, puis la multiplication, puis l'addition.</p>`,
+    qs: [
+      () => { const a = R(-3, 4); return { type: 'num', prompt: L`On a programmé $g(x) = 3x^2 - 5$. Que renvoie <code>g(${a})</code> ?`, code: 'def g(x):\n    return 3*x**2 - 5', answer: 3 * a * a - 5,
+        hint: L`Calcule d'abord $(${a})^2$, puis multiplie par 3, puis enlève 5.`, expl: L`$3\times(${a})^2 - 5 = 3\times ${a * a} - 5 = ${3 * a * a - 5}$.` }; },
+      () => { const [q, t] = pk([[1000, 5], [20, 45], [50, -30], [200, 10], [80, 25]]); const c = `def evo(qte, taux):\n    return qte * (1 + taux/100)\n\nprint(evo(${q}, ${t}))`;
+        return { type: 'num', prompt: 'Qu\'affiche ce programme ? (c\'est une évolution en pourcentage)', code: c, answer: +out1(c), hint: L`$1 + \frac{${t}}{100} = ${1 + t / 100}$ : on multiplie ${q} par ce coefficient.`, expl: L`$${q} \times ${1 + t / 100} = ${out1(c)}$.` }; },
+      () => { const age = R(10, 30), cf = pk([true, false]); const c = `def prix_entree(age, carte_fidelite):\n    if age >= 18:\n        tarif = 12\n    else:\n        tarif = 8\n    if carte_fidelite == True:\n        tarif = tarif - 2\n    return tarif\n\nprint(prix_entree(${age}, ${cf ? 'True' : 'False'}))`;
+        return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c), hint: 'age = ' + age + ' et carte_fidelite = ' + cf + '. Suis les deux tests.', expl: `${age >= 18 ? 'Adulte (12 €)' : 'Mineur (8 €)'}${cf ? ', −2 € de fidélité' : ''} → ${out1(c)}.` }; },
+      () => { const [h, d] = pk([[120, true], [600, false], [300, false], [500, false]]); const v = h >= 500 || d; return { type: 'qcm', prompt: 'Que renvoie l\'appel <code>selection(' + h + ', ' + (d ? 'True' : 'False') + ')</code> ?', code: 'def selection(heures_vol, doctorat):\n    return heures_vol >= 500 or doctorat == True', ...VF(v), cc: true,
+        hint: 'Il suffit d\'une des deux conditions (or).', expl: `${h} >= 500 : ${h >= 500 ? 'V' : 'F'} ; doctorat : ${d ? 'V' : 'F'} → ${v}.` }; },
+      () => { const a = R(1, 4); const c = `def f(x):\n    return 2*x + 1\n\ndef g(x):\n    return x**2\n\nprint(f(g(${a})))`; return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c),
+        hint: 'On calcule d\'abord ce qui est à l\'intérieur : g(' + a + '), puis on applique f au résultat.', expl: `g(${a}) = ${a * a}, puis f(${a * a}) = ${2 * a * a + 1}.` }; },
+      () => { const a = R(2, 9); const c = `def h(x):\n    y = x + 4\n    return y * 2\n\nprint(h(${a}))`; return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c), hint: 'Dans la fonction : y = ' + a + ' + 4, puis on renvoie y × 2.', expl: `y = ${a + 4}, résultat ${2 * (a + 4)}.` }; },
+    ] },
+  { id: 'traduire', name: 'Traduire en Python', skill: 'Représenter',
+    method: L`<p>Pour passer de $f(x) = \dots$ (maths) à une fonction Python :</p>
+<ol><li><code>def f(x):</code> — le nom, puis la variable en paramètre, puis <code>:</code></li>
+<li>ligne suivante, <b>décalée</b> : <code>return</code> suivi du calcul.</li></ol>
+<p>Règles d'écriture : $3x$ → <code>3*x</code> ; $x^2$ → <code>x**2</code> ; $\frac{a+b}{2}$ → <code>(a + b) / 2</code> (parenthèses !).</p>
+<pre class="py">def f(x):
+    return 2*x**2 - 3*x + 1     # f(x) = 2x² − 3x + 1</pre>`,
+    qs: [
+      () => ({ type: 'qcm', prompt: L`Quelle ligne complète la fonction $f(x) = 2x^2 - 3x + 1$ ?`, code: 'def f(x):\n    ...', choices: ['    return 2*x**2 - 3*x + 1', '    return 2x**2 - 3x + 1', '    return 2*x^2 - 3*x + 1', '    f(x) = 2*x**2 - 3*x + 1'], answer: 0, cc: true,
+        hint: 'Multiplication écrite, puissance **, et le mot return.', expl: L`<code>return 2*x**2 - 3*x + 1</code>.` }),
+      () => ({ type: 'fill', prompt: L`Complète la fonction $g : x \mapsto 3x^3 - 5$.`, code: 'def [[0]]([[1]]):\n    [[2]] 3*x[[3]]3 - 5', holes: ['g', 'x', 'return', '**'], tiles: ['g', 'x', 'return', 'print', '**', '^', 'f', '3'],
+        hint: 'Nom de la fonction, paramètre, puis le mot qui renvoie le résultat.', expl: '<code>def g(x):</code> puis <code>return 3*x**3 - 5</code>.' }),
+      () => ({ type: 'fill', prompt: 'Complète la fonction qui calcule le prix total de plusieurs places.', code: 'def prix_total(nb_places, tarif):\n    total = nb_places [[0]] tarif\n    [[1]] [[2]]', holes: ['*', 'return', 'total'], tiles: ['*', '+', 'return', 'print', 'total', 'tarif'],
+        hint: 'Le prix total = nombre de places × tarif. Puis on renvoie la variable calculée.', expl: '<code>total = nb_places * tarif</code> puis <code>return total</code>.' }),
+      () => ({ type: 'order', prompt: 'Remets dans l\'ordre la fonction qui renvoie la moyenne de deux nombres (attention, il y a des lignes pièges).', lines: ['def moyenne(a, b):', '    s = a + b', '    return s / 2'], distract: ['    return s', 'def moyenne(a + b):'],
+        hint: 'def en premier, puis le calcul, puis return.', expl: 'On calcule la somme, puis on renvoie la somme divisée par 2.' }),
+      () => ({ type: 'qcm', prompt: L`Quelle ligne programme $h(x) = \dfrac{x+1}{2}$ ?`, choices: ['return (x + 1) / 2', 'return x + 1 / 2', 'return x + (1 / 2)', 'return (x + 1) // 2'], answer: 0, cc: true,
+        hint: L`Sans parenthèses, la division est faite avant l'addition.`, expl: L`<code>x + 1 / 2</code> calcule $x + 0{,}5$. Il faut <code>(x + 1) / 2</code>.` }),
+      () => ({ type: 'qcm', prompt: L`On veut une fonction $A$ qui donne l'aire d'un rectangle de longueur $L$ et de largeur $\ell$. Quelle première ligne ?`, choices: ['def aire(L, l):', 'def aire(L * l):', 'def aire():', 'aire(L, l) = L * l'], answer: 0, cc: true,
+        hint: 'Deux paramètres, séparés par une virgule.', expl: '<code>def aire(L, l):</code> puis <code>return L * l</code>.' }),
+    ] },
+  { id: 'ecrire', name: 'Écrire une fonction', skill: 'Programmer',
+    method: L`<p><b>Méthode pour écrire une fonction :</b></p>
+<ol><li>Choisir le <b>nom</b> et les <b>paramètres</b> : <code>def nom(param):</code></li>
+<li>Écrire le <b>calcul</b> (lignes décalées de 4 espaces) ;</li>
+<li>Terminer par <code>return</code> et le résultat ;</li>
+<li><b>Tester</b> avec un appel dont on connaît la réponse : bouton <b>▶ Exécuter</b>.</li></ol>
+<pre class="py">def triple(x):
+    return 3*x
+
+print(triple(4))    # affiche 12</pre>`,
+    qs: [
+      () => ({ type: 'fill', prompt: 'Échauffement : complète la fonction qui renvoie le double de x.', code: '[[0]] double(x):\n    [[1]] 2*x', holes: ['def', 'return'], tiles: ['def', 'return', 'print', 'if', 'for'],
+        hint: 'Un mot pour définir, un mot pour renvoyer.', expl: '<code>def double(x):</code> / <code>return 2*x</code>' }),
+      () => ({ type: 'code', prompt: L`Écris une fonction <code>carre(x)</code> qui renvoie le carré $x^2$.`, starter: 'def carre(x):\n    ', tests: { ref: 'def carre(x):\n    return x**2', calls: ['carre(3)', 'carre(-2)', 'carre(1.5)'], must: ['def', 'return'] },
+        hint: 'Une seule ligne suffit dans la fonction : return x**2', expl: '<code>return x**2</code> (ou <code>x*x</code>).' }),
+      () => ({ type: 'code', prompt: L`Écris la fonction <code>f(x)</code> qui renvoie $f(x) = 3x^3 - 7x + 4$.`, starter: 'def f(x):\n    ', tests: { ref: 'def f(x):\n    return 3*x**3 - 7*x + 4', calls: ['f(0)', 'f(2)', 'f(-1)', 'f(10)'], must: ['def', 'return'] },
+        hint: 'return 3*x**3 - 7*x + 4 : chaque multiplication s\'écrit avec *.', expl: '<code>return 3*x**3 - 7*x + 4</code>' }),
+      () => ({ type: 'code', prompt: 'Écris une fonction <code>moyenne(a, b)</code> qui renvoie la moyenne de a et b.', starter: 'def moyenne(a, b):\n    ', tests: { ref: 'def moyenne(a, b):\n    return (a + b) / 2', calls: ['moyenne(10, 14)', 'moyenne(3, 4)', 'moyenne(-2, 2)'], must: ['def', 'return'] },
+        hint: 'Attention aux parenthèses : (a + b) / 2.', expl: '<code>return (a + b) / 2</code>' }),
+      () => ({ type: 'code', prompt: 'Écris une fonction <code>prix_total(nb_places, tarif)</code> qui renvoie le prix à payer.', starter: 'def prix_total(nb_places, tarif):\n    ', tests: { ref: 'def prix_total(nb_places, tarif):\n    return nb_places * tarif', calls: ['prix_total(3, 8)', 'prix_total(1, 12)', 'prix_total(5, 7.5)'], must: ['def', 'return'] },
+        hint: 'Le prix = nombre de places × tarif. Renvoie-le avec return.', expl: '<code>return nb_places * tarif</code>' }),
+      () => ({ type: 'code', prompt: 'Écris une fonction <code>est_pair(n)</code> qui renvoie <code>True</code> si n est pair et <code>False</code> sinon.', starter: 'def est_pair(n):\n    ', tests: { ref: 'def est_pair(n):\n    return n % 2 == 0', calls: ['est_pair(4)', 'est_pair(7)', 'est_pair(0)', 'est_pair(15)'], must: ['def', 'return'] },
+        hint: 'Avec un if : if n % 2 == 0: return True, else: return False. (Ou directement return n % 2 == 0.)', expl: '<code>return n % 2 == 0</code> renvoie directement True ou False.' }),
+    ] },
+  ],
+  bossQs: [
+    () => { const age = R(12, 40), cf = pk([true, false]); const c = `def prix_entree(age, carte_fidelite):\n    if age >= 18:\n        tarif = 12\n    else:\n        tarif = 8\n    if carte_fidelite == True:\n        tarif = tarif - 2\n    return tarif`;
+      return { type: 'num', prompt: 'Que renvoie l\'appel <code>prix_entree(' + age + ', ' + (cf ? 'True' : 'False') + ')</code> ?', code: c, answer: +out1(c + `\nprint(prix_entree(${age}, ${cf ? 'True' : 'False'}))`), hint: 'Suis les deux tests l\'un après l\'autre.', expl: 'Résultat : ' + out1(c + `\nprint(prix_entree(${age}, ${cf ? 'True' : 'False'}))`) + ' €.' }; },
+    () => ({ type: 'qcm', prompt: 'Un client de 25 ans <b>sans</b> carte de fidélité arrive. Quel appel faut-il écrire ?', choices: ['prix_entree(25, False)', 'prix_entree(False, 25)', 'prix_entree(25)', 'prix_entree = 25, False'], answer: 0, cc: true,
+      hint: 'Les valeurs sont données dans le même ordre que les paramètres : age, puis carte_fidelite.', expl: '<code>prix_entree(25, False)</code> renvoie 12.' }),
+    () => ({ type: 'code', prompt: 'Pour sélectionner un astronaute, il faut au moins 500 heures de vol <b>OU</b> un doctorat. Écris <code>selection(heures_vol, doctorat)</code> qui renvoie <code>True</code> ou <code>False</code> (doctorat est un booléen).', starter: 'def selection(heures_vol, doctorat):\n    ',
+      tests: { ref: 'def selection(heures_vol, doctorat):\n    return heures_vol >= 500 or doctorat == True', calls: ['selection(120, True)', 'selection(600, False)', 'selection(120, False)', 'selection(500, False)'], must: ['def', 'return'] },
+      hint: 'return heures_vol >= 500 or doctorat == True', expl: 'Une seule des deux conditions suffit : <code>or</code>.' }),
+    () => { const q = pk([100, 200, 50]); const c = `def evo(qte, taux):\n    return qte * (1 + taux/100)\n\nprint(evo(evo(${q}, 10), 10))`; return { type: 'num', prompt: 'Qu\'affiche ce programme ? (deux hausses de 10 % à la suite)', code: c, answer: +out1(c),
+      hint: 'Calcule d\'abord evo(' + q + ', 10), puis réapplique evo au résultat.', expl: `${q} → ${+(q * 1.1).toFixed(4)} → ${+(q * 1.21).toFixed(4)}. Deux hausses de 10 % font +21 %, pas +20 % !` }; },
+    () => ({ type: 'code', prompt: 'Écris une fonction <code>tarif(age)</code> qui renvoie 8 si l\'âge est inférieur à 18, et 12 sinon.', starter: 'def tarif(age):\n    ',
+      tests: { ref: 'def tarif(age):\n    if age < 18:\n        return 8\n    else:\n        return 12', calls: ['tarif(10)', 'tarif(18)', 'tarif(40)', 'tarif(17)'], must: ['def', 'return', 'if'] },
+      hint: 'Dans la fonction : if age < 18: (décalé), return 8 (encore plus décalé), else:, return 12.', expl: 'Un if / else dans une fonction, avec un return dans chaque bloc.' }),
+    () => ({ type: 'qcm', prompt: 'De quel type est le paramètre <code>carte_fidelite</code> dans <code>prix_entree(16, True)</code> ?', choices: ['bool', 'int', 'str', 'float'], answer: 0, noShuffle: true, cc: true, hint: 'Sa valeur est True ou False.', expl: 'True/False : c\'est un booléen (<code>bool</code>).' }),
+  ] },
+
+/* ======================= ÎLE 3 : FOR ======================= */
+{ id: 'for', name: 'Île de la boucle for', place: 'La Spirale du Serpent', color: '#ffd23f', deep: '#a8811a',
+  story: 'Quand on connaît à l\'avance le nombre de répétitions, la boucle for fait le travail à notre place.',
+  boss: { name: 'Le Serpent Répétiteur', kind: 'serpent', line: 'Je m\'enroule exactement le bon nombre de fois… et toi ?' },
+  blocks: [
+  { id: 'range', name: 'range : les valeurs du compteur', skill: 'Représenter',
+    method: L`<p>Une <b>boucle bornée</b> répète un bloc un nombre de fois <b>connu à l'avance</b>.</p>
+<pre class="py">for i in range(a, b):
+    # instructions répétées</pre>
+<p>Se lit : « pour i allant de $a$ à $b-1$ ». Le compteur <code>i</code> prend les valeurs $a,\ a+1,\ \dots,\ b-1$ : <b>b n'est jamais atteint !</b></p>
+<p>Nombre de tours : $b - a$. Et <code>range(b)</code> = <code>range(0, b)</code>.</p>
+<p>Ex : <code>range(2, 5)</code> → 2, 3, 4 (3 tours).</p>`,
+    qs: [
+      () => { const a = R(0, 6), b = a + R(3, 5); const v = []; for (let k = a; k < b; k++) v.push(k); return { type: 'seq', prompt: 'Quelles valeurs prend <code>k</code> ? Écris-les séparées par des espaces.', code: `for k in range(${a}, ${b}):\n    ...`, answer: v,
+        hint: 'On commence à ' + a + ' et on s\'arrête AVANT ' + b + '.', expl: 'k prend ' + v.join(', ') + ' (pas ' + b + ').' }; },
+      () => { const a = R(1, 20), b = a + R(5, 40); return { type: 'num', prompt: 'Combien de fois le bloc est-il répété ?', code: `for i in range(${a}, ${b}):\n    print(i)`, answer: b - a,
+        hint: L`Nombre de tours $= b - a$.`, expl: L`$${b} - ${a} = ${b - a}$ tours.` }; },
+      () => ({ type: 'qcm', prompt: 'On veut que <code>i</code> aille de 1 à 10 (10 inclus). Quel range ?', choices: ['range(1, 11)', 'range(1, 10)', 'range(10)', 'range(0, 10)'], answer: 0, cc: true,
+        hint: 'La deuxième valeur n\'est jamais atteinte : il faut aller un cran plus loin.', expl: '<code>range(1, 11)</code> donne 1, 2, …, 10.' }),
+      () => { const a = R(2, 6), b = a + R(3, 5); const v = []; for (let k = a; k < b; k++) v.push(k); return { type: 'pick', prompt: 'Touche les valeurs prises par <code>k</code> dans <code>for k in range(' + a + ', ' + b + '):</code>', lo: 0, hi: 12, answer: v,
+        hint: 'De ' + a + ' jusqu\'à ' + (b - 1) + '.', expl: v.join(', ') + '.' }; },
+      () => { const m = R(2, 9), n = R(3, 5); const c = `for i in range(${n}):\n    print(i * ${m})`; return { type: 'seq', prompt: 'Quels nombres affiche ce programme ? (séparés par des espaces)', code: c, answer: out(c).map(Number),
+        hint: 'range(' + n + ') commence à 0 !', expl: 'i prend 0 à ' + (n - 1) + ', d\'où ' + out(c).join(', ') + '.' }; },
+      () => ({ type: 'num', prompt: 'Combien de tours fait cette boucle ?', code: 'for j in range(0, 100):\n    b = b + 1', answer: 100, hint: 'De 0 à 99…', expl: '100 − 0 = 100 tours (j va de 0 à 99).' }),
+    ] },
+  { id: 'lirefor', name: 'Comprendre une boucle for', skill: 'Calculer',
+    method: L`<p><b>Méthode 1 — déterminer ce qu'affiche une boucle for :</b></p>
+<ol><li>On identifie le <b>compteur</b> et ses valeurs ;</li><li>on identifie ce que fait la boucle à chaque tour (le calcul) ;</li>
+<li>on dresse un <b>tableau</b> : une ligne par tour ;</li><li>on calcule au fur et à mesure.</li></ol>
+<pre class="py">f = 1
+for k in range(2, 5):
+    f = f * k</pre>
+<table class="mt"><tr><td>départ</td><td>f = 1</td></tr><tr><td>k = 2</td><td>f = 1×2 = 2</td></tr><tr><td>k = 3</td><td>f = 2×3 = 6</td></tr><tr><td>k = 4</td><td>f = 6×4 = 24</td></tr></table>`,
+    qs: [
+      () => { const a = R(1, 3), b = a + R(3, 4); const c = `f = 1\nfor k in range(${a}, ${b}):\n    f = f * k`; const tr = out(`f = 1\nfor k in range(${a}, ${b}):\n    f = f * k\n    print(k, f)`).map(l => l.split(' '));
+        return { type: 'trace', prompt: 'Complète le tableau : valeur de <code>f</code> à la fin de chaque tour.', code: c, cols: ['Tour', 'k', 'f'], rows: [['départ', '—', '1'], ...tr.map((r, j) => [String(j + 1), r[0], { a: +r[1] }])],
+          hint: 'À chaque tour : nouvelle valeur de f = ancienne valeur de f × k.', expl: 'Valeurs de f : ' + tr.map(r => r[1]).join(' → ') + '.' }; },
+      () => { const a = R(2, 3), b = a + 3; const c = `f = 1\nfor k in range(${a}, ${b}):\n    f = 2*f - k`; const tr = out(c + '\n    print(k, f)').map(l => l.split(' '));
+        return { type: 'trace', prompt: 'Complète le tableau (compteur ET valeur de <code>f</code>).', code: c, cols: ['Tour', 'k', 'f'], rows: [['départ', '—', '1'], ...tr.map((r, j) => [String(j + 1), { a: +r[0] }, { a: +r[1] }])],
+          hint: 'k commence à ' + a + '. Calcule 2 × (ancien f) − k.', expl: 'f : 1 → ' + tr.map(r => r[1]).join(' → ') + '.' }; },
+      () => ({ type: 'num', prompt: 'Quelle est la valeur de <code>b</code> à la fin ? (Piège !)', code: 'b = 5\nfor j in range(0, 100):\n    b = b * j', answer: 0,
+        hint: 'Regarde bien la toute première valeur de j…', expl: 'Au premier tour, j = 0 donc b = 5 × 0 = 0. Ensuite 0 × j reste 0.' }),
+      () => ({ type: 'num', prompt: L`Quelle est la <b>dernière</b> valeur prise par <code>c</code> ? (valeur décimale)`, code: 'for k in range(5, 10):\n    c = k / (k + 1)', answer: 0.9,
+        hint: 'Dernière valeur de k : 9.', expl: L`Pour $k = 9$ : $c = \frac{9}{10} = 0{,}9$.` }),
+      () => { const n = R(4, 10); const c = `s = 0\nfor i in range(1, ${n + 1}):\n    s = s + i\nprint(s)`; return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c),
+        hint: 's ajoute tous les entiers de 1 à ' + n + '.', expl: L`$1 + 2 + \dots + ${n} = ${out1(c)}$.` }; },
+      () => { const d = R(5, 9), b = pk([3, 5, 10]); const c = `prix = 100\nfor jour in range(${d}):\n    prix = prix - ${b}\nprint(prix)`; return { type: 'num', prompt: 'Grande braderie : chaque jour, le prix baisse. Qu\'affiche le programme ?', code: c, answer: +out1(c),
+        hint: 'La boucle tourne ' + d + ' fois et enlève ' + b + ' à chaque tour.', expl: L`$100 - ${d}\times ${b} = ${out1(c)}$.` }; },
+    ] },
+  { id: 'completefor', name: 'Compléter une boucle for', skill: 'Modéliser',
+    method: L`<p><b>Méthode 2 — écrire une boucle for :</b></p>
+<ol><li>Choisir un <b>compteur</b> (par ex. <code>i</code>) ;</li><li>analyser l'<b>intervalle</b> : de combien à combien ? (attention au $b-1$) ;</li>
+<li>traduire le calcul en Python dans le bloc indenté.</li></ol>
+<p>Ex : afficher les quadruples des entiers de 11 à 20 :</p><pre class="py">for i in range(11, 21):
+    print(4 * i)</pre>
+<p><b>Attention à l'indentation :</b> une ligne décalée est répétée ; une ligne non décalée après la boucle est exécutée une seule fois, à la fin.</p>`,
+    qs: [
+      () => ({ type: 'fill', prompt: 'Complète : le programme affiche les quadruples des entiers de 11 à 20.', code: 'for i in range([[0]], [[1]]):\n    print([[2]])', holes: ['11', '21', '4 * i'], tiles: ['11', '20', '21', '10', '4 * i', 'i * i', '4 + i'],
+        hint: 'Le deuxième nombre du range n\'est pas atteint.', expl: '<code>range(11, 21)</code> puis <code>print(4 * i)</code>.' }),
+      () => ({ type: 'fill', prompt: 'Complète : le programme affiche le triple des entiers de 6 à 600.', code: 'for [[0]] in [[1]]:\n    print([[2]])', holes: ['k', 'range(6, 601)', '3 * k'], tiles: ['k', 'range(6, 601)', 'range(6, 600)', '3 * k', 'k ** 3', '6'],
+        hint: 'Pour inclure 600, le range doit aller jusqu\'à 601.', expl: '<code>for k in range(6, 601): print(3 * k)</code>' }),
+      () => ({ type: 'order', prompt: L`Remets dans l'ordre : on affiche les images par $g(x) = 3x^3 - 5$ des entiers de 5 à 25 (une ligne est en trop).`, lines: ['def fonct(x):', '    return 3*x**3 - 5', 'for x in range(5, 26):', '    print(fonct(x))'], distract: ['for x in range(5, 25):'],
+        hint: 'La fonction est définie d\'abord. 25 doit être inclus.', expl: 'On définit la fonction, puis on l\'appelle dans la boucle pour x de 5 à 25.' }),
+      () => ({ type: 'fill', prompt: 'Braderie : un article coûte 100 €, son prix baisse de 5 € chaque jour pendant 7 jours. Complète.', code: 'prix = 100\nfor jour in range([[0]]):\n    prix = prix [[1]] 5\n    print(prix)', holes: ['7', '-'], tiles: ['7', '8', '6', '-', '+', '*'],
+        hint: 'range(n) fait exactement n tours.', expl: '<code>range(7)</code> : 7 tours, et on retire 5 à chaque fois.' }),
+      () => ({ type: 'fill', prompt: L`Complète : le programme affiche la somme $1 + 2 + \dots + 100$.`, code: 's = [[0]]\nfor i in range(1, [[1]]):\n    s = [[2]]\nprint(s)', holes: ['0', '101', 's + i'], tiles: ['0', '1', '100', '101', 's + i', 'i + 1', 's + 1'],
+        hint: 'On part d\'une somme vide (0) et on ajoute i à chaque tour.', expl: 's = 0, range(1, 101), s = s + i → 5050.' }),
+      () => ({ type: 'qcm', prompt: 'Lequel de ces programmes affiche <b>une seule fois</b> le total final ?', choices: ['s = 0\nfor i in range(5):\n    s = s + i\nprint(s)', 's = 0\nfor i in range(5):\n    s = s + i\n    print(s)', 'for i in range(5):\n    s = 0\n    s = s + i\nprint(s)', 's = 0\nfor i in range(5):\nprint(s)'], answer: 0, cc: true, block: true,
+        hint: 'Le print ne doit pas être répété : il doit être en dehors de la boucle (pas décalé).', expl: 'Un print non indenté, après la boucle, n\'est exécuté qu\'une fois. Si s = 0 est dans la boucle, la somme est remise à zéro à chaque tour !' }),
+    ] },
+  { id: 'ecrirefor', name: 'Écrire une boucle for', skill: 'Programmer',
+    method: L`<p>À toi d'écrire ! Rappel de la méthode :</p>
+<ol><li>compteur et intervalle : <code>for i in range(a, b+1):</code> pour aller de $a$ à $b$ ;</li>
+<li>bloc décalé de 4 espaces (bouton <b>⇥</b>) ;</li><li>teste avec <b>▶ Exécuter</b> avant de valider.</li></ol>
+<pre class="py">for i in range(1, 6):
+    print(i**2)       # 1 4 9 16 25</pre>`,
+    qs: [
+      () => ({ type: 'code', prompt: 'Écris un programme qui affiche les quadruples des entiers de 11 à 20.', starter: '', tests: { ref: 'for i in range(11, 21):\n    print(4*i)', must: ['for'] },
+        hint: 'for i in range(11, 21): puis, décalé, print(4*i)', expl: '<code>for i in range(11, 21):\n    print(4*i)</code>' }),
+      () => ({ type: 'code', prompt: 'Écris un programme qui affiche le triple des entiers de 6 à 60.', starter: '', tests: { ref: 'for k in range(6, 61):\n    print(3*k)', must: ['for'] },
+        hint: 'Pour inclure 60, va jusqu\'à 61 dans le range.', expl: '<code>for k in range(6, 61):\n    print(3*k)</code>' }),
+      () => ({ type: 'code', prompt: L`Écris un programme qui calcule puis affiche la somme $1 + 2 + 3 + \dots + 100$ (une seule valeur affichée).`, starter: 's = 0\n', tests: { ref: 's = 0\nfor i in range(1, 101):\n    s = s + i\nprint(s)', must: ['for'] },
+        hint: 'Dans la boucle : s = s + i. Le print est APRÈS la boucle (pas décalé).', expl: 'Résultat : 5050.' }),
+      () => ({ type: 'code', prompt: L`La fonction $g(x) = x^2 - 3x$ est déjà programmée. Affiche les images des entiers de 0 à 10 par $g$.`, starter: 'def g(x):\n    return x**2 - 3*x\n\n', tests: { ref: 'def g(x):\n    return x**2 - 3*x\n\nfor x in range(0, 11):\n    print(g(x))', must: ['for'] },
+        hint: 'for x in range(0, 11): puis print(g(x)).', expl: 'On appelle la fonction g dans la boucle.' }),
+      () => ({ type: 'code', prompt: 'Braderie : un article coûte 100 € et son prix baisse de 5 € par jour pendant 7 jours. Affiche le prix à la fin de chaque jour.', starter: 'prix = 100\n', tests: { ref: 'prix = 100\nfor jour in range(7):\n    prix = prix - 5\n    print(prix)', must: ['for'] },
+        hint: 'Dans la boucle (7 tours) : on baisse le prix, puis on l\'affiche.', expl: 'Affiche 95, 90, …, 65.' }),
+    ] },
+  ],
+  bossQs: [
+    () => ({ type: 'code', prompt: L`Affiche les images des entiers de 1 à 10 par $f : x \mapsto 3x^2 - 36x + 105$, <b>sauf</b> celles qui sont inférieures ou égales à 0.`, starter: 'def f(x):\n    return 3*x**2 - 36*x + 105\n\n',
+      tests: { ref: 'def f(x):\n    return 3*x**2 - 36*x + 105\n\nfor x in range(1, 11):\n    if f(x) > 0:\n        print(f(x))', must: ['for', 'if'] },
+      hint: 'Une boucle for, et dans la boucle un if f(x) > 0: avant le print.', expl: 'Boucle + condition : on n\'affiche que les images strictement positives.' }),
+    () => { const c = `def evo(qte, taux):\n    return qte * (1 + taux/100)\n\nx = 120\nfor y in range(1, 5):\n    print(evo(x, 10*y))`; return { type: 'seq', prompt: 'Quelles valeurs affiche ce programme ? (séparées par des espaces)', code: c, answer: out(c).map(Number),
+      hint: 'y prend 1, 2, 3, 4 donc le taux vaut 10, 20, 30, 40.', expl: '120 × 1,1 ; 120 × 1,2 ; 120 × 1,3 ; 120 × 1,4 → ' + out(c).join(' ; ') + '.' }; },
+    () => { const n = R(3, 6), b = pk([2, 3]); const c = `p = 1\nfor i in range(${n}):\n    p = p * ${b}\nprint(p)`; return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c),
+      hint: 'On multiplie ' + n + ' fois par ' + b + '.', expl: L`$${b}^{${n}} = ${out1(c)}$.` }; },
+    () => ({ type: 'qcm', prompt: L`Défi : un programme affiche les images des entiers de 1 à 10 par $g(x) = -x^2 - x^3 + 1$, sauf celles qui sont négatives ou nulles. Combien de valeurs s'affichent ?`, choices: ['Aucune', '1', '5', '10'], answer: 0, noShuffle: true,
+      hint: L`Calcule $g(1)$. Que se passe-t-il quand $x$ augmente ?`, expl: L`$g(1) = -1 - 1 + 1 = -1 < 0$, et $g$ devient de plus en plus négative : rien ne s'affiche !` }),
+    () => { const m = pk([3, 4, 7]); const c = `c = 0\nfor n in range(1, 21):\n    if n % ${m} == 0:\n        c = c + 1\nprint(c)`; return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c),
+      hint: 'c compte les entiers de 1 à 20 qui sont multiples de ' + m + '.', expl: 'Il y a ' + out1(c) + ' multiples de ' + m + ' entre 1 et 20.' }; },
+    () => { const a = R(2, 3); const c = `f = 1\nfor k in range(${a}, ${a + 3}):\n    f = 2*f - k`; return { type: 'num', prompt: 'Quelle est la valeur finale de <code>f</code> ?', code: c, answer: +out(c + '\nprint(f)')[0],
+      hint: 'Fais un tableau : tour, k, f.', expl: 'Valeur finale : ' + out(c + '\nprint(f)')[0] + '.' }; },
+  ] },
+
+/* ======================= ÎLE 4 : WHILE ======================= */
+{ id: 'while', name: 'Île de la boucle while', place: 'Le Marais de l\'Hydre', color: '#ff6fb5', deep: '#a3326c',
+  story: 'Quand on ne sait pas combien de fois répéter, on répète TANT QUE la condition est vraie.',
+  boss: { name: 'L\'Hydre Tant-que', kind: 'hydre', line: 'Tant que tu te trompes, mes têtes repoussent !' },
+  blocks: [
+  { id: 'choix', name: 'for ou while ?', skill: 'Raisonner',
+    method: L`<p><b>for</b> : le nombre de répétitions est <b>connu à l'avance</b>.<br><b>while</b> : on répète <b>tant que</b> une condition est vraie (on ne sait pas combien de fois).</p>
+<pre class="py">while condition:
+    # instructions répétées</pre>
+<p><b>Astuce :</b> la condition du while est le <b>contraire</b> de la condition d'arrêt.<br>
+On veut <b>au moins</b> 1000 € (arrêt quand capital $\ge 1000$) → on continue <code>while capital < 1000:</code></p>
+<p>Contraires : $\ge$ ↔ $<$ et $>$ ↔ $\le$.</p>`,
+    qs: [
+      () => ({ type: 'qcm', prompt: 'Afficher les 50 premiers multiples de 3 : quelle boucle ?', choices: ['for', 'while'], answer: 0, noShuffle: true, cc: true, hint: 'Sait-on combien de tours il faut ?', expl: 'On sait qu\'il faut 50 tours : boucle <code>for</code>.' }),
+      () => ({ type: 'qcm', prompt: 'Placer 500 € à 10 % par an jusqu\'à avoir au moins 1000 € : quelle boucle ?', choices: ['for', 'while'], answer: 1, noShuffle: true, cc: true, hint: 'Peut-on dire à l\'avance le nombre d\'années ?', expl: 'On ne connaît pas le nombre d\'années : on répète <b>tant que</b> le capital est inférieur à 1000 → <code>while</code>.' }),
+      () => ({ type: 'qcm', prompt: 'On s\'arrête dès que le capital atteint <b>au moins</b> 1000 €. Quelle condition écrire ?', code: 'while ... :\n    capital = capital * 1.1', choices: ['capital < 1000', 'capital >= 1000', 'capital > 1000', 'capital == 1000'], answer: 0, cc: true,
+        hint: 'La condition du while dit quand on CONTINUE, pas quand on s\'arrête.', expl: L`Arrêt : capital $\ge 1000$. Le contraire (on continue) : capital $< 1000$.` }),
+      () => ({ type: 'qcm', prompt: 'On veut l\'année où la population <b>dépasse</b> 60 000 habitants. Quelle condition dans le while ?', choices: ['pop <= 60000', 'pop > 60000', 'pop < 60000', 'pop >= 60000'], answer: 0, cc: true,
+        hint: L`Arrêt quand pop $> 60000$. Quel est le contraire de $>$ ?`, expl: L`Le contraire de $> 60000$ est $\le 60000$ : <code>while pop <= 60000:</code>.` }),
+      () => ({ type: 'qcm', prompt: L`On affiche les puissances de 7 <b>strictement inférieures</b> à $10^4$. On continue tant que…`, choices: ['p < 10**4', 'p > 10**4', 'p <= 10**4', 'p == 10**4'], answer: 0, cc: true,
+        hint: 'On affiche p seulement s\'il est strictement inférieur à 10 000.', expl: L`<code>while p < 10**4:</code> ($10^4$ s'écrit <code>10**4</code>).` }),
+      () => ({ type: 'qcm', prompt: 'Le capital augmente de 10 % par an. Quelle instruction le fait évoluer ?', choices: ['capital = capital * 1.1', 'capital = capital + 10', 'capital = capital * 0.1', 'capital = capital * 10'], answer: 0, cc: true,
+        hint: L`Augmenter de 10 %, c'est multiplier par $1 + \frac{10}{100}$.`, expl: L`Coefficient multiplicateur : $1 + 0{,}1 = 1{,}1$.` }),
+    ] },
+  { id: 'lirewhile', name: 'Comprendre une boucle while', skill: 'Calculer',
+    method: L`<p><b>Méthode 3 — déterminer ce qu'affiche une boucle while :</b></p>
+<ol><li>On calcule successivement les valeurs, dans un <b>tableau</b> ;</li><li>avant chaque tour, on <b>teste la condition</b> ;</li><li>on s'arrête dès qu'elle est <b>fausse</b>.</li></ol>
+<pre class="py">p = 1
+while p < 10000:
+    p = 2*p</pre>
+<p>p : 1, 2, 4, …, 8192 (8192 < 10000 : on continue) → 16384. Le test 16384 < 10000 est faux : on s'arrête. Valeur finale : 16384.</p>
+<p><b>Danger :</b> si la condition ne devient jamais fausse → <b>boucle infinie</b> !</p>`,
+    qs: [
+      () => { const b = pk([2, 3]), S = pk([50, 100, 200]); const c = `p = 1\nwhile p < ${S}:\n    p = ${b}*p`; const tr = out(c + '\n    print(p)').map(Number);
+        return { type: 'trace', prompt: 'Complète le tableau : valeur de <code>p</code> après chaque tour.', code: c, cols: ['Tour', `p < ${S} ?`, 'p'], rows: [['départ', '—', '1'], ...tr.map((v, j) => [String(j + 1), 'Vrai', { a: v }])],
+          hint: 'On multiplie par ' + b + ' tant que p < ' + S + '. Le dernier tour fait dépasser ' + S + '.', expl: 'p : 1 → ' + tr.join(' → ') + '. Ensuite ' + tr[tr.length - 1] + ' < ' + S + ' est faux : fin.' }; },
+      () => { const b = pk([2, 3]), S = pk([1000, 10000, 5000]); const c = `p = 1\nwhile p < ${S}:\n    p = ${b}*p\nprint(p)`; return { type: 'num', prompt: 'Quelle valeur affiche ce programme ?', code: c, answer: +out1(c),
+        hint: 'Liste les puissances de ' + b + ' et arrête-toi à la première qui n\'est plus < ' + S + '.', expl: 'La première puissance de ' + b + ' qui atteint ' + S + ' est ' + out1(c) + '.' }; },
+      () => { const c = 'k = 2\nwhile k != 2048:\n    print(k)\n    k = 4*k'; return { type: 'seq', prompt: 'Quelles valeurs sont affichées ? (séparées par des espaces)', code: c, answer: out(c).map(Number),
+        hint: 'Attention : on affiche AVANT de multiplier, et on ne rentre plus dans la boucle quand k vaut 2048.', expl: '2, 8, 32, 128, 512. Quand k = 2048, la condition est fausse : 2048 n\'est pas affiché.' }; },
+      () => ({ type: 'qcm', prompt: 'Que se passe-t-il avec ce programme ?', code: 'k = 3\nwhile k != 32:\n    k = 2*k', choices: ['Boucle infinie : k ne vaut jamais 32', 'Il s\'arrête avec k = 32', 'Il s\'arrête avec k = 48', 'Erreur de syntaxe'], answer: 0,
+        hint: 'Écris les valeurs : 3, 6, 12, 24, 48… passe-t-on par 32 ?', expl: 'k vaut 3, 6, 12, 24, 48, 96… jamais 32 : la condition k != 32 reste vraie → boucle infinie.' }),
+      () => { const c = 'u = 5\nn = 1\nwhile u >= 1.5:\n    u = u/2 + 1/u\n    n = n + 1'; return { type: 'num', prompt: 'Quelle est la valeur de <code>n</code> à la fin ?', code: c, answer: +out(c + '\nprint(n)')[0],
+        hint: 'Calcule u à chaque tour (à la calculatrice) et compte les tours. Départ : n = 1.', expl: 'u : 5 → 2,7 → environ 1,72 → environ 1,44 (< 1,5 : stop). 3 tours, n = 4.' }; },
+      () => { const x0 = pk([100, 50, 200, 1000]); const c = `c = 0\nx = ${x0}\nwhile x > 1:\n    x = x / 2\n    c = c + 1\nprint(c)`; return { type: 'num', prompt: 'Combien de fois divise-t-on par 2 ? Qu\'affiche le programme ?', code: c, answer: +out1(c),
+        hint: 'Divise ' + x0 + ' par 2 plusieurs fois jusqu\'à obtenir un nombre ≤ 1, en comptant.', expl: 'Il faut ' + out1(c) + ' divisions par 2.' }; },
+    ] },
+  { id: 'completewhile', name: 'Compléter une boucle while', skill: 'Modéliser',
+    method: L`<p><b>Méthode 4 — écrire une boucle while :</b></p>
+<ol><li>On <b>analyse</b> le problème ;</li><li>on identifie la (les) <b>variable(s)</b> et leur <b>valeur de départ</b> ;</li>
+<li>on identifie la <b>condition</b> pour continuer (le contraire de l'arrêt) ;</li><li>on identifie l'<b>évolution</b> des variables à chaque tour.</li></ol>
+<p>Ex : plus petit entier positif $x$ tel que $f(x) = 3x^3 - 7x + 4 \ge 1000$ :</p>
+<pre class="py">x = 0
+while f(x) < 1000:
+    x = x + 1
+print(x)</pre>`,
+    qs: [
+      () => ({ type: 'fill', prompt: '500 € placés à 10 % par an : au bout de combien d\'années aura-t-on au moins 1000 € ?', code: 'capital = 500\nannees = 0\nwhile capital [[0]] 1000:\n    capital = capital [[1]]\n    annees = [[2]]\nprint(annees)', holes: ['<', '* 1.1', 'annees + 1'], tiles: ['<', '>=', '* 1.1', '+ 10', 'annees + 1', 'annees - 1'],
+        hint: 'On continue tant qu\'on n\'a pas 1000. Chaque année : +10 % et une année de plus.', expl: 'Résultat affiché : 8 années.' }),
+      () => ({ type: 'fill', prompt: L`Complète : plus petit entier positif $x$ tel que $f(x) \ge 1000$.`, code: 'def f(x):\n    return 3*x**3 - 7*x + 4\n\nx = [[0]]\nwhile [[1]]:\n    x = [[2]]\nprint(x)', holes: ['0', 'f(x) < 1000', 'x + 1'], tiles: ['0', '1000', 'f(x) < 1000', 'f(x) >= 1000', 'x + 1', 'f(x) + 1'],
+        hint: 'On teste les entiers un par un en partant de 0. On continue tant que f(x) est trop petit.', expl: 'On augmente x de 1 tant que f(x) < 1000.' }),
+      () => ({ type: 'order', prompt: 'Remets dans l\'ordre : on affiche toutes les puissances de 5 inférieures à 1 000 000 (une ligne en trop).', lines: ['p = 1', 'while p < 1000000:', '    print(p)', '    p = 5 * p'], distract: ['    p = p + 5'],
+        hint: 'La plus petite puissance de 5 est 1. La suivante est 1 × 5, puis 5 × 5…', expl: 'On affiche p puis on le multiplie par 5.' }),
+      () => { const c = 'def f(x):\n    return 3*x**3 - 7*x + 4\n\nx = 0\nwhile f(x) < 1000:\n    x = x + 1\nprint(x)'; return { type: 'num', prompt: L`Quel est le plus petit entier positif $x$ tel que $3x^3 - 7x + 4 \ge 1000$ ? (Le programme est donné.)`, code: c, answer: +out1(c),
+        hint: L`Calcule $f(6)$ et $f(7)$.`, expl: L`$f(6) = 610 < 1000$ et $f(7) = 984$… $f(8)=1484$. Réponse : ${out1(c)}.` }; },
+      () => ({ type: 'fill', prompt: L`Complète : on affiche toutes les puissances de 7 strictement inférieures à $10^4$.`, code: 'p = [[0]]\nwhile p [[1]] 10**4:\n    print(p)\n    p = [[2]]', holes: ['1', '<', '7 * p'], tiles: ['0', '1', '7', '<', '>', '7 * p', 'p + 7'],
+        hint: L`$7^0 = 1$ est la première puissance. Ensuite on multiplie par 7.`, expl: 'Affiche 1, 7, 49, 343, 2401.' }),
+      () => ({ type: 'qcm', prompt: 'Que se passe-t-il quand on exécute ce programme ?', code: 'x = 0\nwhile x < 10:\n    print(x)', choices: ['Boucle infinie : x n\'évolue jamais', 'Affiche 0 à 9', 'Affiche 0 à 10', 'N\'affiche rien'], answer: 0,
+        hint: 'Que vaut x après chaque tour ?', expl: 'x reste à 0 : la condition est toujours vraie. Il manque <code>x = x + 1</code> dans la boucle.' }),
+    ] },
+  { id: 'ecrirewhile', name: 'Écrire une boucle while', skill: 'Programmer',
+    method: L`<p>À toi d'écrire ! Les 4 questions de la méthode :</p>
+<ol><li>Quelles <b>variables</b>, et quelles <b>valeurs de départ</b> ?</li><li>Condition pour <b>continuer</b> ?</li><li>Comment <b>évoluent</b> les variables ?</li><li>Que faut-il <b>afficher</b>, et où (dans la boucle ou après) ?</li></ol>
+<pre class="py">p = 1
+while p < 100:
+    print(p)
+    p = 3 * p      # 1 3 9 27 81</pre>`,
+    qs: [
+      () => ({ type: 'code', prompt: 'Écris un programme qui affiche toutes les puissances de 5 inférieures à 1 000 000.', starter: 'p = 1\n', tests: { ref: 'p = 1\nwhile p < 1000000:\n    print(p)\n    p = 5*p', must: ['while'] },
+        hint: 'while p < 1000000: puis, décalés, print(p) et p = 5*p', expl: 'Affiche 1, 5, 25, …, 390625.' }),
+      () => ({ type: 'code', prompt: L`Soit $f(x) = 2x^3 - 5x + 3$. Affiche le plus petit entier positif $x$ tel que $f(x) \ge 500$.`, starter: 'def f(x):\n    return 2*x**3 - 5*x + 3\n\n', tests: { ref: 'def f(x):\n    return 2*x**3 - 5*x + 3\n\nx = 0\nwhile f(x) < 500:\n    x = x + 1\nprint(x)', must: ['while'] },
+        hint: 'x = 0, puis while f(x) < 500: x = x + 1, et print(x) après la boucle.', expl: 'Réponse : 7.' }),
+      () => ({ type: 'code', prompt: 'On place 500 € à 10 % par an. Affiche le nombre d\'années nécessaires pour avoir au moins 1000 €.', starter: 'capital = 500\nannees = 0\n', tests: { ref: 'capital = 500\nannees = 0\nwhile capital < 1000:\n    capital = capital * 1.1\n    annees = annees + 1\nprint(annees)', must: ['while'] },
+        hint: 'Deux variables évoluent dans la boucle : le capital (× 1.1) et les années (+ 1).', expl: 'Il faut 8 ans.' }),
+      () => ({ type: 'code', prompt: L`Affiche toutes les puissances de 7 strictement inférieures à $10^4$.`, starter: '', tests: { ref: 'p = 1\nwhile p < 10**4:\n    print(p)\n    p = 7*p', must: ['while'] },
+        hint: 'Comme pour les puissances de 5, avec 7 et 10**4.', expl: '1, 7, 49, 343, 2401.' }),
+      () => ({ type: 'code', prompt: 'Suite de Syracuse : on part de n. Si n est pair on le divise par 2, sinon on calcule 3n + 1. Affiche le <b>nombre d\'étapes</b> pour arriver à 1.', starter: 'n = int(input("n ?"))\netapes = 0\n',
+        tests: { ref: 'n = int(input("n ?"))\netapes = 0\nwhile n != 1:\n    if n % 2 == 0:\n        n = n // 2\n    else:\n        n = 3*n + 1\n    etapes = etapes + 1\nprint(etapes)', inputs: [['6'], ['7'], ['1'], ['27']], must: ['while', 'if'] },
+        hint: 'while n != 1: puis un if n % 2 == 0: … else: … et etapes = etapes + 1 (dans la boucle, pas dans le if).', expl: 'Pour n = 6 : 8 étapes ; pour n = 27 : 111 étapes !' }),
+    ] },
+  ],
+  bossQs: [
+    () => { const c = 'co2 = 550\nannee = 2005\nwhile co2 >= 300:\n    co2 = co2 * (1 - 8.5/100)\n    annee = annee + 5\nprint(annee)'; return { type: 'num', prompt: L`En 2005, l'empreinte carbone de la France était de 550 millions de tonnes de CO$_2$. Elle diminue de 8,5 % tous les <b>5 ans</b>. En quelle année passera-t-elle sous 300 millions ? (Le programme peut t'aider.)`, code: c, answer: +out1(c),
+      hint: L`Coefficient : $1 - 0{,}085 = 0{,}915$, et on ajoute 5 ans à chaque tour.`, expl: 'Le programme affiche ' + out1(c) + '.' }; },
+    () => { const c = 'def evo(qte, taux):\n    return qte * (1 + taux/100)\n\npop = 45\nannee = 2024\nwhile pop <= 60:\n    pop = evo(pop, 2.5)\n    annee = annee + 1\nprint(annee)'; return { type: 'num', prompt: 'En 2024, une ville compte 45 mille habitants ; la population augmente de 2,5 % par an. En quelle année dépassera-t-elle 60 mille ?', code: c, answer: +out1(c),
+      hint: 'Le programme utilise la fonction evo dans une boucle while. Exécute-le dans ta tête… ou compte les années à la calculatrice.', expl: 'Réponse : ' + out1(c) + '.' }; },
+    () => { const n = pk([6, 3, 12, 10]); const c = `n = ${n}\nprint(n)\nwhile n != 1:\n    if n % 2 == 0:\n        n = n // 2\n    else:\n        n = 3*n + 1\n    print(n)`; return { type: 'seq', prompt: 'Suite de Syracuse : quelles valeurs affiche ce programme ?', code: c, answer: out(c).map(Number),
+      hint: 'Pair : on divise par 2. Impair : 3n + 1. On s\'arrête à 1.', expl: out(c).join(' → ') + '.' }; },
+    () => { const c = 'def evo(qte, taux):\n    return qte * (1 + taux/100)\n\nx = 120\ny = 10\nwhile evo(x, y) <= 200:\n    y = y + 5\nprint(evo(x, y))'; return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c),
+      hint: 'On augmente le taux y de 5 en 5 tant que evo(120, y) ne dépasse pas 200.', expl: 'y = 70 donne 204 > 200 : le programme affiche ' + out1(c) + '.' }; },
+    () => ({ type: 'code', prompt: 'Épargne : 500 € placés à 5 % par an, puis on ajoute 50 € à la fin de chaque année. Affiche le nombre d\'années pour atteindre au moins 1000 €.', starter: 'capital = 500\nannees = 0\n',
+      tests: { ref: 'capital = 500\nannees = 0\nwhile capital < 1000:\n    capital = capital * 1.05 + 50\n    annees = annees + 1\nprint(annees)', must: ['while'] },
+      hint: 'Chaque année : capital = capital * 1.05 + 50, et une année de plus.', expl: 'Il faut 6 ans.' }),
+    () => { const c = 'k = 1\nn = 0\nwhile k < 1000:\n    k = 3*k\n    n = n + 1\nprint(n)'; return { type: 'num', prompt: 'Qu\'affiche ce programme ?', code: c, answer: +out1(c),
+      hint: 'Puissances de 3 : 1, 3, 9, 27… combien de multiplications pour atteindre 1000 ?', expl: L`$3^6 = 729 < 1000$ et $3^7 = 2187$ : 7 tours.` }; },
+  ] },
+];
+const FINAL_BOSS = { name: 'La Reine de la Brume', kind: 'reine', color: '#b9a8ff', deep: '#5b4a9e', line: 'Tu as rallumé les quatre îles… mais sauras-tu tout combiner ?' };
+if (typeof module !== 'undefined') module.exports = { ISLANDS, FINAL_BOSS };
+
+</script>
+<script>
+{
+// ================= Utilitaires =================
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const KWS = 'def|return|if|elif|else|for|in|while|and|or|not|True|False|None|pass|break';
+const BUI = 'print|range|int|float|input|str|abs|round|len';
+function hl(code) {
+  const re = new RegExp(`(#.*$)|("[^"\\n]*"?|'[^'\\n]*'?)|\\b(${KWS})\\b|\\b(${BUI})\\b|\\b(\\d+\\.?\\d*)\\b`, 'gm');
+  let o = '', last = 0, m;
+  while ((m = re.exec(code))) {
+    o += esc(code.slice(last, m.index));
+    const cls = m[1] ? 'c' : m[2] ? 's' : m[3] ? 'k' : m[4] ? 'b' : 'n';
+    o += `<span class="${cls}">${esc(m[0])}</span>`; last = re.lastIndex;
+  }
+  return o + esc(code.slice(last));
+}
+const pre = c => `<pre class="py">${hl(c)}</pre>`;
+function tex(el) { try { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(() => {}); else setTimeout(() => tex(el), 400); } catch (e) {} }
+function fixPres(el) { el.querySelectorAll('pre.py').forEach(p => { if (!p.dataset.h) { p.innerHTML = hl(p.textContent); p.dataset.h = 1; } }); }
+const numParse = s => { s = String(s).trim().replace(/\s/g, '').replace(',', '.'); if (/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)) return parseFloat(s); if (/^[-+]?\d+\/\d+$/.test(s)) { const [a, b] = s.split('/'); return +a / +b; } return NaN; };
+const near = (a, b) => Math.abs(a - b) <= 1e-6 * Math.max(1, Math.abs(b));
+
+// ================= Sauvegarde =================
+const KEY = 'pythonia_v1';
+let S = { name: '', xp: 0, blocks: {}, bosses: {}, unlock: false, big: false };
+try { const t = localStorage.getItem(KEY); if (t) S = Object.assign(S, JSON.parse(t)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const bkey = (i, b) => i.id + '/' + b.id;
+
+// ================= Dessins =================
+const lumi = (w = 80, mood = 'happy') => `<svg viewBox="0 0 100 100" width="${w}" height="${w}" aria-hidden="true"><defs><radialGradient id="lg${w}${mood}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f4ffc2"/><stop offset=".45" stop-color="#d8ff5e" stop-opacity=".9"/><stop offset="1" stop-color="#d8ff5e" stop-opacity="0"/></radialGradient></defs>
+<circle cx="50" cy="66" r="34" fill="url(#lg${w}${mood})"/><ellipse cx="35" cy="34" rx="16" ry="10" fill="#cfeef0" opacity=".75" transform="rotate(-30 35 34)"/><ellipse cx="65" cy="34" rx="16" ry="10" fill="#cfeef0" opacity=".75" transform="rotate(30 65 34)"/>
+<ellipse cx="50" cy="66" rx="17" ry="15" fill="#e9ff8f"/><circle cx="50" cy="44" r="17" fill="#2b5662"/><circle cx="50" cy="44" r="17" fill="none" stroke="#0d2a33" stroke-width="2"/>
+<path d="M42 28 Q38 16 32 14 M58 28 Q62 16 68 14" stroke="#2b5662" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="32" cy="14" r="3.5" fill="#d8ff5e"/><circle cx="68" cy="14" r="3.5" fill="#d8ff5e"/>
+<circle cx="44" cy="43" r="4.5" fill="#fff"/><circle cx="56" cy="43" r="4.5" fill="#fff"/><circle cx="45" cy="44" r="2.3" fill="#0d2a33"/><circle cx="57" cy="44" r="2.3" fill="#0d2a33"/>
+${mood === 'sad' ? '<path d="M44 54 Q50 49 56 54" stroke="#d8ff5e" stroke-width="2.5" fill="none" stroke-linecap="round"/>' : mood === 'think' ? '<path d="M45 53 L55 52" stroke="#d8ff5e" stroke-width="2.5" stroke-linecap="round"/>' : '<path d="M43 51 Q50 58 57 51" stroke="#d8ff5e" stroke-width="2.5" fill="none" stroke-linecap="round"/>'}</svg>`;
+const heart = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M14 6h12v4H14z" fill="#7a5a2a"/><rect x="10" y="10" width="20" height="24" rx="7" fill="#d8ff5e"/><rect x="10" y="10" width="20" height="24" rx="7" fill="none" stroke="#7a5a2a" stroke-width="3"/><path d="M20 15 v14 M14 22 h12" stroke="#a7c93a" stroke-width="2"/></svg>`;
+const spk = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#1d2a2e"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#1d2a2e" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+function glyph(id, c, d) {
+  if (id === 'bases') return `<rect x="128" y="34" width="44" height="40" rx="8" fill="${d}"/><text x="150" y="61" font-family="JetBrains Mono" font-weight="700" font-size="16" text-anchor="middle" fill="#fff">T/F</text><path d="M95 72 l10 -20 l10 20 z M190 74 l8 -14 l8 14z" fill="${d}"/>`;
+  if (id === 'fonctions') return `<g transform="translate(150 50)"><circle r="22" fill="${d}"/><g fill="${d}">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<rect x="-5" y="-30" width="10" height="12" rx="2" transform="rotate(${a})"/>`).join('')}</g><circle r="9" fill="#fff"/></g><path d="M92 56 h26 M182 56 h26" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M200 50 l8 6 l-8 6" stroke="#fff" stroke-width="4" fill="none"/>`;
+  if (id === 'for') return `<path d="M150 56 m-4 0 a4 4 0 1 1 8 0 a10 10 0 1 1 -20 0 a16 16 0 1 1 32 0 a22 22 0 1 1 -44 0" stroke="${d}" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="106" cy="56" r="5" fill="${d}"/>`;
+  if (id === 'while') return `<path d="M120 70 C110 40,140 26,152 44 C164 26,194 40,184 70" stroke="${d}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M178 62 l6 9 l7 -8" stroke="${d}" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="120" cy="70" r="5" fill="${d}"/>`;
+  return `<path d="M150 20 l10 22 l24 2 l-18 15 l6 24 l-22 -13 l-22 13 l6 -24 l-18 -15 l24 -2z" fill="${d}"/>`;
+}
+function islandArt(id, c, d, lit) {
+  const flies = Array.from({ length: lit }, (_, k) => `<circle cx="${40 + (k * 47) % 220}" cy="${14 + (k * 29) % 40}" r="3" fill="#d8ff5e" style="animation-delay:${-k * .7}s"/>`).join('');
+  return `<svg class="art" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><ellipse cx="150" cy="118" rx="128" ry="22" fill="#0a2027"/>
+<path d="M30 110 C40 80,80 70,110 76 C130 60,180 58,200 74 C230 70,272 84,272 110 Z" fill="#f2deae"/><path d="M48 106 C58 74,96 62,120 68 C140 50,182 50,198 66 C226 62,256 80,256 104 C200 96,110 96,48 106Z" fill="${c}"/>
+<path d="M60 112 C120 104,190 104,246 112" stroke="#fff" stroke-opacity=".35" stroke-width="3" fill="none"/>${glyph(id, c, d)}<g class="flies">${flies}</g>
+<path d="M12 132 q10 -6 20 0 t20 0 M240 136 q10 -6 20 0 t20 0" stroke="#3d7d89" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+}
+function bossArt(kind, c) {
+  const eyes = `<circle cx="-14" cy="-6" r="8" fill="#fff"/><circle cx="14" cy="-6" r="8" fill="#fff"/><circle cx="-12" cy="-4" r="4" fill="#160a14"/><circle cx="16" cy="-4" r="4" fill="#160a14"/><path d="M-22 -18 l14 6 M22 -18 l-14 6" stroke="#160a14" stroke-width="4" stroke-linecap="round"/><path d="M-12 16 q12 -8 24 0" stroke="#160a14" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  let body;
+  if (kind === 'golem') body = `<rect x="-42" y="-40" width="84" height="80" rx="14" fill="${c}"/><rect x="-60" y="-14" width="18" height="44" rx="8" fill="${c}"/><rect x="42" y="-14" width="18" height="44" rx="8" fill="${c}"/><path d="M-30 -40 l8 -14 l10 14 M14 -40 l10 -12 l8 12" fill="${c}"/><text x="0" y="34" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#160a14">True?</text>`;
+  else if (kind === 'machine') body = `<rect x="-46" y="-36" width="92" height="76" rx="10" fill="${c}"/><rect x="-62" y="-6" width="16" height="22" fill="#5b6b70"/><rect x="46" y="-6" width="16" height="22" fill="#5b6b70"/><circle cx="0" cy="-46" r="10" fill="#5b6b70"/><rect x="-24" y="26" width="48" height="8" rx="3" fill="#160a14"/>`;
+  else if (kind === 'serpent') body = `<path d="M-50 40 C-50 10,50 20,40 -4 C30 -24,-30 -16,-20 -36" stroke="${c}" stroke-width="26" fill="none" stroke-linecap="round"/><circle cx="0" cy="-8" r="34" fill="${c}"/><path d="M0 22 l-5 12 M0 22 l5 12" stroke="#ff4d6d" stroke-width="3"/>`;
+  else if (kind === 'hydre') body = `<path d="M-40 -20 Q-56 -46 -34 -56 M40 -20 Q56 -46 34 -56" stroke="${c}" stroke-width="14" fill="none" stroke-linecap="round"/><circle cx="-34" cy="-58" r="12" fill="${c}"/><circle cx="34" cy="-58" r="12" fill="${c}"/><circle cx="-37" cy="-60" r="3" fill="#fff"/><circle cx="31" cy="-60" r="3" fill="#fff"/><ellipse cx="0" cy="4" rx="46" ry="40" fill="${c}"/>`;
+  else body = `<path d="M-50 40 Q-56 -20 0 -44 Q56 -20 50 40 Q36 30 25 40 Q12 30 0 40 Q-12 30 -25 40 Q-36 30 -50 40Z" fill="${c}"/><path d="M-22 -48 l8 -16 l8 12 l6 -14 l6 14 l8 -12 l8 16z" fill="#ffd23f"/>`;
+  return `<svg viewBox="-80 -80 160 140" aria-hidden="true"><ellipse cx="0" cy="48" rx="56" ry="8" fill="#000" opacity=".3"/><g>${body}</g><g>${eyes}</g></svg>`;
+}
+const heroSVG = () => `<svg viewBox="0 0 400 380" aria-hidden="true"><defs><radialGradient id="moon"><stop offset="0" stop-color="#fffbe6"/><stop offset="1" stop-color="#f6ecd2" stop-opacity="0"/></radialGradient></defs>
+<circle cx="300" cy="70" r="70" fill="url(#moon)" opacity=".5"/><circle cx="300" cy="70" r="30" fill="#f6ecd2"/>
+<g transform="translate(-10 120) scale(.75)">${islandArt('bases', '#ff8a5b', '#b84a2a', 0).replace(/<svg[^>]*>|<\/svg>/g, '')}</g>
+<g transform="translate(180 170) scale(.7)">${islandArt('for', '#ffd23f', '#a8811a', 0).replace(/<svg[^>]*>|<\/svg>/g, '')}</g>
+<g transform="translate(60 250) scale(.8)">${islandArt('while', '#ff6fb5', '#a3326c', 0).replace(/<svg[^>]*>|<\/svg>/g, '')}</g>
+<g transform="translate(150 20)">${lumi(110).replace(/<svg[^>]*>|<\/svg>/g, '').replace(/id="lg/g, 'id="lgh').replace(/url\(#lg/g, 'url(#lgh')}</g>
+<g class="flies">${[[40, 60], [90, 30], [250, 160], [350, 200], [30, 220], [320, 300], [200, 130]].map(([x, y], k) => `<circle cx="${x}" cy="${y}" r="3.5" fill="#d8ff5e" style="animation-delay:${-k}s"/>`).join('')}</g></svg>`;
+
+// ================= Progression =================
+const blkState = (i, b) => S.blocks[bkey(i, b)] || { best: 0, done: false, plays: 0 };
+const islDone = i => i.blocks.filter(b => blkState(i, b).done).length;
+const islProgress = i => (islDone(i) + (S.bosses[i.id] ? 1 : 0)) / (i.blocks.length + 1);
+const bossOpen = i => S.unlock || islDone(i) === i.blocks.length;
+const finalOpen = () => S.unlock || ISLANDS.every(i => S.bosses[i.id]);
+const level = (p, played) => p >= .8 ? ['Compris !', 'var(--ok)'] : p >= .5 ? ['En progrès', 'var(--warn)'] : (p > 0 || played) ? ['À revoir', 'var(--bad)'] : ['Pas encore essayé', 'var(--mute)'];
+const RANKS = [[0, 'Étincelle'], [150, 'Luciole'], [400, 'Lanterne'], [800, 'Phare'], [1300, 'Étoile de Pythonia']];
+const rank = () => RANKS.filter(r => S.xp >= r[0]).pop()[1];
+const gaugeHTML = (p, played) => { const [l, c] = level(p, played); return `<div class="gauge"><div class="barlab"><span class="gl" style="color:${c}">${l}</span><span>${Math.round(p * 100)} %</span></div><div class="bar" style="--c:${c}"><i style="width:${Math.round(p * 100)}%"></i></div></div>`; };
+const setIsl = (c, d) => { document.documentElement.style.setProperty('--isl', c); document.documentElement.style.setProperty('--isld', d); };
+
+// ================= Écrans =================
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); window.scrollTo(0, 0); }
+function renderMap() {
+  $('#m-xp').textContent = S.xp + ' lucioles'; $('#m-rank').textContent = rank();
+  const done = ISLANDS.filter(i => S.bosses[i.id]).length;
+  $('#m-intro').innerHTML = lumi(64) + `<div><b>${esc(S.name || 'Explorateur·rice')}</b>, ${done === 4 ? (S.bosses.final ? 'tu as chassé la Brume. Bravo ! Tu peux rejouer pour améliorer tes jauges.' : 'les quatre îles brillent ! La Reine de la Brume t\'attend.') : 'choisis une île. Conseil : suis l\'ordre Bases → Fonctions → for → while.'} <span class="small" style="color:var(--mute)">Chaque île a une jauge de compréhension par méthode.</span></div>`;
+  $('#mapgrid').innerHTML = ISLANDS.map((i, k) => { const p = islProgress(i); const lit = Math.round(p * 10);
+    return `<button class="islcard" style="--c:${i.color}" data-isl="${k}">${islandArt(i.id, i.color, i.deep, lit)}<h2>${esc(i.name)}</h2><div class="sub">${esc(i.place)} · ${i.blocks.length} épreuves + 1 gardien</div><div class="barlab"><span>Progression</span><span>${Math.round(p * 100)} %</span></div><div class="bar"><i style="width:${p * 100}%"></i></div>${S.bosses[i.id] ? '<span class="tag" style="color:var(--glow)">Gardien vaincu</span>' : ''}</button>`; }).join('') +
+    `<button class="islcard finalcard ${finalOpen() ? '' : 'locked'}" id="finalcard"><div style="display:flex;gap:14px;align-items:center"><div style="width:120px;flex:none">${bossArt('reine', FINAL_BOSS.color)}</div><div><h2>Le Cœur de la Brume</h2><div class="sub">Boss final : des problèmes qui mélangent tout ce que tu as appris.</div>${finalOpen() ? (S.bosses.final ? '<span class="tag" style="color:var(--glow)">Reine vaincue !</span>' : '<span class="tag" style="color:var(--glow)">Ouvert</span>') : '<div class="lockmsg">Bats les 4 gardiens pour l\'ouvrir</div>'}</div></div></button>`;
+  document.querySelectorAll('[data-isl]').forEach(b => b.onclick = () => openIsland(+b.dataset.isl));
+  $('#finalcard').onclick = () => { if (finalOpen()) startFinal(); };
+}
+let curIsl = 0;
+function openIsland(k) {
+  curIsl = k; const i = ISLANDS[k]; setIsl(i.color, i.deep);
+  $('#i-xp').textContent = S.xp + ' lucioles';
+  const p = islProgress(i), bo = bossOpen(i);
+  $('#islwrap').innerHTML = `<div class="islhead"><div><h1>${esc(i.name)}</h1><p style="margin:6px 0 10px">${esc(i.story)}</p><div class="barlab" style="color:#1d1208"><b>Progression de l'île</b><b>${Math.round(p * 100)} %</b></div><div class="bar"><i style="width:${p * 100}%"></i></div></div>${islandArt(i.id, '#fff8e0', i.deep, Math.round(p * 10))}</div>
+  <div class="blocks">${i.blocks.map((b, j) => { const st = blkState(i, b); return `<button class="blk" data-b="${j}"><span class="num">${j + 1}</span><div><h3>${esc(b.name)}</h3><div class="meta">${b.qs.length} questions · <span class="tag">${b.skill}</span>${st.plays ? ' · joué ' + st.plays + ' fois' : ''}</div>${gaugeHTML(st.best, st.plays)}</div><span class="btn isl" style="min-height:44px;padding:6px 16px">${st.done ? 'Rejouer' : 'Jouer'}</span></button>`; }).join('')}
+  <button class="blk bossblk ${bo ? '' : 'locked'}" id="bossbtn"><span class="num">${bossArt(i.boss.kind, i.color)}</span><div><h3>Gardien : ${esc(i.boss.name)}</h3><div class="meta">${bo ? esc(i.boss.line) : 'Termine les ' + i.blocks.length + ' épreuves pour le défier.'}</div></div><span class="btn ${bo ? '' : 'ghost'}" style="min-height:44px;padding:6px 16px">${S.bosses[i.id] ? 'Revanche' : bo ? 'Affronter' : 'Verrouillé'}</span></button></div>`;
+  document.querySelectorAll('[data-b]').forEach(b => b.onclick = () => methodModal(i, i.blocks[+b.dataset.b], true));
+  $('#bossbtn').onclick = () => { if (bo) startBoss(i); };
+  show('s-island');
+}
+function methodModal(i, b, start) {
+  $('#mbox').innerHTML = `<span class="badge">${esc(i.name)} · ${esc(b.skill)}</span><h2 style="margin:10px 0">Méthode : ${esc(b.name)}</h2><div class="mth">${b.method}</div><div class="actions">${start ? '<button class="btn ghost" id="m-x">Retour</button><button class="btn isl" id="m-go">J\'ai compris, commencer !</button>' : '<button class="btn isl" id="m-x">Revenir à la question</button>'}</div>`;
+  fixPres($('#mbox')); $('#modal').classList.add('on'); tex($('#mbox')); $('#mbox').scrollTop = 0;
+  $('#m-x').onclick = closeModal; if (start) $('#m-go').onclick = () => { closeModal(); startBlock(i, b); };
+}
+function closeModal() { $('#modal').classList.remove('on'); }
+$('#modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
+
+// ================= Partie =================
+let G = null;
+function gen(fs) { return fs.map(f => { const q = f(); q._ = {}; return q; }); }
+function startBlock(i, b) { G = { mode: 'block', isl: i, blk: b, qs: gen(b.qs), i: 0, lives: 3, score: 0, res: [], xp0: S.xp }; setIsl(i.color, i.deep); renderQ(); show('s-game'); }
+function startBoss(i) { G = { mode: 'boss', isl: i, boss: i.boss, qs: gen(i.bossQs), i: 0, lives: 3, score: 0, res: [], xp0: S.xp }; setIsl(i.color, i.deep); renderQ(); show('s-game'); }
+function startFinal() {
+  const fs = shuffle(ISLANDS.flatMap(i => shuffle(i.bossQs).slice(0, 2)));
+  G = { mode: 'final', boss: FINAL_BOSS, qs: gen(fs), i: 0, lives: 3, score: 0, res: [], xp0: S.xp }; setIsl(FINAL_BOSS.color, FINAL_BOSS.deep); renderQ(); show('s-game');
+}
+function helpFor() {
+  if (G.mode === 'block') return methodModal(G.isl, G.blk, false);
+  const q = G.qs[G.i]; const isl = G.isl || ISLANDS.find(i => i.bossQs.includes(q._src)) || ISLANDS[0];
+  $('#mbox').innerHTML = `<span class="badge">Aide · gardien</span><h2 style="margin:10px 0">Les méthodes de l'île</h2><p>Touche la méthode dont tu as besoin :</p><div class="choices">${(G.isl ? [G.isl] : ISLANDS).flatMap(i => i.blocks.map(b => `<button class="choice" data-m="${ISLANDS.indexOf(i)}/${i.blocks.indexOf(b)}"><b>${esc(b.name)}</b><br><span class="small">${esc(i.name)}</span></button>`)).join('')}</div><div class="actions"><button class="btn isl" id="m-x">Revenir à la question</button></div>`;
+  $('#modal').classList.add('on'); $('#m-x').onclick = closeModal;
+  document.querySelectorAll('[data-m]').forEach(x => x.onclick = () => { const [a, c] = x.dataset.m.split('/'); methodModal(ISLANDS[a], ISLANDS[a].blocks[c], false); });
+}
+$('#b-help').onclick = helpFor;
+$('#b-quit').onclick = () => {
+  $('#mbox').innerHTML = `<h2>Quitter ?</h2><p>Ta progression dans ce niveau sera perdue (tes lucioles déjà gagnées sont gardées).</p><div class="actions"><button class="btn ghost" id="m-x">Continuer à jouer</button><button class="btn isl" id="m-q">Quitter</button></div>`;
+  $('#modal').classList.add('on'); $('#m-x').onclick = closeModal; $('#m-q').onclick = () => { closeModal(); G.mode === 'final' ? (renderMap(), show('s-map')) : openIsland(curIsl); };
+};
+function say(t) { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; u.rate = .95; speechSynthesis.speak(u); } catch (e) {} }
+function spoken(html) { const d = document.createElement('div'); d.innerHTML = html; return d.textContent.replace(/\$/g, '').replace(/\\[a-z]+/g, ' ').replace(/[{}^]/g, ' '); }
+
+function renderTop() {
+  const isBoss = G.mode !== 'block';
+  $('#g-title').textContent = isBoss ? G.boss.name : G.blk.name;
+  $('#b-help').textContent = 'Aide';
+  $('#g-lives').innerHTML = [0, 1, 2].map(k => `<span class="${k < G.lives ? '' : 'lost'}" title="vie">${heart}</span>`).join('');
+  $('#g-dots').innerHTML = G.qs.map((q, k) => `<i class="${k < G.i ? (G.res[k] === 1 ? 'done' : G.res[k] === .5 ? 'half' : 'miss') : k === G.i ? 'cur' : ''}"></i>`).join('');
+  if (isBoss) { const hp = 1 - G.res.filter(x => x > 0).length / G.qs.length;
+    $('#g-boss').innerHTML = `<div class="bossarena"><div id="bossimg">${bossArt(G.boss.kind, G.boss.color || G.isl.color)}</div><div><b style="font:800 1.2rem 'Baloo 2'">${esc(G.boss.name)}</b><p class="say2" style="margin:4px 0 8px">« ${esc(G.boss.line)} »</p><div class="barlab"><span>Énergie du gardien</span><span>${Math.round(hp * 100)} %</span></div><div class="bar hp"><i style="width:${hp * 100}%"></i></div></div></div>`;
+  } else $('#g-boss').innerHTML = '';
+}
+function renderQ() {
+  renderTop();
+  const q = G.qs[G.i]; q._.tries = 0; q._.locked = false;
+  const card = $('#g-card');
+  card.innerHTML = `<div class="qprompt"><div class="t"><span class="small">Question ${G.i + 1} / ${G.qs.length}</span><br>${q.prompt}</div><button class="say" id="b-say" aria-label="Lire la consigne à voix haute">${spk}</button></div>${q.code && q.type !== 'code' ? pre(q.code) : ''}<div id="w"></div><div id="fb"></div><div class="actions" id="acts"><button class="btn isl" id="b-ok">Valider</button></div>`;
+  $('#b-say').onclick = () => say(spoken(q.prompt));
+  W[q.type].render(q, $('#w'));
+  $('#b-ok').onclick = validate;
+  tex(card);
+}
+function feedback(kind, title, html, mood) {
+  $('#fb').innerHTML = `<div class="fb ${kind}">${lumi(54, mood)}<div><h3>${title}</h3><div>${html}</div></div></div>`; tex($('#fb'));
+  $('#fb').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function validate() {
+  const q = G.qs[G.i]; if (q._.locked) return;
+  const r = W[q.type].check(q);
+  if (r === null) return; // réponse incomplète
+  if (r === true) {
+    const pts = q._.tries === 0 ? 1 : .5; G.res[G.i] = pts; G.score += pts; const gain = (G.mode === 'block' ? 10 : 15) * pts; S.xp += gain; save();
+    q._.locked = true; W[q.type].lock && W[q.type].lock(q);
+    feedback('ok', pk(['Bravo !', 'Excellent !', 'Bien joué !', 'Parfait !', 'Lumineux !']) + ` +${gain} lucioles`, q.expl, 'happy');
+    if (G.mode !== 'block') { const im = $('#bossimg'); if (im) { im.classList.remove('hit'); void im.offsetWidth; im.classList.add('hit'); } }
+    nextBtn();
+  } else if (q._.tries === 0) {
+    q._.tries = 1;
+    feedback('hint', 'Pas tout à fait… voici un indice', (typeof r === 'string' ? `<p style="margin:0 0 6px">${r}</p>` : '') + q.hint + '<br><button class="btn hintbtn" id="b-meth" style="min-height:40px;margin-top:8px;padding:4px 14px">Revoir la méthode</button>', 'think');
+    $('#b-meth').onclick = helpFor;
+    $('#b-ok').textContent = 'Valider à nouveau';
+  } else {
+    G.res[G.i] = 0; G.lives--; q._.locked = true; W[q.type].reveal(q);
+    renderTop(); $('#g-dots').children[G.i].className = 'miss';
+    feedback('ko', 'Une vie perdue', '<b>La bonne réponse est affichée.</b> ' + q.expl, 'sad');
+    if (G.lives <= 0) { $('#acts').innerHTML = '<button class="btn isl" id="b-next">Continuer</button>'; $('#b-next').onclick = ejected; }
+    else nextBtn();
+  }
+}
+function nextBtn() { $('#acts').innerHTML = `<button class="btn isl" id="b-next">${G.i + 1 < G.qs.length ? 'Question suivante →' : 'Voir le résultat'}</button>`; $('#b-next').onclick = () => { G.i++; G.i < G.qs.length ? renderQ() : finish(); }; $('#b-next').focus(); }
+function ejected() {
+  const back = G.mode === 'final' ? 'la carte' : 'l\'île';
+  $('#reswrap').innerHTML = `${lumi(140, 'sad')}<h1>Éjecté·e de ${back} !</h1><p>Tu as perdu tes 3 vies. La Brume t'a renvoyé·e au port… mais tes lucioles gagnées sont gardées. Relis la méthode et retente : les nombres changent à chaque partie.</p><div class="actions" style="justify-content:center"><button class="btn ghost" id="r-back">Retour</button><button class="btn isl" id="r-again">Recommencer</button></div>`;
+  $('#r-back').onclick = () => G.mode === 'final' ? (renderMap(), show('s-map')) : openIsland(curIsl);
+  $('#r-again').onclick = () => G.mode === 'block' ? methodModal(G.isl, G.blk, true) : G.mode === 'boss' ? startBoss(G.isl) : startFinal();
+  if (G.mode === 'block') { const k = bkey(G.isl, G.blk); const st = blkState(G.isl, G.blk); st.plays++; S.blocks[k] = st; save(); }
+  show('s-res');
+}
+function finish() {
+  const p = G.score / G.qs.length; let title, txt, extra = '';
+  if (G.mode === 'block') {
+    const k = bkey(G.isl, G.blk); const st = blkState(G.isl, G.blk); st.plays++; st.done = true; st.best = Math.max(st.best, p); S.blocks[k] = st;
+    title = 'Épreuve réussie !'; txt = `Tu as terminé « ${esc(G.blk.name)} ».`; extra = `<p class="small" style="color:var(--mute)">Ta jauge garde ton meilleur score. 1 point par bonne réponse du premier coup, ½ point au deuxième essai.</p>${gaugeHTML(st.best)}`;
+  } else if (G.mode === 'boss') { S.bosses[G.isl.id] = true; title = G.boss.name + ' est vaincu !'; txt = `${esc(G.isl.name)} brille de nouveau. Ses lucioles se sont rallumées.`; }
+  else { S.bosses.final = true; title = 'La Brume se dissipe !'; txt = 'Tu as vaincu la Reine de la Brume. Pythonia est sauvée !'; }
+  save();
+  $('#reswrap').innerHTML = `${G.mode === 'block' ? lumi(140) : `<div style="width:160px;margin:auto;opacity:.5">${bossArt(G.boss.kind, G.boss.color || G.isl.color)}</div>${lumi(90)}`}<h1>${title}</h1><p>${txt}</p><div class="bigpct">${Math.round(p * 100)} %</div><p>+${S.xp - G.xp0} lucioles · rang : <b>${rank()}</b></p>${extra}<div class="actions" style="justify-content:center"><button class="btn ghost" id="r-again">Rejouer</button><button class="btn isl" id="r-back">${G.mode === 'final' ? 'Retour à la carte' : 'Retour à l\'île'}</button></div>`;
+  $('#r-back').onclick = () => G.mode === 'final' ? (renderMap(), show('s-map')) : openIsland(curIsl);
+  $('#r-again').onclick = () => G.mode === 'block' ? methodModal(G.isl, G.blk, true) : G.mode === 'boss' ? startBoss(G.isl) : startFinal();
+  show('s-res');
+}
+
+// ================= Types de questions =================
+const W = {};
+W.qcm = {
+  render(q, el) { const order = q.noShuffle ? q.choices.map((_, k) => k) : shuffle(q.choices.map((_, k) => k)); q._.sel = -1;
+    el.innerHTML = `<div class="choices" ${q.block ? 'style="grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))"' : ''}>${order.map(k => `<button class="choice ${q.cc ? 'code' : ''}" data-k="${k}">${esc(q.choices[k])}</button>`).join('')}</div>`;
+    el.querySelectorAll('.choice').forEach(b => b.onclick = () => { if (q._.locked) return; q._.sel = +b.dataset.k; el.querySelectorAll('.choice').forEach(x => x.classList.toggle('sel', x === b)); el.querySelectorAll('.wrong').forEach(x => x.classList.remove('wrong')); }); },
+  check(q) { if (q._.sel < 0) { feedback('hint', 'Choisis une réponse', 'Touche une des propositions, puis valide.', 'think'); return null; }
+    const ok = q._.sel === q.answer; if (!ok) $('#w').querySelector(`[data-k="${q._.sel}"]`).classList.add('wrong'); return ok; },
+  lock(q) { $('#w').querySelector(`[data-k="${q.answer}"]`).classList.add('right'); },
+  reveal(q) { this.lock(q); },
+};
+W.num = {
+  render(q, el) { el.innerHTML = `<div class="ans"><input id="in" inputmode="decimal" autocomplete="off" placeholder="Ta réponse"></div><p class="small">Nombre à virgule : tu peux écrire 0,9 ou 0.9.</p>`; const i = $('#in'); i.onkeydown = e => { if (e.key === 'Enter') validate(); }; i.oninput = () => i.className = ''; setTimeout(() => i.focus({ preventScroll: true }), 50); },
+  check(q) { const v = $('#in').value; if (!v.trim()) return null; const n = numParse(v); const ok = !isNaN(n) && near(n, +q.answer); $('#in').className = ok ? 'right' : 'wrong'; if (isNaN(n)) return 'Écris seulement un nombre.'; return ok; },
+  lock() { $('#in').disabled = true; },
+  reveal(q) { const i = $('#in'); i.value = String(q.answer).replace('.', ','); i.className = 'right'; i.disabled = true; },
+};
+W.seq = {
+  render(q, el) { el.innerHTML = `<div class="ans"><input id="in" autocomplete="off" placeholder="ex : 2 5 8"></div><p class="small">Sépare les nombres par des espaces (ou des ;).</p>`; $('#in').onkeydown = e => { if (e.key === 'Enter') validate(); }; },
+  check(q) { const v = $('#in').value.trim(); if (!v) return null; const arr = v.split(q.answer.every(Number.isInteger) ? /[\s;,]+/ : /[\s;]+|,(?=\s)|,(?!\d)/).filter(Boolean).map(numParse);
+    const ok = arr.length === q.answer.length && arr.every((x, k) => near(x, q.answer[k])); $('#in').className = ok ? 'right' : 'wrong';
+    if (!ok && arr.length !== q.answer.length) return `Tu as donné ${arr.length} valeur(s). Vérifie s'il en manque ou s'il y en a en trop.`; return ok; },
+  lock() { $('#in').disabled = true; },
+  reveal(q) { $('#in').value = q.answer.map(x => String(x).replace('.', ',')).join('  '); $('#in').className = 'right'; $('#in').disabled = true; },
+};
+W.trace = {
+  render(q, el) { el.innerHTML = `<div style="overflow-x:auto"><table class="trace"><tr>${q.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr>${q.rows.map((r, i) => `<tr>${r.map((c, j) => `<td>${typeof c === 'object' ? `<input inputmode="decimal" data-r="${i}" data-c="${j}" autocomplete="off" aria-label="${esc(q.cols[j])} ligne ${i + 1}">` : esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;
+    el.querySelectorAll('input').forEach(x => x.oninput = () => x.className = ''); },
+  check(q) { const ins = [...$('#w').querySelectorAll('input')]; if (ins.some(x => !x.value.trim())) { feedback('hint', 'Tableau incomplet', 'Remplis toutes les cases vides avant de valider.', 'think'); return null; }
+    let bad = 0; ins.forEach(x => { const a = q.rows[x.dataset.r][x.dataset.c].a; const ok = near(numParse(x.value), +a); x.className = ok ? 'right' : 'wrong'; if (!ok) bad++; });
+    return bad ? `${bad} case(s) en rouge à corriger.` : true; },
+  lock() { $('#w').querySelectorAll('input').forEach(x => x.disabled = true); },
+  reveal(q) { $('#w').querySelectorAll('input').forEach(x => { x.value = String(q.rows[x.dataset.r][x.dataset.c].a).replace('.', ','); x.className = 'right'; x.disabled = true; }); },
+};
+W.pick = {
+  render(q, el) { q._.set = new Set(); let h = ''; for (let n = q.lo; n <= q.hi; n++) h += `<button data-n="${n}" aria-pressed="false">${n}</button>`; el.innerHTML = `<div class="pick">${h}</div>`;
+    el.querySelectorAll('button').forEach(b => b.onclick = () => { if (q._.locked) return; const n = +b.dataset.n; q._.set.has(n) ? q._.set.delete(n) : q._.set.add(n); b.classList.toggle('sel'); b.setAttribute('aria-pressed', q._.set.has(n)); el.querySelectorAll('.extra,.miss').forEach(x => x.classList.remove('extra', 'miss')); }); },
+  check(q) { if (!q._.set.size) return null; const A = new Set(q.answer); const extra = [...q._.set].filter(x => !A.has(x)).length, miss = q.answer.filter(x => !q._.set.has(x)).length;
+    if (!extra && !miss) return true; return `${miss ? miss + ' nombre(s) oublié(s)' : ''}${miss && extra ? ' et ' : ''}${extra ? extra + ' nombre(s) en trop' : ''}.`; },
+  reveal(q) { const A = new Set(q.answer); $('#w').querySelectorAll('button').forEach(b => { const n = +b.dataset.n; if (A.has(n) && !q._.set.has(n)) b.classList.add('miss'); if (!A.has(n) && q._.set.has(n)) b.classList.add('extra'); if (A.has(n)) b.classList.add('sel'); }); },
+};
+W.fill = {
+  render(q, el) { q._.v = q.holes.map(() => null); q._.act = 0; const parts = q.code.split(/\[\[(\d+)\]\]/);
+    el.innerHTML = `<pre class="py fillcode">${parts.map((p, k) => k % 2 ? `<button class="hole" data-h="${p}">&nbsp;</button>` : hl(p)).join('')}</pre><p class="small">Touche une case, puis le bon morceau de code. Touche une case remplie pour la vider.</p><div class="tray">${q.tiles.map((t, k) => `<button class="tile" data-t="${k}">${esc(t)}</button>`).join('')}</div>`;
+    const draw = () => { el.querySelectorAll('.hole').forEach(h => { const k = +h.dataset.h; h.innerHTML = q._.v[k] === null ? '&nbsp;' : esc(q.tiles[q._.v[k]]); h.classList.toggle('act', k === q._.act && !q._.locked); }); el.querySelectorAll('.tile').forEach(t => t.classList.toggle('used', q._.v.includes(+t.dataset.t))); };
+    q._.draw = draw;
+    el.querySelectorAll('.hole').forEach(h => h.onclick = () => { if (q._.locked) return; const k = +h.dataset.h; if (q._.v[k] !== null && q._.act === k) q._.v[k] = null; q._.act = k; h.classList.remove('wrong'); draw(); });
+    el.querySelectorAll('.tile').forEach(t => t.onclick = () => { if (q._.locked) return; const ti = +t.dataset.t; const was = q._.v.indexOf(ti); if (was >= 0) q._.v[was] = null; q._.v[q._.act] = ti; el.querySelector(`.hole[data-h="${q._.act}"]`).classList.remove('wrong'); const nx = q._.v.findIndex(x => x === null); if (nx >= 0) q._.act = nx; draw(); });
+    draw(); },
+  check(q) { if (q._.v.some(x => x === null)) { feedback('hint', 'Il reste des cases vides', 'Remplis toutes les cases en pointillés.', 'think'); return null; }
+    let bad = 0; $('#w').querySelectorAll('.hole').forEach(h => { const k = +h.dataset.h; const ok = q.tiles[q._.v[k]] === q.holes[k]; h.classList.toggle('wrong', !ok); if (!ok) bad++; }); return bad ? bad + ' case(s) incorrecte(s), en rouge.' : true; },
+  lock(q) { q._.draw(); $('#w').querySelectorAll('.hole').forEach(h => h.classList.add('right')); },
+  reveal(q) { q._.v = q.holes.map(h => q.tiles.indexOf(h)); q._.locked = true; q._.draw(); $('#w').querySelectorAll('.hole').forEach(h => { h.classList.remove('wrong'); h.classList.add('right'); }); },
+};
+W.order = {
+  render(q, el) { q._.pool = shuffle([...q.lines, ...(q.distract || [])]); q._.prog = [];
+    const draw = () => { el.innerHTML = `<div class="ordz"><div><div class="lab">Ton programme (touche une ligne pour la retirer)</div><div class="zone prog">${q._.prog.length ? q._.prog.map((l, k) => `<button class="line" data-p="${k}">${hl(l)}</button>`).join('') : '<div class="ph">Touche les lignes ci-dessous dans le bon ordre. Le décalage (indentation) est déjà fait.</div>'}</div></div>
+      <div><div class="lab">Lignes disponibles${q.distract && q.distract.length ? ' (attention : ' + q.distract.length + ' ligne(s) piège)' : ''}</div><div class="zone">${q._.pool.map((l, k) => `<button class="line" data-l="${k}">${hl(l)}</button>`).join('') || '<div class="small" style="padding:8px">Toutes les lignes sont placées.</div>'}</div></div></div>`;
+      el.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { if (q._.locked) return; q._.prog.push(q._.pool.splice(+b.dataset.l, 1)[0]); draw(); });
+      el.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { if (q._.locked) return; q._.pool.push(q._.prog.splice(+b.dataset.p, 1)[0]); draw(); }); };
+    q._.draw = draw; draw(); },
+  check(q) { if (!q._.prog.length) return null; if (q._.prog.length === q.lines.length && q._.prog.every((l, k) => l === q.lines[k])) return true;
+    const used = q._.prog.filter(l => (q.distract || []).includes(l)).length; return used ? 'Tu as utilisé une ligne piège.' : q._.prog.length < q.lines.length ? 'Il manque des lignes.' : 'L\'ordre n\'est pas le bon.'; },
+  reveal(q) { q._.prog = q.lines.slice(); q._.pool = (q.distract || []).slice(); q._.locked = true; q._.draw(); },
+};
+const KEYS = ['⇥', '⇤', ':', '(', ')', '=', '==', '<', '>', '<=', '>=', '!=', '+', '-', '*', '/', '**', '%', '"', 'print(', 'range(', 'for ', ' in ', 'while ', 'if ', 'else:', 'def ', 'return ', 'and', 'or'];
+function stripC(c) { return c.split('\n').map(l => l.replace(/#.*$/, '')).join('\n'); }
+function sameOut(a, b) { if (a.length !== b.length) return false; return a.every((l, k) => { const x = l.trim().split(/\s+/), y = b[k].trim().split(/\s+/); return x.length === y.length && x.every((t, j) => { const u = numParse(t), v = numParse(y[j]); return (!isNaN(u) && !isNaN(v)) ? near(u, v) : t === y[j]; }); }); }
+W.code = {
+  render(q, el) {
+    el.innerHTML = `<div class="editor"><textarea id="ed" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Éditeur Python">${esc(q._.draft ?? q.starter)}</textarea>
+    <div class="keybar">${KEYS.map(k => `<button data-k="${esc(k)}" class="${k.length > 3 ? 'w' : ''}" aria-label="${k === '⇥' ? 'Décaler (4 espaces)' : k === '⇤' ? 'Enlever le décalage' : esc(k)}">${esc(k.trim() || k)}</button>`).join('')}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" id="b-run" style="min-height:44px">▶ Exécuter (sans risque)</button>${q.tests.inputs ? `<span class="small" style="align-self:center">Valeur saisie simulée pour input : ${esc(q.tests.inputs[0][0])}</span>` : ''}</div>
+    <div class="console" id="con"><span class="h">La sortie de ton programme s'affichera ici.</span></div></div>`;
+    const ed = $('#ed');
+    const ins = (txt) => { const s = ed.selectionStart, e = ed.selectionEnd; ed.setRangeText(txt, s, e, 'end'); ed.focus(); q._.draft = ed.value; };
+    ed.addEventListener('keydown', e => {
+      if (e.key === 'Tab') { e.preventDefault(); ins('    '); }
+      if (e.key === 'Enter') { e.preventDefault(); const s = ed.selectionStart; const line = ed.value.slice(0, s).split('\n').pop(); let ind = line.match(/^ */)[0]; if (/:\s*$/.test(line)) ind += '    '; ins('\n' + ind); }
+    });
+    ed.oninput = () => q._.draft = ed.value;
+    el.querySelectorAll('.keybar button').forEach(b => { b.addEventListener('pointerdown', e => e.preventDefault()); b.onclick = () => {
+      const k = b.dataset.k; const s = ed.selectionStart; const ls = ed.value.lastIndexOf('\n', s - 1) + 1;
+      if (k === '⇥') { ed.setRangeText('    ', ls, ls, 'preserve'); ed.selectionStart = ed.selectionEnd = s + 4; ed.focus(); q._.draft = ed.value; }
+      else if (k === '⇤') { const sp = ed.value.slice(ls, ls + 4).match(/^ */)[0].length; if (sp) { ed.setRangeText('', ls, ls + sp, 'preserve'); ed.selectionStart = ed.selectionEnd = Math.max(ls, s - sp); } ed.focus(); q._.draft = ed.value; }
+      else if (k === 'and' || k === 'or') ins(' ' + k + ' ');
+      else if (['==', '<', '>', '<=', '>=', '!=', '='].includes(k)) ins(' ' + k + ' ');
+      else ins(k);
+    }; });
+    $('#b-run').onclick = () => { const r = PY.run(ed.value, { inputs: q.tests.inputs ? q.tests.inputs[0].slice() : [] }); this.show(r); };
+  },
+  show(r, extra) { const c = $('#con'); const o = r.out.length > 60 ? r.out.slice(0, 60).concat(['… (' + (r.out.length - 60) + ' lignes de plus)']) : r.out;
+    c.innerHTML = (o.length ? esc(o.join('\n')) : '<span class="h">(rien n\'est affiché)</span>') + (r.err ? `\n<span class="e">Erreur${r.line ? ' ligne ' + r.line : ''} : ${esc(r.err)}</span>` : '') + (extra ? '\n' + extra : ''); },
+  check(q) {
+    const code = $('#ed').value; const t = q.tests; if (!code.trim() || code.trim() === q.starter.trim()) { feedback('hint', 'Écris ton programme', 'Écris ton code dans la zone noire, puis valide.', 'think'); return null; }
+    for (const m of (t.must || [])) if (!new RegExp('\\b' + m + '\\b').test(stripC(code))) return `Ton programme doit utiliser <code>${m}</code>.`;
+    const cases = t.inputs || [[]];
+    for (const inp of cases) {
+      const tail = t.calls ? '\n' + t.calls.map(c => `print(${c})`).join('\n') : '';
+      const ref = PY.run(t.ref + tail, { inputs: inp.slice(), echo: false });
+      const me = PY.run(code + tail, { inputs: inp.slice(), echo: false });
+      if (me.err) { this.show(me); return `Ton programme provoque une erreur${me.line ? ' à la ligne ' + me.line : ''} : ${esc(me.err)}`; }
+      if (!sameOut(me.out, ref.out)) {
+        let msg;
+        if (t.calls) { const n = t.calls.length, a = me.out.slice(-n), b = ref.out; const k = b.findIndex((x, j) => !sameOut([a[j] || ''], [x])); msg = `Test : <code>${esc(t.calls[k] || t.calls[0])}</code> devrait renvoyer <b>${esc(b[k] ?? b[0])}</b>, ton programme donne <b>${esc(a[k] ?? 'rien')}</b>.`; }
+        else msg = `Avec ${inp.length ? 'n = ' + esc(inp[0]) : 'ton programme'}, l'affichage attendu commence par <b>${esc(ref.out.slice(0, 4).join(' ; '))}${ref.out.length > 4 ? ' …' : ''}</b> (${ref.out.length} ligne(s)), le tien : <b>${esc(me.out.slice(0, 4).join(' ; ') || 'rien')}${me.out.length > 4 ? ' …' : ''}</b> (${me.out.length} ligne(s)).`;
+        this.show(me); return msg;
+      }
+    }
+    this.show(PY.run(code, { inputs: cases[0].slice() }), '<span style="color:#5ee6a0">✔ Tous les tests sont réussis.</span>'); return true;
+  },
+  lock() { $('#ed').readOnly = true; },
+  reveal(q) { $('#con').innerHTML = '<span class="h">Une solution possible :</span>\n' + hl(q.tests.ref); $('#ed').readOnly = true; },
+};
+
+// ================= Carnet =================
+function renderCarnet() {
+  $('#c-xp').textContent = S.xp + ' lucioles';
+  $('#carwrap').innerHTML = `<h1 style="font-size:2.4rem;color:var(--sand)">Mon carnet de bord</h1><p style="color:var(--mute)">${esc(S.name)} · rang <b style="color:var(--glow)">${rank()}</b> · ${S.xp} lucioles. Chaque jauge montre ton meilleur score sur la méthode.</p>
+  <div class="legend"><span><i style="background:var(--ok)"></i>Compris (80 % et plus)</span><span><i style="background:var(--warn)"></i>En progrès (50 à 79 %)</span><span><i style="background:var(--bad)"></i>À revoir (moins de 50 %)</span></div>
+  ${ISLANDS.map(i => `<h2 style="--c:${i.color}">${esc(i.name)} ${S.bosses[i.id] ? '<span class="tag" style="color:var(--glow)">gardien vaincu</span>' : ''}</h2>${i.blocks.map(b => `<div class="row"><div><b>${esc(b.name)}</b><br><span class="small" style="color:var(--mute)">${b.skill}</span></div>${gaugeHTML(blkState(i, b).best, blkState(i, b).plays)}</div>`).join('')}`).join('')}
+  <h2 style="--c:var(--glow)">Mon bilan pour le professeur</h2><p style="color:var(--mute)">Copie ce bilan pour le coller dans l'ENT ou un message.</p><pre class="console" id="bilan"></pre><div class="actions" style="justify-content:flex-start"><button class="btn" id="b-copy">Copier mon bilan</button></div>
+  <details style="margin-top:30px;color:var(--mute)"><summary>Espace professeur</summary><p>Déverrouiller tous les gardiens (pour une démonstration) ou effacer la progression de cette tablette.</p><div class="actions" style="justify-content:flex-start"><button class="btn ghost" id="b-unl">${S.unlock ? 'Reverrouiller' : 'Tout déverrouiller'}</button><button class="btn ghost" id="b-reset">Effacer la progression</button></div></details>`;
+  const bil = `Pythonia – ${S.name} – ${S.xp} lucioles (${rank()})\n` + ISLANDS.map(i => `${i.name}${S.bosses[i.id] ? ' [gardien vaincu]' : ''}\n` + i.blocks.map(b => { const p = blkState(i, b).best; return `  - ${b.name} : ${Math.round(p * 100)} % (${level(p, blkState(i, b).plays)[0]})`; }).join('\n')).join('\n') + (S.bosses.final ? '\nBoss final vaincu !' : '');
+  $('#bilan').textContent = bil;
+  $('#b-copy').onclick = () => { try { navigator.clipboard.writeText(bil).then(() => $('#b-copy').textContent = 'Copié !', () => $('#b-copy').textContent = 'Sélectionne le texte et copie-le'); } catch (e) { $('#b-copy').textContent = 'Sélectionne le texte et copie-le'; } };
+  $('#b-unl').onclick = () => { S.unlock = !S.unlock; save(); renderCarnet(); };
+  $('#b-reset').onclick = () => { $('#mbox').innerHTML = `<h2>Tout effacer ?</h2><p>Les jauges, lucioles et gardiens de cette tablette seront remis à zéro. C'est définitif.</p><div class="actions"><button class="btn ghost" id="m-x">Annuler</button><button class="btn isl" id="m-r" style="background:var(--bad)">Effacer</button></div>`; $('#modal').classList.add('on'); $('#m-x').onclick = closeModal; $('#m-r').onclick = () => { const n = S.name; S = { name: n, xp: 0, blocks: {}, bosses: {}, unlock: false, big: S.big }; save(); closeModal(); renderCarnet(); }; };
+  show('s-carnet');
+}
+
+// ================= Démarrage =================
+$('#heroart').innerHTML = heroSVG();
+$('#pname').value = S.name || '';
+const goMap = () => { const n = $('#pname').value.trim(); if (!n) { $('#pname').focus(); $('#pname').placeholder = 'Écris ton prénom pour commencer'; return; } S.name = n; save(); renderMap(); show('s-map'); };
+$('#go').onclick = goMap; $('#pname').onkeydown = e => { if (e.key === 'Enter') goMap(); };
+$('#b-carnet').onclick = renderCarnet;
+$('#b-back-map').onclick = $('#b-back-map2').onclick = () => { renderMap(); show('s-map'); };
+const applyBig = () => document.documentElement.classList.toggle('big', !!S.big);
+$('#b-big').onclick = () => { S.big = !S.big; save(); applyBig(); }; applyBig();
+if (S.name) $('#go').textContent = 'Reprendre l\'aventure';
+}
+
+</script>
+</body>
+</html>

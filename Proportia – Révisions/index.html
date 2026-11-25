@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proportia – Révisions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<script>
+window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'global'},startup:{typeset:false}};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<style>
+/* VOICE: jeu de révision joyeux, lisible pour des élèves en difficulté (PAP) : grands caractères, consignes courtes.
+   IDEA: une console portable des années 2000 — carte du monde en pixel art, combats en boîtes de dialogue doubles.
+   PICTURE: la carte de la région Proportia (plaine, port, labo, cascade, mont, Ligue) avec le dresseur qui s'y déplace.
+   COLOUR and TYPE: vert prairie dominant, bleu-ardoise des cadres, rouge vif d'interface ; Press Start 2P pour les titres, Atkinson Hyperlegible pour lire.
+   LAYOUT: écran de jeu centré max 1100px ; carte + panneau ; combat = terrain en haut, dialogue en bas ; tout s'empile sous 600px. */
+:root{color-scheme:light dark;
+--bg:light-dark(#cfe9b4,#0f1f17);--ink:light-dark(#18241b,#eef5e8);--panel:light-dark(#ffffff,#1b2b24);
+--soft:light-dark(#f1f7ea,#22362d);--line:light-dark(#2f3d5c,#a9bde0);--red:#e2403a;--gold:#f2b705;
+--ok:light-dark(#2e8b3a,#6fd67c);--warn:light-dark(#b85c00,#ffb357);--bad:light-dark(#c62828,#ff7a7a);
+--grass:light-dark(#7ccf5a,#2f6b3a);--grass2:light-dark(#69b84a,#285c32);--path:light-dark(#ecd9a0,#8a7a50);--water:light-dark(#5ab8f0,#1f5d86)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 'Atkinson Hyperlegible',system-ui,sans-serif;overflow-x:clip}
+.px{font-family:'Press Start 2P',monospace;line-height:1.5}
+#app{max-width:1100px;margin:0 auto;padding:14px max(3vw,12px) 40px}
+h1,h2,h3{font-family:'Press Start 2P',monospace;font-weight:400;line-height:1.35;margin:0 0 12px;text-wrap:balance}
+h1{font-size:clamp(22px,4vw,36px)}h2{font-size:clamp(15px,2.4vw,20px)}h3{font-size:13px}
+.box{background:var(--panel);border:4px solid var(--line);border-radius:6px;box-shadow:inset 0 0 0 3px var(--panel),inset 0 0 0 5px light-dark(#c9d4e8,#3c5068);padding:18px}
+.btn{font-family:'Press Start 2P',monospace;font-size:12px;line-height:1.4;min-height:44px;padding:12px 16px;border:3px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);box-shadow:0 4px 0 var(--line);cursor:pointer;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.btn:focus-visible,.cell:focus-visible,input:focus-visible,.choice:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.btn.main{background:var(--red);color:#fff}.btn.gold{background:var(--gold);color:#2a2000}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hud{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.chip{font-family:'Press Start 2P',monospace;font-size:11px;background:var(--panel);border:3px solid var(--line);border-radius:4px;padding:8px 10px;display:inline-flex;gap:8px;align-items:center}
+.prof-banner{background:var(--gold);color:#2a2000;font-family:'Press Start 2P',monospace;font-size:11px;padding:8px 12px;border-radius:4px;margin-bottom:10px}
+svg.sp{shape-rendering:crispEdges;display:block}
+/* titre */
+.title{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:stretch}
+.logo{font-size:clamp(28px,6vw,54px);color:var(--red);text-shadow:4px 4px 0 var(--line);margin:4px 0 10px}
+.parade{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;background:var(--grass);border:4px solid var(--line);border-radius:6px;padding:20px 10px;margin-top:14px}
+.plist{display:grid;gap:10px;margin:12px 0}
+.pbtn{display:flex;gap:12px;align-items:center;text-align:left;width:100%}
+.pbtn small{font-family:'Atkinson Hyperlegible',sans-serif;font-size:14px;display:block;margin-top:4px}
+/* création */
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0 18px}
+.pick button{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px}
+.pick button[aria-pressed=true]{background:var(--gold);color:#2a2000}
+input[type=text],input[type=password]{font:18px 'Atkinson Hyperlegible',sans-serif;padding:10px 12px;border:3px solid var(--line);border-radius:4px;background:var(--soft);color:var(--ink);min-height:48px;width:100%;max-width:340px}
+/* carte */
+.mapwrap{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.map{position:relative;border:4px solid var(--line);border-radius:6px;overflow:hidden;background:#78c850}
+.map canvas{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges}
+.tz{position:absolute;background:transparent;border:3px dashed transparent;border-radius:3px;cursor:pointer;padding:0;min-height:0}
+.tz:hover,.tz.on{border-color:#f2b705}.tz:focus-visible{outline:3px solid #f2b705}
+.lbl{position:absolute;transform:translate(-50%,0);font-family:'Press Start 2P',monospace;font-size:clamp(7px,.95vw,10px);background:#fffbe8;color:#1d1d2b;border:2px solid #1d1d2b;padding:3px 5px;white-space:nowrap;pointer-events:none;box-shadow:2px 2px 0 rgba(0,0,0,.3)}
+.lbl.lk{background:#d8d8d8;color:#555}
+.token{position:absolute;transform:translate(-50%,-88%);pointer-events:none;z-index:2;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.35))}
+.token svg{width:clamp(16px,2.2vw,26px);height:auto}
+.token img{height:clamp(30px,4.6vw,54px)!important;width:auto!important}.token.walk svg,.token.walk img{animation:bob .28s steps(2) infinite}@keyframes bob{50%{transform:translateY(-2px)}}
+@media(max-width:600px){.lbl{display:none}}
+.intro{position:fixed;inset:0;z-index:30;display:none;overflow:hidden}.intro.on{display:block}.intro.out{opacity:0;transition:opacity .35s}
+.fl{position:absolute;inset:0;background:#fff;opacity:0;animation:fl2 .8s linear}@keyframes fl2{20%{opacity:.85}40%{opacity:0}60%{opacity:.85}80%{opacity:0}}
+.bars{position:absolute;inset:0;display:grid;grid-template-rows:repeat(10,1fr)}.bars i{background:#111;transform:translateX(-101%);animation:bar .4s steps(6) forwards}.bars i:nth-child(even){transform:translateX(101%)}@keyframes bar{to{transform:none}}
+.vs{position:absolute;inset:0;background:#111;opacity:0;animation:vsin .3s 1.4s forwards;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:1fr auto;align-items:center;justify-items:center;padding:4vh 4vw;gap:12px}
+@keyframes vsin{to{opacity:1}}
+.vsband{position:absolute;inset:0;background:var(--c);clip-path:polygon(0 22%,100% 8%,100% 66%,0 80%)}
+.vsP,.vsC{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;color:#fff;font-family:'Press Start 2P',monospace;font-size:12px;text-align:center;text-shadow:2px 2px 0 #000}
+.vs svg.sp,.vs img.cimg,.vs img.trimg{width:auto!important;height:clamp(140px,38vh,320px)!important;filter:drop-shadow(4px 4px 0 rgba(0,0,0,.4))}.vsC .crew img.cimg{height:clamp(60px,13vh,110px)!important}
+.vsP{animation:slL .5s 1.6s both steps(8)}.vsC{animation:slR .5s 1.6s both steps(8)}@keyframes slL{from{transform:translateX(-70vw)}}@keyframes slR{from{transform:translateX(70vw)}}
+.vsT{position:relative;font-size:clamp(40px,9vw,96px);color:#f2b705;text-shadow:5px 5px 0 #000;animation:zoom .4s 2s both steps(5)}@keyframes zoom{from{transform:scale(3);opacity:0}}
+.vsQ{grid-column:1/-1;position:relative;max-width:640px;width:100%;opacity:0;animation:vsin .3s 2.3s forwards}
+.rm .vs,.rm .vsP,.rm .vsC,.rm .vsT,.rm .vsQ{animation:none!important;opacity:1!important}
+@media(max-width:600px){.vs{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;align-content:center}.vsQ{grid-column:auto}}
+.towns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.towns .btn{font-size:10px;padding:10px}
+.towns .btn.on{background:var(--gold);color:#2a2000}
+.meter{height:18px;border:3px solid var(--line);border-radius:3px;background:var(--soft);overflow:hidden;margin:6px 0 4px}
+.meter i{display:block;height:100%;background:var(--ok);transition:width .5s}
+.meter.lo i{background:var(--bad)}.meter.mid i{background:var(--warn)}
+.mlabel{font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+/* ville */
+.banner{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;color:#fff;border:4px solid var(--line);border-radius:6px;padding:18px;margin-bottom:16px;text-shadow:2px 2px 0 rgba(0,0,0,.35)}
+.banner h1{margin:0 0 8px}
+.lvls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+.lvl{display:flex;flex-direction:column;gap:8px;text-align:left;align-items:flex-start;height:100%}
+.lvl .sk{font-size:9px;background:var(--soft);padding:4px 6px;border-radius:3px}
+.lvl b{font-size:12px}
+.lvl small{font-family:'Atkinson Hyperlegible',sans-serif;font-size:14px}
+.lvl.boss{background:light-dark(#fff4d6,#3a3216)}
+/* combat */
+.field{position:relative;height:clamp(210px,32vw,280px);border:4px solid var(--line);border-radius:6px 6px 0 0;overflow:hidden;background:#9fd8ff}
+.field canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.foe{position:absolute;right:10%;top:2%;height:46%;animation:idle 1.4s steps(2) infinite}.foe svg,.bud svg,.foe img,.bud img{height:100%!important;width:auto!important}.bud img{transform:scaleX(-1)}.crimg.sil{filter:brightness(0) opacity(.55)}.crimg,.trimg{filter:drop-shadow(2px 3px 0 rgba(0,0,0,.18))}.foe.ch{height:64%;top:0;right:8%}.banner img.cimg{background:rgba(255,255,255,.18);border-radius:6px}.bud{position:absolute;left:8%;bottom:3%;height:50%;animation:idle 1.7s steps(2) infinite}.bud svg{transform:scaleX(-1)}@keyframes idle{50%{transform:translateY(-3px)}}.foe.shake{animation:sh .35s steps(4)}
+.stat{position:absolute;background:var(--panel);border:3px solid var(--line);border-radius:4px;padding:8px 10px;font-family:'Press Start 2P',monospace;font-size:10px;min-width:170px}
+.stat.top{left:4%;top:8%}.stat.bot{right:4%;bottom:8%}
+.hp{height:10px;border:2px solid var(--line);background:var(--soft);margin-top:6px;border-radius:2px;overflow:hidden}
+.hp i{display:block;height:100%;background:var(--ok);transition:width .5s}
+.hearts{display:flex;gap:4px;margin-top:6px}
+.dialog{border:4px solid var(--line);border-top:0;border-radius:0 0 6px 6px;background:var(--panel);padding:18px;min-height:240px}
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:10px}
+.tag{font-family:'Press Start 2P',monospace;font-size:10px;background:var(--line);color:var(--panel);padding:5px 8px;border-radius:3px}
+.qtext{font-size:19px;margin-bottom:14px}
+.ans{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}
+.ans input{max-width:220px}
+.unit{font-weight:700;font-size:19px}
+.choices{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.choice{font:17px 'Atkinson Hyperlegible',sans-serif;text-align:left;padding:12px 14px;min-height:48px;border:3px solid var(--line);border-radius:4px;background:var(--soft);color:var(--ink);cursor:pointer}
+.choice.no{border-color:var(--bad);opacity:.55;text-decoration:line-through}.choice.yes{border-color:var(--ok);background:light-dark(#e3f6e5,#1e3d25)}
+.fb{margin-top:14px;padding:12px 14px;border-radius:4px;border:3px solid;font-size:17px}
+.fb.ok{border-color:var(--ok);background:light-dark(#eaf8ec,#173022)}.fb.hint{border-color:var(--warn);background:light-dark(#fff3e0,#3a2a12)}.fb.bad{border-color:var(--bad);background:light-dark(#fdeaea,#3a1818)}
+.fb b{font-family:'Press Start 2P',monospace;font-size:11px;display:block;margin-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(10,minmax(0,30px));gap:3px;margin:8px 0;touch-action:none;user-select:none}
+.cell{aspect-ratio:1;border:2px solid var(--line);border-radius:2px;background:var(--soft);padding:0;cursor:pointer}
+.cell.pre{background:light-dark(#cdeec0,#2d5a35)}.cell.on{background:var(--red)}
+.mf{display:grid;gap:10px;margin:8px 0}
+.mf label{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:18px}
+.mf input.good{border-color:var(--ok)}.mf input.wrong{border-color:var(--bad)}
+.tb{border-collapse:collapse;margin:8px 0;font-size:16px}.tb th,.tb td{border:2px solid var(--line);padding:6px 10px;text-align:right;white-space:nowrap}.tb th{background:var(--soft);text-align:left}
+.scroll{overflow-x:auto}
+.shake{animation:sh .35s steps(4)}@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.flash{animation:fl .4s}@keyframes fl{50%{background:var(--bad)}}
+@media (prefers-reduced-motion:reduce){.shake,.flash,.foe,.bud{animation:none}.token.walk svg{animation:none}}
+/* modale */
+#modal{position:fixed;inset:0;background:rgba(10,20,15,.6);display:none;align-items:center;justify-content:center;padding:14px;z-index:20}
+#modal.open{display:flex}
+#modal .box{max-width:680px;width:100%;max-height:90vh;overflow:auto}
+.meth{background:var(--soft);border-left:6px solid var(--red);padding:12px 14px;margin:10px 0;border-radius:3px}
+.meth ol{margin:6px 0;padding-left:22px}
+.ex{border-left-color:var(--gold)}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:12px}
+.bcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:var(--soft);border:3px solid var(--line);border-radius:6px;padding:12px}
+.bcard b{font-size:11px}.bcard small{font-size:14px;line-height:1.35}.bcard.unk{opacity:.85}.bno{position:absolute;left:8px;top:8px;font-size:9px;opacity:.7}
+.btype{font-size:13px;font-weight:700;background:var(--panel);border:2px solid var(--line);border-radius:3px;padding:1px 6px}
+.shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.shop .box{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:14px}
+.ptable{border-collapse:collapse;width:100%;font-size:15px}.ptable th,.ptable td{border-bottom:2px solid var(--soft);padding:8px 6px;text-align:left;vertical-align:middle}
+.mini{width:60px;height:10px;border:2px solid var(--line);display:inline-block;vertical-align:middle;background:var(--soft)}.mini i{display:block;height:100%;background:var(--ok)}
+.note{font-size:14px;opacity:.85}
+@media(max-width:760px){.title,.mapwrap{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.banner{grid-template-columns:minmax(0,1fr)}.stat{min-width:0;font-size:8px;padding:6px}.qtext{font-size:18px}.grid{grid-template-columns:repeat(10,minmax(0,1fr))}.dialog{padding:14px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="intro" class="intro" aria-live="polite"></div>
+<div id="modal" role="dialog" aria-modal="true"><div class="box" id="mbox"></div></div>
+<script>
+{
+/*DATA*/
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const P=a=>a[Math.floor(Math.random()*a.length)];
+const SH=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const rd=(x,d=0)=>{const f=10**d,v=+(x*f).toPrecision(12);return Math.sign(v)*Math.round(Math.abs(v))/f};
+const fr=x=>String(+(+x).toPrecision(12)).replace('.',',');
+const L=x=>fr(x).replace(',','{,}');
+const pct=x=>fr(x)+' %';
+const m=(s,...v)=>'\\('+String.raw(s,...v)+'\\)';
+const N=(q,ans,o={})=>({t:'num',q,ans,...o});
+const C=(q,good,bad,o={})=>({t:'qcm',q,good,choices:SH([good,...bad]),...o});
+const G=(q,ans,pre,o={})=>({t:'grid',q,ans,pre,...o});
+const U=(q,fields,o={})=>({t:'multi',q,fields,...o});
+const tb=(h,rows)=>`<div class="scroll"><table class="tb"><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map((x,i)=>i?`<td>${x}</td>`:`<th>${x}</th>`).join('')}</tr>`).join('')}</table></div>`;
+const up_=t=>1+t/100, dn_=t=>1-t/100;
+
+/* ---------- MÉTHODES (fiches du cours) ---------- */
+const METH=[
+`<div class="meth"><b>Propriété — Proportions d'ensembles emboîtés</b><br>On a trois ensembles ${m`C\subset B\subset A`}.<br>${m`p`} = proportion de B dans A, ${m`p'`} = proportion de C dans B.<br>Alors la proportion de C dans A est ${m`p\times p'`}.</div>
+<div class="meth"><b>Méthode</b><ol><li>Je repère A (le grand ensemble), B (celui du milieu) et C (le plus petit).</li><li>J'écris ${m`p`} et ${m`p'`} en nombres décimaux ou en fractions.</li><li>Je multiplie : ${m`p\times p'`}, puis je convertis en %.</li></ol></div>
+<div class="meth ex"><b>Exemple</b><br>40 % des viennoiseries sont des croissants, 20 % des croissants sont aux amandes :<br>${m`0{,}4\times 0{,}2=0{,}08`} soit 8 % des viennoiseries.</div>`,
+`<div class="meth"><b>Propriété — Coefficient multiplicateur</b><br>Augmenter de ${m`t\,\%`}, c'est multiplier par ${m`c=1+\frac{t}{100}`}.<br>Diminuer de ${m`t\,\%`}, c'est multiplier par ${m`c=1-\frac{t}{100}`}.<br>Valeur d'arrivée : ${m`V_A=V_D\times c`}.</div>
+<div class="meth"><b>Méthode</b><ol><li>Hausse ou baisse ? Je choisis le signe + ou −.</li><li>Je calcule ${m`c`} (${m`c>1`} : hausse, ${m`c<1`} : baisse).</li><li>Je multiplie la valeur de départ par ${m`c`}. Pour retrouver la valeur de départ : ${m`V_D=V_A\div c`}.</li></ol></div>
+<div class="meth ex"><b>Exemple</b><br>Une console à 400 € baisse de 15 % : ${m`c=1-\frac{15}{100}=0{,}85`} et ${m`400\times0{,}85=340`} €.</div>`,
+`<div class="meth"><b>Définition — Variations</b><br>Une quantité passe de ${m`V_D`} (départ) à ${m`V_A`} (arrivée).<br>Variation absolue : ${m`V_A-V_D`}.<br>Variation relative (taux d'évolution) : ${m`\dfrac{V_A-V_D}{V_D}=c-1`}.</div>
+<div class="meth"><b>Méthode</b><ol><li>Je repère bien ${m`V_D`} (avant) et ${m`V_A`} (après).</li><li>Variation absolue : arrivée moins départ (avec l'unité).</li><li>Variation relative : je divise par la valeur de <b>départ</b>, puis ×100 pour avoir des %. Négatif = baisse.</li></ol></div>
+<div class="meth ex"><b>Exemple</b><br>Salaire : 1 500 € → 1 200 €. Absolue : ${m`1200-1500=-300`} €. Relative : ${m`\frac{-300}{1500}=-0{,}2`} soit −20 %.</div>`,
+`<div class="meth"><b>Définition — Évolutions successives</b><br>Deux évolutions de coefficients ${m`c_1`} puis ${m`c_2`} :<br>${m`c_{\text{global}}=c_1\times c_2`} et ${m`T_{\text{global}}=c_{\text{global}}-1`}.</div>
+<div class="meth"><b>Méthode</b><ol><li>Je calcule ${m`c_1`} et ${m`c_2`}.</li><li>Je les <b>multiplie</b> (on n'additionne jamais les pourcentages !).</li><li>J'enlève 1 et je convertis en %.</li></ol></div>
+<div class="meth ex"><b>Exemple</b><br>+30 % puis −10 % : ${m`1{,}3\times0{,}9=1{,}17`} donc ${m`T=1{,}17-1=0{,}17`} soit +17 % (et pas +20 %).</div>`,
+`<div class="meth"><b>Définition — Évolution réciproque</b><br>Pour revenir de ${m`V_A`} à ${m`V_D`} : ${m`c_{\text{réciproque}}=\dfrac{1}{c}`} et ${m`t_{\text{réciproque}}=c_{\text{réciproque}}-1`}.</div>
+<div class="meth"><b>Méthode</b><ol><li>Je calcule le coefficient ${m`c`} de l'évolution de départ.</li><li>Je calcule ${m`\frac{1}{c}`}.</li><li>J'enlève 1 et je convertis en %. Attention : on ne retrouve pas le même pourcentage !</li></ol></div>
+<div class="meth ex"><b>Exemple</b><br>Hausse de 25 % : ${m`c=1{,}25`}, ${m`\frac{1}{1{,}25}=0{,}8`}, ${m`0{,}8-1=-0{,}2`} : il faut une baisse de 20 %.</div>`
+];
+METH.push(`<div class="meth"><b>Fiche récap de la Ligue</b><br>Emboîtés : ${m`p\times p'`}<br>Hausse : ${m`c=1+\frac{t}{100}`} — Baisse : ${m`c=1-\frac{t}{100}`} — ${m`V_A=V_D\times c`}<br>Variation absolue : ${m`V_A-V_D`} — relative : ${m`\frac{V_A-V_D}{V_D}=c-1`}<br>Successives : ${m`c_{\text{global}}=c_1\times c_2`}, ${m`T=c_{\text{global}}-1`}<br>Réciproque : ${m`c_{\text{réc}}=\frac1c`}, ${m`t_{\text{réc}}=\frac1c-1`}</div>`);
+
+/* ---------- ATELIERS ---------- */
+const T1={
+l1:[
+()=>{const p=P([20,30,40,50,60,80]),q=P([10,20,25,50]),[a,b]=P([['Plante','Poison'],['Eau','Vol'],['Roche','Sol'],['Feu','Combat'],['Insecte','Vol']]),r=p*q/100;
+ return N(`Sur la Route 1, ${pct(p)} des créatures sont de type <b>${a}</b>. Parmi elles, ${pct(q)} ont aussi le type <b>${b}</b>.<br>Quelle proportion des créatures de la Route 1 sont de double type ${a}/${b} ?`,r,{u:'%',hint:`A = toutes les créatures, B = les ${a}, C = les ${a}/${b}. Multiplie les deux proportions : ${m`${L(p/100)}\times${L(q/100)}`}.`,sol:m`${L(p/100)}\times${L(q/100)}=${L(r/100)}`+` soit ${pct(r)}.`})},
+()=>{const [a,b,c,d]=P([[1,2,1,4],[1,4,1,5],[3,4,1,3],[2,5,1,2],[1,2,3,5]]),r=a*c/(b*d)*100;
+ return N(`Dans la Grotte Sombre, ${m`\frac{${a}}{${b}}`} des créatures sont nocturnes. Parmi les nocturnes, ${m`\frac{${c}}{${d}}`} sont de type Spectre.<br>Quelle proportion des créatures de la grotte sont des Spectres nocturnes ? (en %)`,r,{u:'%',hint:`Une fraction d'une fraction : on multiplie les fractions, numérateur × numérateur et dénominateur × dénominateur.`,sol:m`\frac{${a}}{${b}}\times\frac{${c}}{${d}}=\frac{${a*c}}{${b*d}}=${L(r/100)}`+` soit ${pct(r)}.`})},
+()=>{const p=P([60,40,70]),q=P([50,25,20]);
+ return C(`Dans l'équipe de Maé, ${pct(p)} des créatures sont de type Eau ; parmi celles-ci, ${pct(q)} sont Eau/Vol.<br>Dans la propriété ${m`C\subset B\subset A`}, que représente l'ensemble <b>B</b> ?`,'Les créatures de type Eau',["Toutes les créatures de l'équipe",'Les créatures Eau/Vol','Les créatures de type Vol'],{sk:'Lire',hint:`B est l'ensemble « du milieu » : il contient C et il est contenu dans A.`,sol:`A = toute l'équipe, B = les Eau, C = les Eau/Vol.`})},
+()=>{const [p,k]=P([[45,3],[60,3],[36,4],[70,5],[90,6]]),r=p/k;
+ return N(`À la Boutique de Bourg-Gigogne, ${pct(p)} des objets sont des soins. Parmi les soins, ${m`\frac{1}{${k}}`} sont des Super Soins.<br>Quelle est la proportion de Super Soins parmi tous les objets ? (en %)`,r,{u:'%',hint:`Prendre ${m`\frac1{${k}}`} d'un nombre, c'est le multiplier par ${m`\frac1{${k}}`} (ou le diviser par ${k}).`,sol:m`${L(p/100)}\times\frac{1}{${k}}=${L(r/100)}`+` soit ${pct(r)}.`})}],
+l2:[
+()=>{const [p,q]=P([[50,20],[40,25],[60,50],[80,25],[50,10],[40,50],[70,10],[30,50]]),r=p*q/100;
+ return G(`La grille représente les 100 créatures de la Forêt (A). Les cases vertes claires sont les ${pct(p)} de type Insecte (B).<br>Parmi les Insectes, ${pct(q)} sont aussi Poison (C). <b>Colorie</b> les cases de C.`,r,p,{sk:'Représenter',hint:`Prends ${pct(q)} des ${p} cases vertes : ${m`${L(q/100)}\times${p}`}. Et colorie-les <b>dans</b> la zone verte (C est inclus dans B).`,sol:m`${L(q/100)}\times${p}=${r}`+` cases, soit ${pct(r)} de la forêt.`})},
+()=>{const [p,q]=P([[50,40],[60,25],[80,50],[20,50],[90,10]]),r=p*q/100;
+ return G(`Sur le Pont des Nuages, il y a 100 créatures (A). ${pct(p)} sont de type Vol (cases claires, B). Parmi elles, ${pct(q)} sont des bébés (C).<br><b>Colorie</b> les bébés de type Vol.`,r,p,{sk:'Représenter',hint:`Le nombre de cases est ${m`${L(q/100)}\times${p}`}.`,sol:m`${L(p/100)}\times${L(q/100)}=${L(r/100)}`+` donc ${r} cases sur 100.`})},
+()=>C(`« Les Insectes (I) vivent dans la Forêt (F) et les Insectes-Poison (P) sont parmi les Insectes. » Quelle écriture traduit la situation ?`,m`P\subset I\subset F`,[m`F\subset I\subset P`,m`I\subset P\subset F`,m`P\subset F\subset I`],{sk:'Représenter',hint:`Le symbole ${m`\subset`} se lit « est inclus dans ». Le plus petit ensemble s'écrit à gauche.`,sol:`Les Insectes-Poison sont dans les Insectes, qui sont dans la Forêt : ${m`P\subset I\subset F`}.`}),
+()=>{const [b,c]=P([[40,10],[50,10],[80,20],[25,5],[60,15]]),r=c/b*100;
+ return N(`Sur les 100 créatures du Lac, ${b} sont de type Eau et ${c} sont de type Eau/Glace.<br>Quelle est la proportion de Eau/Glace <b>parmi les créatures Eau</b> ? (en %)`,r,{u:'%',sk:'Lire',hint:`Ici l'ensemble de référence n'est pas le Lac entier mais les ${b} créatures Eau : calcule ${m`\frac{${c}}{${b}}`}.`,sol:m`\frac{${c}}{${b}}=${L(r/100)}`+` soit ${pct(r)}.`})}],
+l3:[
+()=>{const [p,q]=P([[40,50],[30,20],[60,25],[20,40]]);
+ return C(`Léo affirme : « ${pct(p)} des créatures sont de type Feu et ${pct(q)} des Feu sont Feu/Vol, donc ${pct(p+q)} des créatures sont Feu/Vol. » Que penses-tu de son raisonnement ?`,`Faux : il faut multiplier, ${m`${L(p/100)}\times${L(q/100)}=${L(p*q/10000)}`} soit ${pct(p*q/100)}`,['Vrai : on additionne les deux pourcentages',`Faux : il faut soustraire, ${Math.abs(p-q)} %`,'Vrai : car le total est inférieur à 100 %'],{sk:'Argumenter',hint:`C'est une proportion de proportion : regarde la méthode, quelle opération utilise-t-on ?`,sol:`On prend ${pct(q)} <b>des</b> ${pct(p)} : on multiplie. On obtient ${pct(p*q/100)}.`})},
+()=>{const A=P([200,250,400,500,800,1000]),[p,q]=P([[30,40],[50,20],[40,25],[20,50],[60,50]]),pc=p*q/10000,c=A*pc;
+ return N(`Dans la région, ${pct(p)} des créatures vivent près de l'eau et parmi elles ${pct(q)} sont de type Eau. La Professeure a recensé <b>${c}</b> créatures de type Eau vivant près de l'eau.<br>Combien de créatures y a-t-il en tout dans la région ?`,A,{u:'créatures',sk:'Calculer',hint:`Calcule d'abord la proportion globale ${m`p\times p'`}. Ensuite : total × proportion = ${c}, donc total = ${c} ÷ proportion.`,sol:m`${L(p/100)}\times${L(q/100)}=${L(pc)}`+` puis `+m`${c}\div${L(pc)}=${A}`+` créatures.`})},
+()=>{const T=P([400,600,800,1000]),pb=P([0.25,0.2,0.5]),pn=P([0.2,0.1,0.4]),B=T*pb,n=B*pn,r=pb*pn*100;
+ return N(`Voici le recensement de la Professeure Lin :`+tb(['Groupe','Effectif'],[['Toute la région',T],['Dans la Grotte',B],['Nocturnes de la Grotte',n]])+`Quelle proportion des créatures de la région sont des nocturnes de la Grotte ? (en %)`,r,{u:'%',sk:'Lire',hint:`Tu peux calculer ${m`\frac{${n}}{${T}}`} directement, ou bien ${m`\frac{${B}}{${T}}\times\frac{${n}}{${B}}`}.`,sol:m`\frac{${B}}{${T}}\times\frac{${n}}{${B}}=${L(pb)}\times${L(pn)}=${L(r/100)}`+` soit ${pct(r)}.`})},
+()=>C(`Peut-on obtenir une proportion ${m`p\times p'`} plus grande que ${m`p`} ?`,`Non : ${m`p'\leq 1`}, donc ${m`p\times p'\leq p`}`,['Oui, si p′ est grand','Oui, toujours','Cela dépend de la taille de A'],{sk:'Argumenter',hint:`Une proportion est toujours comprise entre 0 et 1. Que se passe-t-il quand on multiplie par un nombre plus petit que 1 ?`,sol:`Multiplier par un nombre entre 0 et 1 fait diminuer (ou ne change pas) : C ne peut pas être plus grand que B.`})],
+boss:[
+()=>{const [a,b,c]=P([[70,25,82],[50,40,50],[60,50,30],[80,25,40]]),r=a*b*c/10000;
+ return N(`Dans le jardin de l'arène, ${pct(a)} des créatures sont de type Plante. ${pct(b)} des Plantes sont des bébés et ${pct(c)} de ces bébés dorment.<br>Quelle proportion de toutes les créatures du jardin sont des bébés Plante endormis ? (en %)`,r,{u:'%',tol:0.006,sk:'Problème',hint:`Trois ensembles emboîtés : on multiplie les <b>trois</b> proportions.`,sol:m`${L(a/100)}\times${L(b/100)}\times${L(c/100)}=${L(r/100)}`+` soit ${pct(r)}.`})},
+()=>{const [p,q,A]=P([[30,40,450],[25,40,600],[50,30,400],[20,25,800]]),c=A*p*q/10000;
+ return N(`${pct(p)} des dresseurs de Bourg-Gigogne ont un badge. Parmi eux, ${pct(q)} ont choisi une créature Plante. Ils sont <b>${c}</b> dans ce cas.<br>Combien y a-t-il de dresseurs à Bourg-Gigogne ?`,A,{u:'dresseurs',sk:'Problème',hint:`Proportion globale ${m`p\times p'`}, puis divise ${c} par cette proportion.`,sol:m`${L(p/100)}\times${L(q/100)}=${L(p*q/10000)}`+` et `+m`${c}\div${L(p*q/10000)}=${A}`+`.`})},
+()=>C(`Deux équipes ont le même nombre de créatures.<br>Équipe X : 50 % Plante, dont 20 % sont Plante/Fée.<br>Équipe Y : 25 % Plante, dont 50 % sont Plante/Fée.<br>Laquelle a la plus grande proportion de Plante/Fée ?`,'L’équipe Y (12,5 % contre 10 %)',['L’équipe X (10 % contre 12,5 %)','Les deux : 70 % et 75 %, c’est presque pareil','On ne peut pas savoir'],{sk:'Argumenter',hint:`Calcule ${m`p\times p'`} pour chaque équipe.`,sol:`X : ${m`0{,}5\times0{,}2=0{,}1`} ; Y : ${m`0{,}25\times0{,}5=0{,}125`}. Y gagne.`}),
+()=>{const [p,r,q]=P([[30,6,20],[40,10,25],[50,5,10],[20,4,20]]);
+ return N(`${pct(p)} des créatures de l'arène sont de type Plante. ${pct(r)} de <b>toutes</b> les créatures sont Plante/Poison.<br>Quelle proportion des Plantes sont Plante/Poison ? (en %)`,q,{u:'%',sk:'Problème',hint:`${m`p\times p'=${L(r/100)}`} avec ${m`p=${L(p/100)}`}. Donc ${m`p'=${L(r/100)}\div${L(p/100)}`}.`,sol:m`${L(r/100)}\div${L(p/100)}=${L(q/100)}`+` soit ${pct(q)}.`})}]
+};
+
+const T2={
+l1:[
+()=>{const t=P([5,8,12,20,35,3]);return N(`Le prix des Capsules <b>augmente de ${pct(t)}</b>. Quel est le coefficient multiplicateur ${m`c`} ?`,up_(t),{hint:`Hausse : ${m`c=1+\frac{t}{100}`}.`,sol:m`c=1+\frac{${t}}{100}=${L(up_(t))}`})},
+()=>{const t=P([5,15,30,40,12,25]);return N(`Le prix des Potions <b>baisse de ${pct(t)}</b>. Quel est le coefficient multiplicateur ${m`c`} ?`,dn_(t),{hint:`Baisse : ${m`c=1-\frac{t}{100}`}.`,sol:m`c=1-\frac{${t}}{100}=${L(dn_(t))}`})},
+()=>{const P0=P([12,24,40,60,80,150]),t=P([10,20,25,15]),it=P(['Un lot de 10 Capsules','Une Super Potion','Un Répulsif Max','Un sac de Baies']),v=P0*dn_(t);
+ return N(`${it} coûte ${fr(P0)} €. Pendant les soldes du Port, son prix baisse de ${pct(t)}. Quel est son nouveau prix ?`,v,{u:'€',hint:`Calcule d'abord ${m`c=1-\frac{${t}}{100}`}, puis ${m`${P0}\times c`}.`,sol:m`${P0}\times${L(dn_(t))}=${L(v)}`+` €.`})},
+()=>{const c=P([1.07,0.93,1.5,0.6,1.25,0.85]),t=rd(Math.abs(c-1)*100,2);
+ const good=c>1?`une hausse de ${pct(t)}`:`une baisse de ${pct(t)}`;
+ const bad=c>1?[`une baisse de ${pct(t)}`,`une hausse de ${pct(rd(c*100,2))}`,`une hausse de ${fr(rd(c-1,2))} %`]:[`une baisse de ${pct(rd(c*100,2))}`,`une hausse de ${pct(t)}`,`une hausse de ${pct(rd(c*100,2))}`];
+ return C(`Un prix est multiplié par ${m`${L(c)}`}. Cela correspond à :`,good,bad,{sk:'Lire',hint:`Si ${m`c>1`} c'est une hausse, si ${m`c<1`} une baisse. Le taux est ${m`c-1`}.`,sol:m`${L(c)}-1=${L(rd(c-1,2))}`+` donc ${good}.`})}],
+l2:[
+()=>{const VD=P([50,80,120,200]),u=Math.random()<.5,t=P([5,10,20,25,40]),c=u?up_(t):dn_(t);
+ return U(`Une Mallette de soins coûte ${fr(VD)} € et subit une <b>${u?'hausse':'baisse'} de ${pct(t)}</b>. Complète le schéma :<br>${m`${L(VD)}\ \xrightarrow{\ \times\, c\ }\ V_A`}`,[{l:m`c=`,ans:c},{l:m`V_A=`,ans:VD*c,u:'€'}],{sk:'Représenter',hint:`D'abord le coefficient (${u?'+':'−'}), puis on multiplie ${VD} par ce coefficient.`,sol:m`c=${L(c)}`+` et `+m`${VD}\times${L(c)}=${L(VD*c)}`+` €.`})},
+()=>{const t=P([30,12,45,8,70]);return C(`Au Centre de Soins, l'étiquette indique « −${t} % ». Quel coefficient faut-il appliquer au prix ?`,m`${L(dn_(t))}`,[m`${L(t/100)}`,m`${L(up_(t))}`,m`-${L(t/100)}`],{sk:'Représenter',hint:`Baisser de ${t} %, c'est garder ${100-t} % du prix.`,sol:m`1-\frac{${t}}{100}=${L(dn_(t))}`})},
+()=>{const g=P([0.98,0.75,0.5,0.9]),bad=SH([1.02,1.15,1.6,2,1.001]).slice(0,3);
+ return C(`Lequel de ces coefficients multiplicateurs traduit une <b>baisse</b> ?`,m`${L(g)}`,bad.map(b=>m`${L(b)}`),{sk:'Représenter',hint:`Une baisse fait diminuer la valeur : on multiplie par un nombre plus petit que 1.`,sol:m`${L(g)}<1`+` : c'est une baisse de ${pct(rd((1-g)*100,1))}.`})},
+()=>{const [a,b]=P([[45,36],[50,40],[80,60],[120,90],[25,20],[60,51],[200,170]]),c=b/a;
+ return N(`Étiquette de la Boutique :`+tb(['Article','Prix'],[['Prix initial',fr(a)+' €'],['Prix soldé',fr(b)+' €']])+`Par quel coefficient multiplicateur ${m`c`} le prix a-t-il été multiplié ?`,c,{sk:'Lire',hint:`${m`V_A=V_D\times c`}, donc ${m`c=\frac{V_A}{V_D}`}.`,sol:m`c=\frac{${b}}{${a}}=${L(c)}`+` (une baisse de ${pct(rd((1-c)*100,1))}).`})}],
+l3:[
+()=>C(`Le marchand dit : « Une hausse de 100 % double le prix. » A-t-il raison ?`,`Vrai : ${m`c=1+\frac{100}{100}=2`}`,['Faux : le prix devient 100 fois plus grand',`Faux : ${m`c=100`}`,`Faux : ${m`c=1{,}1`}`],{sk:'Argumenter',hint:`Calcule le coefficient d'une hausse de 100 %.`,sol:`${m`c=2`} : le prix est multiplié par 2, il double.`}),
+()=>{const t=P([15,30,40,20]);return C(`Mila dit : « Baisser un prix de ${t} %, c'est le multiplier par ${m`${L(t/100)}`}. »`,`Faux : on multiplie par ${m`${L(dn_(t))}`}`,['Vrai',`Faux : on multiplie par ${m`${L(up_(t))}`}`,`Faux : on divise par ${t}`],{sk:'Argumenter',hint:`Multiplier par ${m`${L(t/100)}`} donnerait seulement ${t} % du prix… Que reste-t-il après une baisse ?`,sol:`Après une baisse de ${t} %, il reste ${100-t} % du prix : ${m`c=${L(dn_(t))}`}.`})},
+()=>{const [t,VA,VD]=P([[20,360,300],[25,150,120],[10,55,50],[50,90,60],[8,54,50]]);
+ return N(`Après une hausse de ${pct(t)}, une Super Potion coûte ${VA} €. Quel était son prix <b>avant</b> la hausse ?`,VD,{u:'€',sk:'Calculer',hint:`${m`V_A=V_D\times c`}, donc ${m`V_D=V_A\div c`} avec ${m`c=${L(up_(t))}`}. Attention : on ne fait pas ${VA} − ${t} % !`,sol:m`${VA}\div${L(up_(t))}=${VD}`+` €.`})},
+()=>{const H=P([50,80,120,250,35]);return N(`Au Centre Commercial, les prix sont affichés hors taxes (HT). La TVA de 20 % s'ajoute. Une Mallette coûte ${H} € HT. Quel est son prix TTC ?`,H*1.2,{u:'€',sk:'Calculer',hint:`Ajouter 20 %, c'est multiplier par ${m`1{,}2`}.`,sol:m`${H}\times1{,}2=${L(H*1.2)}`+` €.`})}],
+boss:[
+()=>{const [P0,t]=P([[400,15],[300,20],[250,40],[180,25]]);return N(`Le Vélo Turbo du Port coûte ${P0} €. Marin le solde à −${t} %. Nouveau prix ?`,P0*dn_(t),{u:'€',sk:'Problème',hint:`${m`c=1-\frac{${t}}{100}`} puis multiplie.`,sol:m`${P0}\times${L(dn_(t))}=${L(P0*dn_(t))}`+` €.`})},
+()=>{const [a,b]=P([[50,56],[80,92],[200,230],[40,46]]),c=b/a;return U(`Le prix d'une Canne à pêche passe de ${a} € à ${b} €.`,[{l:'Coefficient '+m`c=`,ans:c},{l:'Taux d’évolution =',ans:(c-1)*100,u:'%',tol:0.01}],{sk:'Problème',hint:`${m`c=\frac{V_A}{V_D}`}, puis le taux est ${m`c-1`} (en %).`,sol:m`\frac{${b}}{${a}}=${L(c)}`+` donc une hausse de ${pct(rd((c-1)*100,2))}.`})},
+()=>{const [p,q]=P([[60,25],[40,50],[80,25]]),r=p*q/100;return N(`${pct(p)} des articles du Port sont des soins ; ${pct(q)} des soins sont en promotion. Quelle proportion des articles sont des soins en promotion ? (en %)`,r,{u:'%',sk:'Problème',hint:`Proportion de proportion : multiplie.`,sol:m`${L(p/100)}\times${L(q/100)}=${L(r/100)}`})},
+()=>{const [t,VA,VD]=P([[20,48,60],[25,30,40],[10,27,30],[40,60,100]]);return N(`Après une baisse de ${pct(t)}, un lot de Capsules coûte ${VA} €. Quel était son prix d'origine ?`,VD,{u:'€',sk:'Problème',hint:`${m`V_D=V_A\div c`} avec ${m`c=${L(dn_(t))}`}.`,sol:m`${VA}\div${L(dn_(t))}=${VD}`+` €.`})}]
+};
+
+const SPEC=['Nuageons','Galetins','Moussigres','Flammiches'];
+const T3={
+l1:[
+()=>{const VD=R(12,40)*10,VA=VD+P([-1,1])*R(2,9)*10,s=P(SPEC);return N(`Dans la réserve, il y avait ${VD} ${s} l'an dernier. Il y en a maintenant ${VA}. Quelle est la <b>variation absolue</b> ?`,VA-VD,{u:s,hint:`Variation absolue = ${m`V_A-V_D`} (arrivée moins départ). Elle peut être négative.`,sol:m`${VA}-${VD}=${VA-VD}`})},
+()=>{const VD=R(15,50)*10,VA=VD+P([-1,1])*R(1,12)*10,s=P(SPEC),r=rd((VA-VD)/VD*100,1);return N(`La population de ${s} passe de ${VD} à ${VA}. Quelle est la <b>variation relative</b> en % ? (arrondie à 0,1 %)`,r,{u:'%',tol:0.051,hint:`${m`\frac{V_A-V_D}{V_D}`} : on divise par la valeur de <b>départ</b>, puis ×100.`,sol:m`\frac{${VA}-${VD}}{${VD}}\approx${L(rd((VA-VD)/VD,4))}`+` soit environ ${pct(r)}.`})},
+()=>{const [a,b]=P([[1500,1200],[250,300],[80,100],[400,340]]);return U(`La ration de Baies d'un élevage passe de ${a} g à ${b} g par jour.`,[{l:'Variation absolue :',ans:b-a,u:'g'},{l:'Variation relative :',ans:(b-a)/a*100,u:'%',tol:0.01}],{hint:`Absolue : ${m`${b}-${a}`}. Relative : divise ce résultat par ${a}.`,sol:m`${b}-${a}=${b-a}`+` g et `+m`\frac{${b-a}}{${a}}=${L((b-a)/a)}`+` soit ${pct(rd((b-a)/a*100,2))}.`})},
+()=>{const [a,b]=P([[219,182],[45,52],[129,99],[18,21]]),r=rd((b-a)/a*100,1);return N(`Le prix d'une Lampe de poche du Labo passe de ${a} € à ${b} €. Quel est le taux d'évolution en % ? (arrondi à 0,1 %)`,r,{u:'%',tol:0.051,hint:`${m`\frac{${b}-${a}}{${a}}`} puis ×100.`,sol:m`\frac{${b}-${a}}{${a}}\approx${L(rd((b-a)/a,4))}`+` soit ${pct(r)}.`})}],
+l2:{setup:()=>{const y=[2021,2022,2023,2024,2025],v=[R(30,60)*10],ch=SH([-0.2,-0.1,0.1,0.15,0.25,0.3]).slice(0,4);if(!ch.some(c=>c<0))ch[1]=-0.1;ch.forEach(c=>v.push(Math.round(v[v.length-1]*(1+c))));return {y,v,s:P(SPEC)}},
+gens:[
+x=>{const i=R(0,3),j=R(i+1,4);return N(`Effectif des ${x.s} suivis par la Professeure Lin :`+tb(['Année',...x.y],[['Effectif',...x.v]])+`Quelle est la variation absolue entre ${x.y[i]} et ${x.y[j]} ?`,x.v[j]-x.v[i],{sk:'Lire',hint:`Lis la valeur de ${x.y[j]} (arrivée) et celle de ${x.y[i]} (départ), puis arrivée − départ.`,sol:m`${x.v[j]}-${x.v[i]}=${x.v[j]-x.v[i]}`})},
+x=>{const r=rd((x.v[4]-x.v[0])/x.v[0]*100,1);return N(`Effectif des ${x.s} :`+tb(['Année',...x.y],[['Effectif',...x.v]])+`Quelle est la variation relative entre 2021 et 2025 ? (en %, arrondie à 0,1 %)`,r,{u:'%',tol:0.051,sk:'Lire',hint:`${m`\frac{V_{2025}-V_{2021}}{V_{2021}}`} puis ×100.`,sol:m`\frac{${x.v[4]}-${x.v[0]}}{${x.v[0]}}`+` ≈ ${pct(r)}.`})},
+x=>{const d=[0,1,2,3].map(k=>x.v[k+1]-x.v[k]),k=d.indexOf(Math.min(...d)),lab=i=>`Entre ${x.y[i]} et ${x.y[i+1]}`;return C(`Effectif des ${x.s} :`+tb(['Année',...x.y],[['Effectif',...x.v]])+`Entre quelles années consécutives l'effectif a-t-il le plus <b>baissé</b> (en nombre d'individus) ?`,lab(k),[0,1,2,3].filter(i=>i!==k).map(lab),{sk:'Lire',hint:`Calcule la variation absolue pour chaque année. La plus forte baisse est la plus négative.`,sol:`Variations : ${d.map((v,i)=>`${x.y[i]}→${x.y[i+1]} : ${v}`).join(' ; ')}.`})},
+x=>{const c=x.v[1]/x.v[0];return N(`Effectif des ${x.s} :`+tb(['Année',...x.y],[['Effectif',...x.v]])+`Par quel coefficient multiplicateur l'effectif a-t-il été multiplié entre 2021 et 2022 ? (arrondi à 0,01)`,rd(c,2),{tol:0.006,sk:'Lire',hint:`${m`c=\frac{V_A}{V_D}=\frac{V_{2022}}{V_{2021}}`}.`,sol:m`\frac{${x.v[1]}}{${x.v[0]}}\approx${L(rd(c,2))}`+`. Vérifie : ${m`c-1`} donne le taux d'évolution.`})}]},
+l3:[
+()=>C(`L'effectif passe de 200 à 300, puis de 300 à 400. Noé dit : « L'effectif augmente de 100 à chaque fois, donc le taux d'évolution est le même. »`,'Faux : +50 % puis environ +33,3 %',['Vrai : +100 à chaque fois','Vrai : +50 % les deux fois','Faux : +100 % puis +50 %'],{sk:'Argumenter',hint:`Le taux se calcule en divisant par la valeur de départ… qui n'est pas la même !`,sol:`${m`\frac{100}{200}=0{,}5`} puis ${m`\frac{100}{300}\approx0{,}333`}.`}),
+()=>{const t=P([12,5,30,8]);return C(`Une variation relative de ${m`-${t}\,\%`} signifie :`,`une baisse de ${t} %`,[`une hausse de ${t} %`,`une baisse de ${t} individus`,`une baisse de ${100-t} %`],{sk:'Lire',hint:`Le signe indique le sens de l'évolution, le % indique que c'est relatif.`,sol:`Négatif = baisse ; c'est une baisse de ${t} % de la valeur de départ.`})},
+()=>{const [a,b]=P([[21,17],[21,16],[20,15]]),r=rd((b-a)/a*100,1);return N(`Un litre d'air inspiré contient ${a} cL de dioxygène, un litre d'air expiré en contient ${b} cL. Quelle est la variation relative de la quantité de dioxygène ? (en %, arrondie à 0,1 %)`,r,{u:'%',tol:0.051,sk:'Calculer',hint:`Départ = air inspiré (${a}), arrivée = air expiré (${b}).`,sol:m`\frac{${b}-${a}}{${a}}\approx${L(rd((b-a)/a,4))}`+` soit ${pct(r)}.`})},
+()=>{const a=P([10,20,50]),b=P([500,1000]);return C(`L'espèce X passe de ${a} à ${2*a} individus. L'espèce Y passe de ${b} à ${b+a} individus. Laquelle a la plus forte évolution <b>relative</b> ?`,'L’espèce X (+100 %)',[`L’espèce Y (+${a} individus aussi, mais plus nombreux)`,'Les deux : elles gagnent le même nombre d’individus','On ne peut pas comparer'],{sk:'Argumenter',hint:`Même variation absolue (+${a}), mais divise par la valeur de départ de chacune.`,sol:`X : ${m`\frac{${a}}{${a}}=1`} soit +100 % ; Y : ${m`\frac{${a}}{${b}}=${L(a/b)}`} soit +${pct(a/b*100)}.`})}],
+boss:[
+()=>{const [a,b]=P([[480,408],[250,290],[1200,1020],[64,80]]);return U(`La colonie de Nuageons du Labo passe de ${a} à ${b}.`,[{l:'Variation absolue :',ans:b-a},{l:'Variation relative :',ans:(b-a)/a*100,u:'%',tol:0.01}],{sk:'Problème',hint:`${m`V_A-V_D`}, puis ${m`\frac{V_A-V_D}{V_D}`}.`,sol:m`${b}-${a}=${b-a}`+` ; `+m`\frac{${b-a}}{${a}}=${L((b-a)/a)}`+` soit ${pct(rd((b-a)/a*100,2))}.`})},
+()=>{const [p,q]=P([[40,25],[60,50],[30,30]]),r=p*q/100;return N(`${pct(p)} des créatures du Labo sont des Galetins, ${pct(q)} des Galetins sont chromatiques. Proportion de Galetins chromatiques ? (en %)`,r,{u:'%',sk:'Problème',hint:`Multiplie les proportions.`,sol:m`${L(p/100)}\times${L(q/100)}=${L(r/100)}`})},
+()=>{const [a,t]=P([[250,12],[400,15],[150,8],[600,5]]);return N(`Une colonie de ${a} Moussigres augmente de ${pct(t)}. Combien sont-ils maintenant ?`,a*up_(t),{u:'Moussigres',sk:'Problème',hint:`Multiplie par ${m`c=1+\frac{${t}}{100}`}.`,sol:m`${a}\times${L(up_(t))}=${L(a*up_(t))}`})},
+()=>{const c=P([0.85,1.12,0.6,1.3]),t=rd((c-1)*100,0);return C(`Un effectif est multiplié par ${m`${L(c)}`}. La variation relative vaut :`,m`${t>0?'+':''}${t}\,\%`,[m`+${rd(c*100,0)}\,\%`,m`-${rd(c*100,0)}\,\%`,m`${t>0?'-':'+'}${Math.abs(t)}\,\%`],{sk:'Problème',hint:`Variation relative ${m`=c-1`}.`,sol:m`${L(c)}-1=${L(rd(c-1,2))}`+` soit ${t>0?'+':''}${t} %.`})}]
+};
+
+const T4={
+l1:[
+()=>{const a=P([10,20,30,12,25]),b=P([5,10,20]),g=up_(a)*dn_(b);return N(`Le prix d'une Bicyclette augmente de ${pct(a)} puis baisse de ${pct(b)}. Quel est le coefficient multiplicateur global ${m`c_{\text{global}}`} ?`,g,{tol:1e-4,hint:`${m`c_1=${L(up_(a))}`} et ${m`c_2=${L(dn_(b))}`}. On les multiplie.`,sol:m`${L(up_(a))}\times${L(dn_(b))}=${L(g)}`})},
+()=>{const a=P([10,20,30,40]),b=P([5,10,25]),g=up_(a)*dn_(b),T=(g-1)*100;return N(`Le nombre d'abonnés du Journal de Cascade augmente de ${pct(a)} puis baisse de ${pct(b)}. Quel est le taux d'évolution global ? (en %)`,T,{u:'%',tol:0.006,hint:`${m`c_{\text{global}}=c_1\times c_2`} puis ${m`T=c_{\text{global}}-1`}.`,sol:m`${L(up_(a))}\times${L(dn_(b))}=${L(g)}`+` donc ${m`T=${L(rd(g-1,4))}`} soit ${pct(rd(T,2))}.`})},
+()=>{const P0=P([40,60,80,100,120,200]),r1=P([10,15,20,30]),r2=P([5,10,20]),v=P0*dn_(r1)*dn_(r2);return N(`Un Super Bonbon coûte ${P0} €. Il subit une remise de ${pct(r1)}, puis une remise de ${pct(r2)} sur le prix déjà réduit. Prix final ?`,v,{u:'€',tol:0.006,hint:`Multiplie ${P0} par ${m`${L(dn_(r1))}`} puis par ${m`${L(dn_(r2))}`}.`,sol:m`${P0}\times${L(dn_(r1))}\times${L(dn_(r2))}=${L(rd(v,2))}`+` €.`})},
+()=>{const a=R(1,5),b=R(1,5),T=(up_(a)*up_(b)-1)*100;return N(`La population de Cité-Cascade augmente de ${pct(a)} en 2024, puis de ${pct(b)} en 2025. Taux d'évolution global ? (en %)`,T,{u:'%',tol:0.001,hint:`Ce n'est pas ${a+b} % ! Multiplie les coefficients ${m`${L(up_(a))}`} et ${m`${L(up_(b))}`}.`,sol:m`${L(up_(a))}\times${L(up_(b))}=${L(up_(a)*up_(b))}`+` soit +${pct(rd(T,4))}.`})}],
+l2:[
+()=>{const a=P([10,20,50]),b=P([10,20,40]);return U(`Une évolution de +${a} % suivie d'une évolution de −${b} %. Complète le schéma :<br>${m`V_0\xrightarrow{\times c_1}V_1\xrightarrow{\times c_2}V_2`}`,[{l:m`c_1=`,ans:up_(a)},{l:m`c_2=`,ans:dn_(b)},{l:m`c_{\text{global}}=`,ans:up_(a)*dn_(b),tol:1e-4}],{sk:'Représenter',hint:`Hausse : ${m`1+\frac{t}{100}`} ; baisse : ${m`1-\frac{t}{100}`} ; global : on multiplie.`,sol:m`c_1=${L(up_(a))},\ c_2=${L(dn_(b))},\ c_{\text{global}}=${L(up_(a)*dn_(b))}`})},
+()=>{const V0=P([100,200,500,80]),a=P([10,20,25]),b=P([10,20,50]),V1=V0*up_(a),V2=V1*dn_(b);return U(`Un stock de ${V0} Capsules augmente de ${pct(a)}, puis baisse de ${pct(b)}.<br>${m`${V0}\xrightarrow{+${a}\%}V_1\xrightarrow{-${b}\%}V_2`}`,[{l:m`V_1=`,ans:V1},{l:m`V_2=`,ans:V2}],{sk:'Représenter',hint:`${m`V_1=${V0}\times${L(up_(a))}`}, puis ${m`V_2=V_1\times${L(dn_(b))}`}.`,sol:m`V_1=${L(V1)}`+` et `+m`V_2=${L(V2)}`})},
+()=>{const a=P([20,30,15]),b=P([10,25,5]),c1=up_(a),c2=dn_(b);return C(`Quel calcul donne le coefficient global de « +${a} % puis −${b} % » ?`,m`${L(c1)}\times${L(c2)}`,[m`${L(c1)}+${L(c2)}`,m`${L(a/100)}-${L(b/100)}`,m`1+${L((a-b)/100)}`],{sk:'Représenter',hint:`${m`c_{\text{global}}=c_1\times c_2`}.`,sol:m`c_{\text{global}}=${L(c1)}\times${L(c2)}=${L(c1*c2)}`})},
+()=>{const a=P([20,10,30]),b=P([10,20,15]);return C(`Prix A : +${a} % puis −${b} %. Prix B (même prix de départ) : −${b} % puis +${a} %. Que peut-on dire ?`,'Même prix final : la multiplication est commutative',['Le prix A finit plus cher','Le prix B finit plus cher','On ne peut pas savoir sans le prix de départ'],{sk:'Argumenter',hint:`Écris les deux coefficients globaux. L'ordre d'une multiplication change-t-il le résultat ?`,sol:m`${L(up_(a))}\times${L(dn_(b))}=${L(dn_(b))}\times${L(up_(a))}`})}],
+l3:[
+()=>{const r1=P([20,15,30]),r2=P([10,5,20]),g=dn_(r1)*dn_(r2),t=rd((1-g)*100,2);return C(`La vendeuse affirme : « Une remise de ${r1} % puis une remise de ${r2} %, ça fait ${r1+r2} % de remise. »`,`Faux : ${m`${L(dn_(r1))}\times${L(dn_(r2))}=${L(g)}`}, soit −${pct(t)}`,[`Vrai : ${r1} + ${r2} = ${r1+r2}`,`Faux : c'est −${r1*r2} %`,`Faux : c'est −${Math.abs(r1-r2)} %`],{sk:'Argumenter',hint:`La 2e remise s'applique sur le prix <b>déjà réduit</b>. Utilise les coefficients.`,sol:`Remise globale : ${pct(t)}, moins que ${r1+r2} %.`})},
+()=>C(`Un prix augmente de 50 % puis baisse de 50 %. Revient-on au prix initial ?`,`Non : ${m`1{,}5\times0{,}5=0{,}75`}, on a perdu 25 %`,[`Oui : les deux s'annulent`,`Non : on a gagné 25 %`,`Oui : ${m`1{,}5-0{,}5=1`}`],{sk:'Argumenter',hint:`Calcule le coefficient global.`,sol:m`c_{\text{global}}=0{,}75`+` : c'est une baisse de 25 %.`}),
+()=>{const t=P([10,20,5,30]),T=(up_(t)**2-1)*100;return N(`L'effectif des Flammiches augmente de ${pct(t)} deux années de suite. Taux d'évolution global ? (en %)`,T,{u:'%',tol:0.001,sk:'Calculer',hint:`${m`c_{\text{global}}=${L(up_(t))}\times${L(up_(t))}`}.`,sol:m`${L(up_(t))}^2=${L(up_(t)**2)}`+` soit +${pct(rd(T,4))}.`})},
+()=>{const t=P([10,20,5]);return C(`Pour aller plus loin : deux hausses successives de ${t} % donnent une hausse globale…`,`de plus de ${2*t} %`,[`d'exactement ${2*t} %`,`de moins de ${2*t} %`,`de ${t*t} %`],{sk:'Argumenter',hint:`Calcule ${m`(1+${L(t/100)})^2`} et compare à ${m`1+${L(2*t/100)}`}.`,sol:m`(1+t)^2=1+2t+t^2>1+2t`+` : il y a un « bonus » de ${m`t^2`}.`})}],
+boss:[
+()=>{const r1=P([15,20,10]),r2=P([10,5,20]),g=dn_(r1)*dn_(r2);return U(`Au Food Truck de Cascade : remise « Happy Hour » de ${r1} %, puis remise étudiante de ${r2} % sur le prix réduit.`,[{l:m`c_{\text{global}}=`,ans:g,tol:1e-4},{l:'Taux global :',ans:(g-1)*100,u:'%',tol:0.006}],{sk:'Problème',hint:`Multiplie les deux coefficients, puis enlève 1. Le taux d'une baisse est négatif.`,sol:m`${L(dn_(r1))}\times${L(dn_(r2))}=${L(g)}`+` donc ${pct(rd((g-1)*100,2))}.`})},
+()=>{const r1=P([15,20]),r2=P([10,5]),g=dn_(r1)*dn_(r2);return C(`Ce taux de réduction global (remises de ${r1} % puis ${r2} %) est-il égal à ${r1+r2} % ?`,`Non : ${pct(rd((1-g)*100,2))}, car on multiplie les coefficients`,[`Oui, on additionne`,`Non : ${r1*r2} %`,`Oui, à peu près`],{sk:'Argumenter',hint:`Calcule ${m`c_{\text{global}}`}.`,sol:m`${L(g)}`+` → −${pct(rd((1-g)*100,2))}.`})},
+()=>{const [p,t]=P([[8,15],[6,20],[10,12]]);return N(`Le menu Dresseur coûtait ${p} €. Il augmente de ${pct(t)}. Nouveau prix ?`,p*up_(t),{u:'€',sk:'Problème',hint:`${m`c=1+\frac{${t}}{100}`}.`,sol:m`${p}\times${L(up_(t))}=${L(p*up_(t))}`+` €.`})},
+()=>{const [a,b]=P([[60,35],[50,40],[80,25]]);return N(`Un burger géant est composé à ${pct(a)} de garniture, dont ${pct(b)} de fromage fondu. Proportion de fromage dans le burger ? (en %)`,a*b/100,{u:'%',sk:'Problème',hint:`Proportion de proportion.`,sol:m`${L(a/100)}\times${L(b/100)}=${L(a*b/10000)}`})}]
+};
+
+const T5={
+l1:[
+()=>{const t=P([25,60,100,150,300]),c=up_(t);return N(`Un prix augmente de ${pct(t)}. Quel est le coefficient multiplicateur <b>réciproque</b> ? (valeur exacte)`,1/c,{tol:1e-4,hint:`${m`c=${L(c)}`} puis ${m`c_{\text{réc}}=\frac{1}{c}`}.`,sol:m`\frac{1}{${L(c)}}=${L(1/c)}`})},
+()=>{const t=P([20,50,75,60]),c=dn_(t),T=(1/c-1)*100;return N(`Un stock de Baies baisse de ${pct(t)}. De quel pourcentage doit-il <b>augmenter</b> pour revenir à son niveau initial ?`,T,{u:'%',tol:0.001,hint:`${m`c=${L(c)}`}, ${m`\frac1c`}, puis enlève 1.`,sol:m`\frac{1}{${L(c)}}=${L(1/c)}`+` soit +${pct(rd(T,2))}.`})},
+()=>{const t=P([25,60,100,150]),c=up_(t),T=(1/c-1)*100;return N(`Le nombre de pièces défectueuses à l'usine de Mont-Retour a augmenté de ${pct(t)}. Quelle évolution (en %) faut-il pour revenir au niveau précédent ?`,T,{u:'%',tol:0.001,hint:`${m`\frac{1}{${L(c)}}-1`}. Le résultat est négatif : c'est une baisse.`,sol:m`\frac{1}{${L(c)}}-1=${L(rd(1/c-1,4))}`+` soit ${pct(rd(T,2))}.`})},
+()=>{const t=P([18,12,7,35]),T=rd((1/dn_(t)-1)*100,2);return N(`Dans une réserve, la population de Moussigres baisse de ${pct(t)}. De quel pourcentage doit-elle augmenter pour revenir à sa valeur initiale ? (arrondi à 0,01 %)`,T,{u:'%',tol:0.006,hint:`${m`c=${L(dn_(t))}`}, puis ${m`\frac1c-1`}.`,sol:m`\frac{1}{${L(dn_(t))}}-1\approx${L(rd(1/dn_(t)-1,4))}`+` soit +${pct(T)}.`})}],
+l2:[
+()=>{const VD=P([80,200,400,500]),t=P([25,60,100]),c=up_(t);return U(`Aller-retour : ${m`${VD}\xrightarrow{+${t}\%}V_A\xrightarrow{\times\, c_{\text{réc}}}${VD}`}`,[{l:m`c=`,ans:c},{l:m`V_A=`,ans:VD*c},{l:m`c_{\text{réc}}=`,ans:1/c,tol:1e-4}],{sk:'Représenter',hint:`${m`c=1+\frac{${t}}{100}`}, ${m`V_A=${VD}\times c`}, ${m`c_{\text{réc}}=\frac1c`}.`,sol:m`c=${L(c)},\ V_A=${L(VD*c)},\ c_{\text{réc}}=${L(1/c)}`})},
+()=>C(`Quel schéma permet de revenir de ${m`V_A`} à ${m`V_D`} ?`,m`V_A\xrightarrow{\times\frac{1}{c}}V_D`,[m`V_A\xrightarrow{\times c}V_D`,m`V_A\xrightarrow{-c}V_D`,m`V_A\xrightarrow{\times(-c)}V_D`],{sk:'Représenter',hint:`L'opération inverse de « multiplier par c », c'est…`,sol:`On divise par ${m`c`}, c'est-à-dire qu'on multiplie par ${m`\frac1c`}.`}),
+()=>{const [t,VA,VD]=P([[20,240,300],[25,90,120],[40,300,500],[10,180,200]]);return N(`Après une baisse de ${pct(t)}, il reste ${VA} Galetins dans la grotte. Combien y en avait-il avant ?`,VD,{u:'Galetins',sk:'Calculer',hint:`${m`V_D=V_A\times\frac1c=V_A\div${L(dn_(t))}`}.`,sol:m`${VA}\div${L(dn_(t))}=${VD}`})},
+()=>C(`Le coefficient réciproque d'une <b>hausse</b> est toujours :`,'inférieur à 1 (c’est une baisse)',['supérieur à 1','égal à 1','négatif'],{sk:'Argumenter',hint:`Si ${m`c>1`}, que vaut ${m`\frac1c`} ?`,sol:`Si ${m`c>1`} alors ${m`0<\frac1c<1`} : pour revenir en arrière, il faut une baisse.`})],
+l3:[
+()=>{const t=P([20,50,25]),T=rd((1/dn_(t)-1)*100,2);return C(`Yanis dit : « Pour annuler une baisse de ${t} %, il suffit d'une hausse de ${t} %. »`,`Faux : ${m`\frac{1}{${L(dn_(t))}}\approx${L(rd(1/dn_(t),4))}`}, il faut +${pct(T)}`,[`Vrai : les pourcentages s'annulent`,`Faux : il faut +${2*t} %`,`Faux : il faut +${100-t} %`],{sk:'Argumenter',hint:`Calcule ${m`\frac1c`} avec ${m`c=${L(dn_(t))}`}.`,sol:`La hausse s'applique à une valeur plus petite, elle doit donc être plus forte : +${pct(T)}.`})},
+()=>{const [a,b]=P([[21,17],[20,15],[50,40]]),T=rd((a/b-1)*100,2);return N(`L'air expiré contient ${b} cL de dioxygène par litre, l'air inspiré ${a} cL. De quel % la quantité d'air expiré devrait-elle augmenter pour retrouver le niveau inspiré ? (arrondi à 0,01 %)`,T,{u:'%',tol:0.006,sk:'Calculer',hint:`On part de ${b} et on veut arriver à ${a} : ${m`c=\frac{${a}}{${b}}`}.`,sol:m`\frac{${a}}{${b}}-1\approx${L(rd(a/b-1,4))}`+` soit +${pct(T)}.`})},
+()=>C(`Le gérant de l'usine constate +60 % de pièces défectueuses. Quelle évolution faut-il pour revenir au niveau précédent ?`,'−37,5 %',['−60 %','−40 %','+37,5 %'],{sk:'Argumenter',hint:`${m`\frac{1}{1{,}6}-1`}.`,sol:m`\frac{1}{1{,}6}=0{,}625`+` donc ${m`-0{,}375`}, soit −37,5 %.`}),
+()=>{const [a,b]=P([[400,500],[250,200],[80,100],[300,240]]),T=(a/b-1)*100;return N(`Une population passe de ${a} à ${b}. Quel taux d'évolution (en %) permettrait de revenir à ${a} ?`,T,{u:'%',tol:0.001,sk:'Calculer',hint:`On part de ${b}, on arrive à ${a}.`,sol:m`\frac{${a}}{${b}}-1=${L(a/b-1)}`+` soit ${pct(rd(T,2))}.`})}],
+boss:[
+()=>N(`En 2021, la surface d'agriculture biologique de la région atteint 2,78 millions d'hectares après une hausse de 9 %. Quelle était la surface avant ? (en millions d'ha, arrondie au centième)`,2.55,{tol:0.006,sk:'Problème',hint:`${m`V_D=V_A\div1{,}09`}.`,sol:m`2{,}78\div1{,}09\approx2{,}55`+` millions d'hectares.`}),
+()=>{const t=P([18,30,12]),T=rd((1/dn_(t)-1)*100,2);return N(`La population de Flammiches du Mont baisse de ${pct(t)}. Hausse nécessaire pour revenir au niveau initial ? (arrondie à 0,01 %)`,T,{u:'%',tol:0.006,sk:'Problème',hint:`${m`\frac{1}{${L(dn_(t))}}-1`}.`,sol:`+${pct(T)}`})},
+()=>{const t=P([25,100,60]),c=up_(t);return U(`Une évolution de +${t} %.`,[{l:m`c=`,ans:c},{l:m`c_{\text{réc}}=`,ans:1/c,tol:1e-4},{l:m`t_{\text{réc}}=`,ans:(1/c-1)*100,u:'%',tol:0.01}],{sk:'Problème',hint:`${m`c_{\text{réc}}=\frac1c`} puis ${m`t_{\text{réc}}=c_{\text{réc}}-1`}.`,sol:m`c=${L(c)},\ \frac1c=${L(1/c)},\ t=${L(rd((1/c-1)*100,2))}\,\%`})},
+()=>C(`Un prix augmente de 50 %. Quelle baisse le ramène au prix initial ?`,'environ −33,33 %',['−50 %','−66,67 %','−150 %'],{sk:'Problème',hint:`${m`\frac{1}{1{,}5}-1`}.`,sol:m`\frac{1}{1{,}5}\approx0{,}6667`+` donc environ −33,33 %.`})]
+};
+
+/* Ligue : chef final (problème expert) */
+const CHEF={setup:()=>({P0:P([500,400,800])}),gens:[
+x=>N(`Le Cristal Arc-en-ciel coûte ${x.P0} € en janvier. En février, pénurie : +15 %. En mars, nouvelle hausse de +8 %.<br>Coefficient multiplicateur global de janvier à mars ?`,1.15*1.08,{tol:1e-4,sk:'Problème',hint:`${m`1{,}15\times1{,}08`}.`,sol:m`1{,}15\times1{,}08=1{,}242`}),
+x=>U(`Toujours le Cristal (${x.P0} € en janvier, coefficient global 1,242 jusqu'en mars).`,[{l:'Prix en mars :',ans:x.P0*1.242,u:'€',tol:0.006},{l:'Hausse globale :',ans:24.2,u:'%',tol:0.01}],{sk:'Problème',hint:`Prix = ${m`${x.P0}\times1{,}242`} ; taux = ${m`1{,}242-1`}.`,sol:m`${x.P0}\times1{,}242=${L(x.P0*1.242)}`+` € et +24,2 %.`}),
+x=>N(`En avril : −20 % sur le prix de mars, puis −5 % supplémentaires en caisse pour les adhérents. Pourcentage global de réduction pour un adhérent ? (réponds par un nombre positif)`,24,{u:'%',alt:[-24],sk:'Problème',hint:`${m`0{,}8\times0{,}95`} puis compare à 1.`,sol:m`0{,}8\times0{,}95=0{,}76`+` donc une réduction de 24 %.`}),
+x=>N(`Quel est le prix final payé par un adhérent en avril ?`,x.P0*1.242*0.76,{u:'€',tol:0.006,sk:'Problème',hint:`Prix de mars (${fr(x.P0*1.242)} €) ${m`\times0{,}76`}.`,sol:m`${L(x.P0*1.242)}\times0{,}76=${L(rd(x.P0*1.242*0.76,2))}`+` €.`}),
+x=>N(`Coefficient multiplicateur global de janvier au prix adhérent d'avril ? (valeur exacte)`,1.242*0.76,{tol:1e-5,sk:'Problème',hint:`${m`1{,}242\times0{,}76`}.`,sol:m`1{,}242\times0{,}76=0{,}94392`}),
+x=>N(`Quel taux d'évolution réciproque appliquer au prix d'avril pour retrouver exactement ${x.P0} € ? (en %, arrondi à 0,01 %)`,rd((1/(1.242*0.76)-1)*100,2),{u:'%',tol:0.006,sk:'Problème',hint:`${m`\frac{1}{0{,}94392}-1`}.`,sol:m`\frac{1}{0{,}94392}-1\approx0{,}0594`+` soit +5,94 %.`})]};
+
+const TOWNS=[
+{id:'t1',name:'Bourg-Gigogne',theme:'Proportions de proportions',col:'#3f9a3a',champ:'Sylve',ctype:'Plante',badge:'Badge Gigogne',x:80,y:170,
+ lv:[{n:'Les hautes herbes',sk:'Calculer',foe:'moussigre',d:T1.l1},{n:'La carte des zones',sk:'Représenter',foe:'voltinet',d:T1.l2},{n:'Le carnet du ranger',sk:'Argumenter',foe:'spectrin',d:T1.l3},{n:'Arène de Sylve',sk:'Problème',foe:'champ0',boss:1,d:T1.boss}]},
+{id:'t2',name:'Port-Marché',theme:'Coefficients multiplicateurs',col:'#1f6fb2',champ:'Marin',ctype:'Eau',badge:'Badge Ancre',x:170,y:320,
+ lv:[{n:'La Boutique du Port',sk:'Calculer',foe:'bullot',d:T2.l1},{n:'Étiquettes du Centre de Soins',sk:'Représenter',foe:'flammiche',d:T2.l2},{n:'Le marchand bavard',sk:'Argumenter',foe:'moussigre',d:T2.l3},{n:'Arène de Marin',sk:'Problème',foe:'champ1',boss:1,d:T2.boss}]},
+{id:'t3',name:'Val-Recensement',theme:'Variations absolue et relative',col:'#00897b',champ:'Dr Ondine',ctype:'Science',badge:'Badge Loupe',x:330,y:250,
+ lv:[{n:'Le Labo de la Pr Lin',sk:'Calculer',foe:'galetin',d:T3.l1},{n:'Le tableau de recensement',sk:'Lire',foe:'voltinet',d:T3.l2},{n:'Débat au Labo',sk:'Argumenter',foe:'flammiche',d:T3.l3},{n:'Arène du Dr Ondine',sk:'Problème',foe:'champ2',boss:1,d:T3.boss}]},
+{id:'t4',name:'Cité-Cascade',theme:'Évolutions successives',col:'#0097a7',champ:'Cascade',ctype:'Eau',badge:'Badge Cascade',x:430,y:160,
+ lv:[{n:'Les soldes en cascade',sk:'Calculer',foe:'flammiche',d:T4.l1},{n:'Les schémas fléchés',sk:'Représenter',foe:'bullot',d:T4.l2},{n:'Le piège des remises',sk:'Argumenter',foe:'nuageon',d:T4.l3},{n:'Arène de Cascade',sk:'Problème',foe:'champ3',boss:1,d:T4.boss}]},
+{id:'t5',name:'Mont-Retour',theme:'Évolution réciproque',col:'#8d6e63',champ:'Roc',ctype:'Roche',badge:'Badge Boomerang',x:575,y:300,
+ lv:[{n:'Le sentier du retour',sk:'Calculer',foe:'galetin',d:T5.l1},{n:'Aller-retour fléché',sk:'Représenter',foe:'flammiche',d:T5.l2},{n:'Le refuge des sceptiques',sk:'Argumenter',foe:'spectrin',d:T5.l3},{n:'Arène de Roc',sk:'Problème',foe:'champ4',boss:1,d:T5.boss}]},
+{id:'lg',name:'Ligue Proportia',theme:'Toutes les notions',col:'#b8860b',champ:'Aurélia',ctype:'Maîtresse',badge:'Trophée de Maître',x:560,y:60,league:1,
+ lv:[{n:'Le Conseil des Champions',sk:'Problème',foe:'champ0',boss:1,council:1},{n:'Aurélia, Maîtresse de la Ligue',sk:'Problème',foe:'champ5',boss:1,d:CHEF}]}
+];
+const BOSSES=[T1.boss,T2.boss,T3.boss,T4.boss,T5.boss];
+function buildLevel(ti,li){const lv=TOWNS[ti].lv[li];
+ if(lv.council){let qs=[];BOSSES.forEach((b,k)=>SH(b).slice(0,2).forEach(g=>{const q=g();q.foe='champ'+k;q.who=TOWNS[k].champ;qs.push(q)}));return qs}
+ const d=lv.d;if(Array.isArray(d))return d.map(g=>g());const ctx=d.setup();return d.gens.map(g=>g(ctx))}
+function parseNum(s){s=String(s).trim().replace(/[\s€%]/g,'').replace(/[−–]/g,'-').replace(',','.');
+ if(/^[-+]?\d+(\.\d+)?\/\d+(\.\d+)?$/.test(s)){const[a,b]=s.split('/').map(Number);return b?a/b:NaN}
+ if(!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s))return NaN;return Number(s)}
+function judge(v,ans,tol,u,alt){if(isNaN(v))return 'nan';const n=(a,b)=>Math.abs(a-b)<=tol;
+ if(n(v,ans)||(alt||[]).some(a=>n(v,a)))return 'ok';if(u==='%'&&n(v*100,ans))return 'okpct';if(ans!==0&&n(-v,ans))return 'sign';return 'no'}
+const tolOf=(o)=>o.tol??Math.max(1e-6,Math.abs(o.ans)*1e-6);
+/*ENDDATA*/
+
+/* ---------- SPRITES ---------- */
+const BOY=["...kkkkkk...","..kccccccck.",".kccccccccck",".kkkkkkkkkkk",".khsssssshk.",".kssesssesk.",".kssssssssk.","..ksssssssk.","..kjjjjjjk..",".kjjjwwjjjk.","ksjjjwwjjjsk","ksjjjjjjjjsk",".kkjjjjjjkk.","..kppppppk..","..kppkkppk..","..kbbk.kbbk."];
+const GIRL=BOY.map((r,i)=>i>=4&&i<=9?'h'+r.slice(1,11)+'h':r);GIRL[13]=".kjjjjjjjjk.";GIRL[14]="..kssk.kssk.";
+const CRE={
+moussigre:{n:'Moussigre',r:["..k......k..",".kgk....kgk.",".kggkkkkggk.","kggggggggggk","kgweggggwegk","kggggppggggk",".kggggggggk.","..kGGGGGGk..",".kGGGGGGGGk.",".kGkGGGGkGk.",".kk.kkkk.kk.","............"],p:{g:'#5cbf4f',G:'#2e7d32',p:'#f48fb1'}},
+nuageon:{n:'Nuageon',r:["...kkk.kkk..","..kwwwkwwwk.",".kwwwwwwwwwk","kwwwwwwwwwwk","kwwewwwwewwk","kwwwwbbwwwwk","kbwwwwwwwwbk",".kbbbbbbbbk.","..kk.kk.kk..","............"],p:{w:'#ffffff',b:'#9fd4ff'}},
+flammiche:{n:'Flammiche',r:[".k........k.",".kok....kok.",".kookkkkook.","kooooooooook","koweooooweok","kooooyyooook",".kooyyyyookr","..kooooookry",".kook..kookr","............"],p:{o:'#f28c28',y:'#ffd54f',r:'#e53935'}},
+galetin:{n:'Galetin',r:["....kkkk....","..kkllsskk..",".klssssssdk.","klsswesswedk","kssssssssddk","ksssskksssdk",".kssssssddk.","..kkddddkk..","...k....k..."],p:{s:'#a7a7a7',d:'#6b6b6b',l:'#e6e6e6'}},
+bullot:{n:'Bullot',r:["....kkkk....","..kkbbbbkk..",".kbbbbbbbbk.",".kbwebbwebk.","kbbbbbbbbbbk","kbbbkkkkbbbk","kbbbbbbbbbbk",".kBBBBBBBBk.","..kkkkkkkk.."],p:{b:'#4fa3e8',B:'#2f6fb8'}},
+spectrin:{n:'Spectrin',r:["....kkkk....","..kkvvvvkk..",".kvvvvvvvvk.","kvvwevvwevvk","kvvvvvvvvvvk","kvvvkkkkvvvk","kvvvvvvvvvvk","kvvvvvvvvvvk",".kvk.kvk.kvk","..k...k...k."],p:{v:'#a9c3d6'}},
+voltinet:{n:'Voltinet',r:["..k......k..","...k....k...","...kkkkkk...","..kyyyyyyk..",".kyweyyweyk.",".kyyyyyyyyk.",".kkkkkkkkkk.",".kggggkgggk.",".kggggkgggk.","..kkk..kkk.."],p:{y:'#d9e84a',g:'#3a9a5a'}}};
+const BASE={k:'#1d1d2b',s:'#f6c89f',e:'#1d1d2b',w:'#ffffff',b:'#3a3a48'};
+function spr(rows,pal,px=4,cls=''){const w=rows[0].length,h=rows.length,P2={...BASE,...pal};let r='';
+ rows.forEach((row,y)=>{let x=0;while(x<w){const ch=row[x];let n=1;while(x+n<w&&row[x+n]===ch)n++;if(ch!=='.'&&P2[ch])r+=`<rect x="${x}" y="${y}" width="${n}" height="1" fill="${P2[ch]}"/>`;x+=n}});
+ return `<svg class="sp ${cls}" viewBox="0 0 ${w} ${h}" width="${w*px}" height="${h*px}" aria-hidden="true">${r}</svg>`}
+const OUTFITS=[
+{id:'classique',n:'Classique',pr:0,c:'#e2403a',j:'#3b7dd8',p:'#2e3a59'},{id:'foret',n:'Forêt',pr:30,c:'#3f8f3a',j:'#7cc05a',p:'#5a4632'},
+{id:'ocean',n:'Océan',pr:30,c:'#1f6fb2',j:'#4fc3e8',p:'#24476b'},{id:'volcan',n:'Volcan',pr:45,c:'#2b2b2b',j:'#e8562a',p:'#5b1f12'},
+{id:'sakura',n:'Sakura',pr:60,c:'#ffffff',j:'#f48fb1',p:'#8e3b5c'},{id:'nuit',n:'Nuit étoilée',pr:60,c:'#1e2a5a',j:'#3f51b5',p:'#141a38'},
+{id:'or',n:'Or de la Ligue',pr:150,c:'#f2b705',j:'#fff4c2',p:'#8a6d00'}];
+const topR=(base,rows,mods={})=>{const a=base.slice();rows.forEach((r,i)=>a[i]=r);Object.entries(mods).forEach(([i,r])=>a[i]=r);return a};
+const cape=a=>a.map((row,i)=>i>=8&&i<=14?row.replace(/^\.+/,m=>'r'.repeat(m.length)).replace(/\.+$/,m=>'r'.repeat(m.length)):row);
+const CTITLE=['Championne Sylve','Champion Marin','Championne Dr Ondine','Champion Cascade','Champion Roc','Maîtresse Aurélia'];
+const QUOTES=['Dans mon jardin, tout est emboîté : une fraction d’une fraction… Sauras-tu multiplier au bon moment ?','Au Port, les prix montent et descendent comme la marée. Ton coefficient multiplicateur est-il prêt ?','J’ai recensé chaque créature de la vallée. Arrivée moins départ… et on divise par quoi, déjà ?','Une remise, puis une autre… Si tu les additionnes, ma cascade t’emporte !','Monter, c’est facile. Revenir exactement au point de départ, c’est une autre histoire !','Tu as les cinq badges. Montre-moi que tu maîtrises tout le chapitre 10 !'];
+const trainer=(g,o,px=4)=>spr(g==='f'?GIRL:BOY,{c:o.c,j:o.j,p:o.p,h:o.h||(g==='f'?'#b5482a':'#6b3e1f')},px);
+const foeSpr=(k,px)=>/^champ\d$/.test(k)?(px<=3?champBust(+k.slice(5),1):champSpr(+k.slice(5),Math.round(px/2))):crSpr(k,px<=3?1:Math.max(2,Math.round(px/2.4)));
+const heart=(on)=>spr([".kk.kk.","krrkrrk","krrrrrk",".krrrk.","..krk..","...k..."],{r:on?'#e2403a':'#bbbbbb'},3);
+const BADGE=["...kk...","..kyyk..",".kyccyk.","kyccccyk","kyccccyk",".kyccyk.","..kyyk..","...kk..."];
+const badgeSvg=(col,on,px=3)=>spr(BADGE,{y:on?'#fff2a8':'#ddd',c:on?col:'#aaa'},px);
+const TREE=["....kkkk....","..kkgglgkk..",".kgglllgggk.",".kglllggggk.","kgggggggggdk","kgglgggggddk","kgggggggdddk",".kggggggddk.",".kdgggddddk.","..kkddddkk..","....kbbk....","....kbbk....","...kkbbkk..."];
+const PINE=[".....kk.....","....kggk....","...kgggdk...","...kgggdk...","..kggggddk..",".kkggggddkk.","..kgggdddk..",".kggggddddk.","kkkggggdddkk","....kbbk....","....kkkk...."];
+
+/* ---------- PEINTRE DE PERSONNAGES (pixel art original) ---------- */
+const OUTL='#1d1d2b';
+function pgrid(w,h,ox=0,oy=0){let g=Array.from({length:h},()=>Array(w).fill(null));
+ const set=(x,y,c)=>{x=Math.floor(x+ox);y=Math.floor(y+oy);if(x>=0&&y>=0&&x<w&&y<h)g[y][x]=c};
+ const A={set,
+ rect:(x,y,a,b,c)=>{for(let j=Math.round(y);j<Math.round(y+b);j++)for(let i=Math.round(x);i<Math.round(x+a);i++)set(i,j,c)},
+ ell:(cx,cy,rx,ry,c,clip)=>{for(let y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++)for(let x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++)if(((x+.5-cx)/rx)**2+((y+.5-cy)/ry)**2<=1&&(!clip||clip(x,y)))set(x,y,c)},
+ poly:(pts,c)=>{const ys=pts.map(p=>p[1]);for(let y=Math.floor(Math.min(...ys));y<=Math.ceil(Math.max(...ys));y++){const yy=y+.5,xs=[];for(let i=0;i<pts.length;i++){const [x1,y1]=pts[i],[x2,y2]=pts[(i+1)%pts.length];if((y1<=yy&&y2>yy)||(y2<=yy&&y1>yy))xs.push(x1+(yy-y1)*(x2-x1)/(y2-y1))}xs.sort((a,b)=>a-b);for(let k=0;k+1<xs.length;k+=2)for(let x=Math.round(xs[k]);x<Math.round(xs[k+1]);x++)set(x,y,c)}},
+ edge:(skins,skip)=>{const o=g.map(r=>r.slice());for(let y=0;y<h;y++)for(let x=0;x<w;x++){const c=g[y][x];if(!c||skins.includes(c)||skip.includes(c))continue;
+   if([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>g[y+dy]&&skins.includes(g[y+dy][x+dx])))o[y][x]=dk(c,.62)}g=o},
+ outline:()=>{const o=g.map(r=>r.slice());for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(!g[y][x]&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>g[y+dy]&&g[y+dy][x+dx]&&g[y+dy][x+dx]!==OUTL))o[y][x]=OUTL;g=o},
+ svg:(px,mono)=>{let r='';g.forEach((row,y)=>{let x=0;while(x<w){const c=row[x];let n=1;while(x+n<w&&(mono?!!row[x+n]===!!c:row[x+n]===c))n++;if(c)r+=`<rect x="${x}" y="${y}" width="${n}" height="1" fill="${mono||c}"/>`;x+=n}});
+   return `<svg class="sp" viewBox="0 0 ${w} ${h}" width="${w*px}" height="${h*px}" aria-hidden="true">${r}</svg>`}};
+ return A}
+function headBack(A,hx,hy,u,s){const HD=dk(s.hair,.72);
+ if(s.hs==='long')A.ell(hx,hy+3*u,8.2*u,11*u,HD,(x,y)=>y<hy+12*u);
+ if(s.hs==='bob')A.ell(hx,hy+1*u,8.4*u,8.3*u,HD,(x,y)=>y<hy+5*u);
+ if(s.hs==='pony')A.ell(hx+7.6*u,hy+3.5*u,2.6*u,6.8*u,HD)}
+function headFront(A,hx,hy,u,s){const H=s.hair,HD=dk(H,.72),SK=s.skin||'#f6c89f',R=Math.round,C=s.hatC;
+ if(s.hs==='bun')A.ell(hx,hy-7.6*u,3.6*u,3*u,H);
+ A.ell(hx-6.4*u,hy+.8*u,1.3*u,1.7*u,SK);A.ell(hx+6.4*u,hy+.8*u,1.3*u,1.7*u,dk(SK,.88));
+ A.ell(hx,hy,6.5*u,7.2*u,SK);A.ell(hx+4.6*u,hy+.6*u,2.2*u,6*u,dk(SK,.88),(x,y)=>x+.5>hx+4.2*u);
+ if(s.beard){A.ell(hx,hy+3.6*u,6.2*u,4.4*u,s.beardC||H,(x,y)=>y+.5>hy+2.8*u);A.ell(hx,hy+3.9*u,2.6*u,1.3*u,dk(SK,.8))}
+ const ew=Math.max(1,R(1.2*u)),eh=Math.max(2,R(2.1*u)),ex=R(2.7*u);
+ [hx-ex-ew/2,hx+ex-ew/2].forEach(x=>{A.rect(x,hy-.3*u,ew,eh,'#1d1d2b');if(u>1.3)A.set(x,hy-.3*u,'#ffffff')});
+ if(u>1.3){A.rect(hx-ex-1.4*u,hy-2.5*u,2.6*u,Math.max(1,.7*u),HD);A.rect(hx+ex-1.2*u,hy-2.5*u,2.6*u,Math.max(1,.7*u),HD)}
+ if(s.f&&u>1.3){A.set(hx-ex-ew/2-1,hy-.7*u,'#1d1d2b');A.set(hx+ex+ew/2,hy-.7*u,'#1d1d2b')}
+ if(s.blush){A.rect(hx-ex-1.6*u,hy+2.1*u,1.6*u,Math.max(1,.6*u),'#f29a9a');A.rect(hx+ex+.2*u,hy+2.1*u,1.6*u,Math.max(1,.6*u),'#f29a9a')}
+ A.rect(hx-1.1*u,hy+3.8*u,2.2*u,Math.max(1,.6*u),s.beard?'#7a3a2a':'#b5574a');
+ if(s.glasses){[hx-ex,hx+ex].forEach(x=>{const gw=R(3.6*u),gh=R(3*u),gx=R(x-gw/2),gy=R(hy-1.3*u);for(let i=0;i<gw;i++){A.set(gx+i,gy,'#2b3a55');A.set(gx+i,gy+gh-1,'#2b3a55')}for(let j=0;j<gh;j++){A.set(gx,gy+j,'#2b3a55');A.set(gx+gw-1,gy+j,'#2b3a55')}});A.rect(hx-1,hy-.6*u,2,1,'#2b3a55')}
+ A.ell(hx,hy-3.4*u,7.1*u,4.7*u,H,(x,y)=>y+.5<hy-1.4*u-(Math.abs(x+.5-hx)<2.4*u?1*u:0));
+ if(s.hs==='spiky')[-4,-1.4,1.4,4].forEach(d=>A.poly([[hx+(d-1.9)*u,hy-5*u],[hx+(d+1.9)*u,hy-5*u],[hx+(d+.8)*u,hy-10*u]],H));
+ const L=s.hs==='long'?10:s.hs==='bob'||s.hs==='pony'?6:3.6;A.rect(hx-7.2*u,hy-3*u,2*u,L*u,H);A.rect(hx+5.2*u,hy-3*u,2*u,L*u,HD);
+ A.rect(hx-3.6*u,hy-6.7*u,3*u,Math.max(1,.8*u),dk(H,1.35));
+ if(s.hat==='cap'){A.ell(hx,hy-4.3*u,7.5*u,5*u,C,(x,y)=>y+.5<hy-3*u);A.rect(hx-9.2*u,hy-3.7*u,12*u,1.6*u,dk(C,.7));A.rect(hx-1*u,hy-7.6*u,2*u,2*u,'#ffffff');A.rect(hx+2*u,hy-8*u,3*u,Math.max(1,.7*u),dk(C,1.3))}
+ if(s.hat==='captain'){A.ell(hx,hy-6.6*u,8.8*u,3.4*u,'#ffffff');A.rect(hx-7*u,hy-5.6*u,14*u,2.4*u,'#f2f2f2');A.rect(hx-7.4*u,hy-3.6*u,14.8*u,1.4*u,'#1d1d2b');A.rect(hx-1.3*u,hy-5.8*u,2.6*u,2.2*u,'#f2b705')}
+ if(s.hat==='beanie'){A.ell(hx,hy-4*u,7.5*u,6.2*u,C,(x,y)=>y+.5<hy-2.6*u);for(let k=0;k<3;k++)A.rect(hx-7.2*u,hy-(5+k*1.7)*u,14.4*u,Math.max(1,.6*u),dk(C,.75));A.rect(hx-7.7*u,hy-3.8*u,15.4*u,1.8*u,dk(C,1.25));A.ell(hx,hy-10.6*u,2.1*u,2.1*u,'#f4f4f4')}
+ if(s.hat==='crown'){A.rect(hx-5*u,hy-8.4*u,10*u,2.3*u,'#f2b705');[-4,0,4].forEach(d=>A.poly([[hx+(d-1.7)*u,hy-8.2*u],[hx+(d+1.7)*u,hy-8.2*u],[hx+d*u,hy-11.8*u]],'#f2b705'));A.rect(hx-.9*u,hy-8*u,1.8*u,1.5*u,'#e2403a');A.rect(hx-5*u,hy-6.7*u,10*u,Math.max(1,.5*u),'#c98a00')}
+ if(s.hat==='bandana'){A.rect(hx-7.1*u,hy-5.4*u,14.2*u,2.3*u,C);A.rect(hx-7.1*u,hy-3.5*u,14.2*u,Math.max(1,.5*u),dk(C,.7));A.ell(hx+7.3*u,hy-4.3*u,1.7*u,1.4*u,C);A.poly([[hx+7.6*u,hy-4*u],[hx+10.2*u,hy-1.8*u],[hx+8.4*u,hy-1.2*u]],dk(C,.8))}
+ if(s.hat==='flowers'){A.ell(hx-2.6*u,hy-7.2*u,1.5*u,.9*u,'#5cbf4f');A.ell(hx+2.7*u,hy-7.2*u,1.5*u,.9*u,'#5cbf4f');[[-5,-5.6],[0,-7.8],[5,-5.6]].forEach(([dx,dy],i)=>{A.ell(hx+dx*u,hy+dy*u,2*u,2*u,i===1?'#ffffff':'#f48fb1');A.ell(hx+dx*u,hy+dy*u,.8*u,.8*u,'#ffd54f')})}}
+const SKIP=['#1d1d2b','#ffffff','#b5574a','#7a3a2a','#f29a9a','#2b3a55','#f2b705','#ffd54f'];
+function finish(A,s){const SK=s.skin||'#f6c89f';A.edge([SK,dk(SK,.88)],SKIP);A.outline();return A}
+function bustSprite(s){const A=pgrid(46,48),hx=23,hy=21,u=1.6,T=s.coat||s.top,SK=s.skin||'#f6c89f',sy=hy+12;
+ if(s.cape)A.poly([[1,48],[5,sy+2],[41,sy+2],[45,48]],s.cape);
+ headBack(A,hx,hy,u,s);
+ A.rect(hx-4,hy+8,8,6,dk(SK,.88));
+ A.poly([[4,48],[8,sy+3],[15,sy],[31,sy],[38,sy+3],[42,48]],T);A.poly([[23,sy],[31,sy],[38,sy+3],[42,48],[23,48]],dk(T,.8));
+ if(s.coat&&s.top)A.poly([[hx-5,sy],[hx+5,sy],[hx+3,48],[hx-3,48]],s.top);
+ if(s.shirt)A.poly([[hx-4,sy],[hx+4,sy],[hx,sy+7]],s.shirt);
+ if(s.open)A.rect(hx-1,sy+6,2,10,s.shirt||'#ffffff');
+ if(s.buttons)[sy+4,sy+8,sy+12].forEach(y=>A.rect(hx-1,y,2,2,'#f2b705'));
+ if(s.epaul){A.rect(6,sy+2,8,2,'#f2b705');A.rect(32,sy+2,8,2,'#f2b705')}
+ if(s.scarf){A.poly([[hx-7,sy-2],[hx+7,sy-2],[hx+6,sy+3],[hx-6,sy+3]],s.scarf);A.rect(hx+2,sy+2,3,9,dk(s.scarf,.8))}
+ if(s.cape){A.rect(6,sy+1,34,2,s.trim||'#f2b705');A.ell(hx,sy+2,2,2,'#e2403a')}
+ headFront(A,hx,hy,u,s);return finish(A,s)}
+const CSPEC=[
+{f:1,hair:'#3f7a2a',hs:'long',hat:'flowers',top:'#7cc05a',shirt:'#f4ecd8',skirt:1,pants:'#3e5f2a',shoe:'#6b3e1f',blush:1},
+{hair:'#2b2b2b',hs:'short',hat:'captain',beard:1,top:'#1f3f8a',buttons:1,epaul:1,pants:'#e8e8e8',shoe:'#1d1d2b',skin:'#e8b48a'},
+{f:1,hair:'#7b4b2a',hs:'bun',glasses:1,coat:'#f4f6f8',top:'#4dd0e1',shirt:'#4dd0e1',pants:'#455a64',shoe:'#3a3a48'},
+{f:1,hair:'#1a237e',hs:'pony',hat:'bandana',hatC:'#4dd0e1',top:'#00838f',shirt:'#e0f7fa',pants:'#006064',shoe:'#f4f4f4',skin:'#d9a27a',blush:1},
+{hair:'#3a2a1a',hs:'short',hat:'beanie',hatC:'#a0522d',beard:1,top:'#6d7b3a',scarf:'#c0392b',pants:'#4e342e',shoe:'#5a3418',glove:'#8d6e63',skin:'#e8b48a'},
+{hair:'#e8e8e8',hs:'short',hat:'crown',beard:1,beardC:'#e8e8e8',top:'#212121',cape:'#1f3a8a',trim:'#f2b705',shirt:'#f2b705',pants:'#212121',shoe:'#1d1d2b',skin:'#f0c8a0'}];
+const pspec=(g,o)=>g==='f'?{f:1,hair:'#b5482a',hs:'long',hat:'cap',hatC:o.c,top:o.j,shirt:'#ffffff',skirt:1,pants:o.p,blush:1,shoe:'#3a3a48'}:{hair:'#6b3e1f',hs:'spiky',hat:'cap',hatC:o.c,top:o.j,shirt:'#ffffff',open:1,pants:o.p,shoe:'#3a3a48'};
+const SCACHE={};const cached=(k,f)=>SCACHE[k]||(SCACHE[k]=f());
+const cimg=(i,h)=>`<img class="cimg" src="img/champ${i}.png" alt="${esc(CTITLE[i])}" style="height:${Math.round(h)}px;width:auto">`;
+const champSpr=(i,px)=>cimg(i,48*px);
+const champBust=(i,px)=>cimg(i,48*px);
+const bigTrainer=(g,o,px)=>`<img class="trimg" src="img/tr_${g==='f'?'f':'m'}_${o.id}.png" alt="" style="height:${51*px}px;width:auto">`;
+const trainerBust=(g,o,px)=>bigTrainer(g,o,px*48/51);
+
+/* ---------- POSES ---------- */
+const POSE={down:[[-9,25.5],[-8.5,31]],hip:[[-11.5,25],[-6.5,30]],raise:[[-10.5,15],[-11,9]],wave:[[-11.5,16.5],[-13.5,11]],point:[[-11.5,20],[-16.5,18.5]],throw:[[-11.5,22],[-14.5,16.5]],cross:[[-8.5,26],[4,24.5]],clip:[[-9.5,26],[-3,25]]};
+const segL=(A,x1,y1,x2,y2,r,c)=>{const n=Math.max(2,Math.ceil(Math.hypot(x2-x1,y2-y1)*2));for(let i=0;i<=n;i++){const t=i/n;A.ell(x1+(x2-x1)*t,y1+(y2-y1)*t,r,r,c)}};
+function arm(A,cx,side,name,col,skin,item){const [[ex,ey],[hx,hy]]=POSE[name]||POSE.down,sg=side<0?1:-1,sx=cx+side*7,sy=20.5;
+ const E=[cx+ex*sg,ey],H=[cx+hx*sg,hy];segL(A,sx,sy,E[0],E[1],1.7,col);segL(A,E[0],E[1],H[0],H[1],1.5,col);
+ const cu=[E[0]+(H[0]-E[0])*.78,E[1]+(H[1]-E[1])*.78];A.ell(cu[0],cu[1],1.6,1.6,dk(col,.7));
+ if(item==='clip'){A.rect(cx-6,21,8,10,'#8a5a2c');A.rect(cx-5,22,6,8,'#ffffff');for(let y=24;y<30;y+=2)A.rect(cx-4,y,4,1,'#9fb4d8');A.rect(cx-3,20,3,2,'#9e9e9e')}
+ if(name==='wave'){A.ell(H[0],H[1],2.1,2.3,skin);A.set(H[0]-1,H[1]-3,skin);A.set(H[0]+1,H[1]-3,skin);A.set(H[0]+2,H[1]-2,skin)}else A.ell(H[0],H[1],2,2,skin);
+ if(item==='capsule'){A.ell(H[0]+1,H[1]-2,3.4,2.4,'#ffffff');A.ell(H[0]+1,H[1]-2,3.4,2.4,'#4fc3e8',(x,y)=>x+.5<H[0]+1);A.rect(H[0]+1,H[1]-4,1,5,'#1d1d2b');A.set(H[0]+1,H[1]-2,'#ffd54f')}
+ if(item==='flower'){segL(A,H[0],H[1]-1,H[0]+1,H[1]-6,.5,'#3f9a3f');A.ell(H[0]+1,H[1]-7.5,2,2,'#f48fb1');A.set(H[0]+1,H[1]-7.5,'#ffd54f')}}
+function fullSprite(s){const A=pgrid(36,51,0,3),cx=18,T=s.top,P=s.pants,SK=s.skin||'#f6c89f',SH=s.shoe||'#3a3a48',w=s.wide;
+ if(s.cape)A.poly([[cx-8,19],[cx+8,19],[cx+12,45],[cx-12,45]],s.cape),A.poly([[cx,19],[cx+8,19],[cx+12,45],[cx,45]],dk(s.cape,.8));
+ headBack(A,cx,10,1,s);
+ if(s.skirt){A.poly([[cx-6,31],[cx+6,31],[cx+8.5,38],[cx-8.5,38]],P);A.poly([[cx+1,31],[cx+6,31],[cx+8.5,38],[cx+1,38]],dk(P,.8));A.rect(cx-5-(w?1:0),38,3,5,SK);A.rect(cx+2+(w?1:0),38,3,5,dk(SK,.88));A.rect(cx-5-(w?1:0),41,3,2,s.sock||'#ffffff');A.rect(cx+2+(w?1:0),41,3,2,s.sock||'#ffffff')}
+ else if(w){A.poly([[cx-6,31],[cx-1,31],[cx-4,43],[cx-10,43]],P);A.poly([[cx+1,31],[cx+6,31],[cx+10,43],[cx+4,43]],dk(P,.8))}
+ else{A.rect(cx-6,31,5,12,P);A.rect(cx+1,31,5,12,dk(P,.8));A.rect(cx-5,33,1,8,dk(P,1.2))}
+ const fx=w?3:0;A.rect(cx-7-fx,43,6,3,SH);A.rect(cx+1+fx,43,6,3,dk(SH,.85));A.rect(cx-6-fx,43,2,1,dk(SH,1.7));A.rect(cx+2+fx,43,2,1,dk(SH,1.7));
+ A.rect(cx-2,16,4,3,dk(SK,.88));
+ A.poly([[cx-7,19],[cx+7,19],[cx+6,32],[cx-6,32]],T);A.poly([[cx+2,19],[cx+7,19],[cx+6,32],[cx+2,32]],dk(T,.78));
+ if(s.shirt)A.poly([[cx-2.5,19],[cx+2.5,19],[cx,24]],s.shirt);
+ if(s.open)A.rect(cx-1,19,2,12,s.shirt||'#ffffff');
+ if(s.coat){A.poly([[cx-7,19],[cx-1,19],[cx-1,40],[cx-8.5,40]],s.coat);A.poly([[cx+1,19],[cx+7,19],[cx+8.5,40],[cx+1,40]],dk(s.coat,.85));A.rect(cx-6,30,3,1,dk(s.coat,.8))}
+ if(!s.coat){A.rect(cx-6,30,12,2,s.belt||'#3a3a48');A.rect(cx-1,30,2,2,'#f2b705')}
+ if(s.buttons)for(let y=21;y<30;y+=3)A.set(cx,y,'#f2b705');
+ if(s.scarf){A.rect(cx-4,17,8,3,s.scarf);A.rect(cx+1,19,2,6,dk(s.scarf,.8))}
+ if(s.cape)A.rect(cx-8,19,16,1,s.trim||'#f2b705');
+ const AC=s.coat||T,[pl,pr]=s.pose||['down','down'];
+ arm(A,cx,-1,pl,AC,s.glove||SK,s.itemL);arm(A,cx,1,pr,dk(AC,.8),dk(s.glove||SK,.9),s.itemR);
+ if(s.epaul){A.rect(cx-9,19,4,1,'#f2b705');A.rect(cx+5,19,4,1,'#f2b705')}
+ headFront(A,cx,10,1,s);return finish(A,s)}
+Object.assign(CSPEC[0],{pose:['hip','raise'],itemR:'flower'});Object.assign(CSPEC[1],{pose:['cross','cross']});
+Object.assign(CSPEC[2],{pose:['clip','down'],itemL:'clip'});Object.assign(CSPEC[3],{pose:['point','hip'],wide:1});
+Object.assign(CSPEC[4],{pose:['hip','raise'],wide:1});Object.assign(CSPEC[5],{pose:['point','down']});
+const pspec2=pspec;
+const pspecP=(g,o)=>Object.assign(pspec2(g,o),g==='f'?{pose:['hip','wave']}:{pose:['down','throw'],itemR:'capsule',wide:1});
+
+/* ---------- BESTIAIRE ---------- */
+function creature(fn,w=40,h=40){const A=pgrid(w,h);
+ const B=(cx,cy,rx,ry,c)=>{A.ell(cx,cy,rx,ry,c);A.ell(cx,cy,rx,ry,dk(c,.8),(x,y)=>((x+.5-cx)/rx)*.55+((y+.5-cy)/ry)*.85>.6);A.ell(cx,cy,rx,ry,dk(c,1.18),(x,y)=>((x+.5-cx)/rx)*.6+((y+.5-cy)/ry)*.8<-.72)};
+ const E=(x,y,r)=>{if(r<1.6){A.rect(x-1,y-1,2,2,OUTL);return}A.ell(x,y,r,r*1.15,'#ffffff');A.ell(x-r*.22,y+r*.12,r*.62,r*.82,OUTL);A.set(x-r*.5,y-r*.4,'#ffffff')};
+ const S=(x1,y1,x2,y2,r,c)=>segL(A,x1,y1,x2,y2,r,c);
+ const R=(x,y,a,b,c)=>{A.rect(x,y,a,b,c);A.rect(x+a*.66,y,a-Math.round(a*.66),b,dk(c,.8));A.rect(x,y,a,1,dk(c,1.15))};
+ fn(A,{B,E,S,R,K:OUTL});A.outline();return A}
+const BEST=[
+{id:'pousserave',n:'Pousserave',t:'Plante',d:'Ses feuilles poussent de 10 % par semaine : coefficient 1,1.'},
+{id:'braisot',n:'Braisot',t:'Feu',d:'Content, sa flamme grandit de 25 %. Vexé, elle rétrécit de 20 %… et revient pile à sa taille de départ !'},
+{id:'spiralo',n:'Spiralo',t:'Eau',d:'Chaque tour de sa coquille est 20 % plus large que le précédent.'},
+{id:'florelle',n:'Florelle',t:'Plante · Fée',d:'Une fleur sur quatre qu’elle effleure s’ouvre aussitôt : 25 %.'},
+{id:'rocaraign',n:'Rocaraign',t:'Roche · Insecte',d:'6 de ses 8 pattes touchent toujours le sol : 75 %.'},
+{id:'cornelame',n:'Cornelame',t:'Insecte',d:'Il soulève 50 fois son poids : c’est une hausse de 4 900 % !'},
+{id:'taupierre',n:'Taupierre',t:'Sol',d:'Il creuse 2 m de tunnel par heure, mais 1 m sur 4 finit en cul-de-sac.'},
+{id:'lilaminou',n:'Lilaminou',t:'Psy',d:'Elle ronronne 18 heures par jour : 75 % du temps.'},
+{id:'dinoxyde',n:'Dinoxyde',t:'Poison',d:'Ses écailles vertes couvrent 40 % de son corps.'},
+{id:'givrenard',n:'Givrenard',t:'Glace',d:'Au soleil, sa queue perd 10 % de givre : il lui faut environ +11,1 % pour la reconstruire.'},
+{id:'chauvelin',n:'Chauvelin',t:'Vol · Ténèbres',d:'Il dort 80 % de la journée, la tête en bas.'},
+{id:'lavaroc',n:'Lavaroc',t:'Feu · Roche',d:'Sa chaleur monte de 20 %, puis encore de 20 % : +44 % au total, pas +40 % !'},
+{id:'ramurmure',n:'Ramurmure',t:'Plante',d:'Il grandit de 2 % par an depuis trois siècles.'},
+{id:'ermicoque',n:'Ermicoque',t:'Eau',d:'Il change de coquille dès qu’il a grandi de 30 %.'},
+{id:'groinet',n:'Groinet',t:'Normal',d:'Sur ses 3 repas par jour, 2 sont faits de truffes : les 2/3.'},
+{id:'truffon',n:'Truffon',t:'Normal',d:'Son flair est 40 % plus fin que celui des autres chiots.'},
+{id:'champiot',n:'Champiot',t:'Plante · Poison',d:'Seuls 5 % des champignons de la forêt sont des Champiot.'},
+{id:'voltilutin',n:'Voltilutin',t:'Électrik',d:'Sa batterie baisse de 50 %, puis encore de 50 % : il ne lui reste que 25 % !'}];
+const BX=Object.fromEntries(BEST.map((b,i)=>[b.id,{...b,no:i+1}]));
+const STARTERS=['pousserave','braisot','spiralo'];
+const HAB=[['pousserave','florelle','cornelame','champiot','ramurmure','groinet'],['spiralo','ermicoque','truffon','groinet'],['lilaminou','voltilutin','taupierre','chauvelin'],['givrenard','spiralo','dinoxyde','ermicoque'],['braisot','lavaroc','rocaraign','taupierre','chauvelin'],['lavaroc','givrenard','dinoxyde','voltilutin']];
+const crSpr=(id,px)=>`<img class="crimg" src="img/cr/${id}.png" alt="${esc(BX[id]?BX[id].n:'')}" style="height:${40*px}px;width:auto">`;
+const crSil=(id,px)=>`<img class="crimg sil" src="img/cr/${id}.png" alt="Créature inconnue" style="height:${40*px}px;width:auto">`;
+const habOf=id=>TOWNS.filter((t,i)=>HAB[i].includes(id)).map(t=>t.name).join(', ');
+
+/* ---------- ÉTAT & SAUVEGARDE ---------- */
+const KEY='proportia_v1';let DB={profiles:[],cur:null};
+try{const s=localStorage.getItem(KEY);if(s)DB=JSON.parse(s)}catch(e){}
+const OLDB={moussigre:'pousserave',flammiche:'braisot',bullot:'spiralo'};(DB.profiles||[]).forEach(p=>{if(!BX[p.buddy])p.buddy=OLDB[p.buddy]||'pousserave'});
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}};
+let TEACH=false,SEL=0,S=null,CT=0;
+const me=()=>DB.profiles.find(p=>p.id===DB.cur);
+const outfit=p=>OUTFITS.find(o=>o.id===p.outfit)||OUTFITS[0];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lkey=(ti,li)=>TOWNS[ti].id+'_'+li;
+const townOpen=(p,ti)=>TEACH||ti===0||(ti===5?TOWNS.slice(0,5).every(t=>p.badges.includes(t.id)):p.badges.includes(TOWNS[ti-1].id));
+const lvlOpen=(p,ti,li)=>TEACH||(townOpen(p,ti)&&(li===0||p.done[lkey(ti,li-1)]));
+function comp(p,id){const a=p.stats[id]||[];if(!a.length)return null;return Math.round(a.reduce((s,x)=>s+x,0)/a.length*100)}
+const compLab=v=>v===null?'Pas encore évalué':v<40?'À retravailler':v<70?'En progrès':'Compris !';
+const meter=v=>`<div class="meter ${v===null?'':v<40?'lo':v<70?'mid':''}"><i style="width:${v??0}%"></i></div><div class="mlabel"><span>${compLab(v)}</span><span>${v===null?'—':v+' %'}</span></div>`;
+const lvlOf=p=>Math.floor(p.xp/100)+1;
+
+const app=document.getElementById('app'),modal=document.getElementById('modal'),mbox=document.getElementById('mbox');
+const tex=el=>{try{if(window.MathJax&&MathJax.typesetPromise){MathJax.typesetClear&&MathJax.typesetClear([el]);MathJax.typesetPromise([el]).catch(()=>{})}}catch(e){}};
+let mjWait=setInterval(()=>{if(window.MathJax&&MathJax.typesetPromise){clearInterval(mjWait);tex(app);if(modal.classList.contains('open'))tex(mbox)}},300);
+function openModal(html){mbox.innerHTML=html;modal.classList.add('open');tex(mbox);const f=mbox.querySelector('input,button');f&&f.focus()}
+function closeModal(){modal.classList.remove('open');mbox.innerHTML=''}
+modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeModal()});
+function show(html){app.innerHTML=(TEACH?`<div class="prof-banner">Mode prof actif — tous les niveaux sont ouverts <button class="btn" data-a="teachoff" style="font-size:9px;min-height:32px;padding:6px 8px;margin-left:8px">Quitter</button></div>`:'')+html;tex(app);window.scrollTo(0,0)}
+
+/* ---------- ÉCRANS ---------- */
+function hud(p){return `<div class="hud"><div class="row"><span class="chip">${bigTrainer(p.g,outfit(p),.5)} ${esc(p.name)}</span><span class="chip">Niv. ${lvlOf(p)}</span><span class="chip">XP ${p.xp}</span><span class="chip">${spr([".kkkk.","kyyyyk","kyooyk","kyooyk","kyyyyk",".kkkk."],{y:'#f2b705',o:'#c98a00'},3)} ${p.coins} pièces</span><span class="chip">Badges ${p.badges.filter(b=>b!=='lg').length}/5</span></div>
+<div class="row"><button class="btn" data-a="profile">Profil</button><button class="btn" data-a="shop">Boutique</button><button class="btn" data-a="best">Bestiaire</button><button class="btn" data-a="map">Carte</button></div></div>`}
+
+function title(){const list=DB.profiles.map(p=>`<button class="btn pbtn" data-a="pick" data-id="${esc(p.id)}">${bigTrainer(p.g,outfit(p),1.1)}<span>${esc(p.name)}<small>Niv. ${lvlOf(p)} · ${p.badges.filter(b=>b!=='lg').length} badge(s) · ${p.coins} pièces</small></span></button>`).join('');
+ show(`<div class="title"><div class="box"><div class="logo px">PROPORTIA</div><h2>L'aventure des proportions et des évolutions</h2><p>Traverse la région de Proportia de ville en ville. Chaque ville = une méthode du chapitre 10. Bats les champions d'arène, gagne les 5 badges et défie la Ligue !</p>
+ <h3>${DB.profiles.length?'Choisis ton dresseur':'Aucun dresseur sur cet appareil'}</h3><div class="plist">${list}</div>
+ <div class="row"><button class="btn main" data-a="new">Nouveau dresseur</button><button class="btn" data-a="teach">Mode prof</button></div>
+ <p class="note">La progression est enregistrée dans ce navigateur, sur cet appareil.</p></div>
+ <div class="box" style="background:var(--grass);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px"><div class="row" style="justify-content:center;gap:18px">${bigTrainer('m',OUTFITS[0],3)}${bigTrainer('f',OUTFITS[2],3)}</div>
+ <div class="row" style="justify-content:center;gap:14px">${STARTERS.concat(['florelle','lavaroc','givrenard']).map(k=>crSpr(k,2)).join('')}</div>
+ <div class="row" style="justify-content:center">${TOWNS.slice(0,5).map(t=>badgeSvg(t.col,1,4)).join('')}</div></div></div>`)}
+
+let draft={g:'m',buddy:'pousserave',name:''};
+function create(){const gb=g=>`<button class="btn" data-a="dg" data-v="${g}" aria-pressed="${draft.g===g}">${bigTrainer(g,OUTFITS[0],3)}${g==='m'?'Dresseur':'Dresseuse'}</button>`;
+ show(`<div class="box"><h1>Nouveau dresseur</h1><label for="nm"><b>Ton prénom</b></label><br><input id="nm" type="text" maxlength="20" value="${esc(draft.name)}" autocomplete="off">
+ <h3 style="margin-top:18px">Tu es…</h3><div class="pick">${gb('m')}${gb('f')}</div>
+ <h3>Choisis ton compagnon de départ</h3><div class="pick">${STARTERS.map(k=>`<button class="btn" data-a="db" data-v="${k}" aria-pressed="${draft.buddy===k}">${crSpr(k,2)}${BX[k].n}<small class="note">${BX[k].t}</small></button>`).join('')}</div>
+ <div class="row"><button class="btn main" data-a="mk">C'est parti !</button><button class="btn" data-a="home">Retour</button></div><p id="err" class="note"></p></div>`);
+ const nm=document.getElementById('nm');nm.oninput=()=>draft.name=nm.value}
+
+/* ---------- CARTE EN PIXEL ART ---------- */
+const ROUTES=[[[80,170],[80,260],[170,260],[170,320]],[[170,320],[250,320],[250,250],[330,250]],[[330,250],[380,250],[380,160],[430,160]],[[430,160],[550,160],[550,300],[575,300]],[[575,300],[615,300],[615,60],[560,60]]];
+const FULL=[ROUTES[0][0]],TIDX=[0];ROUTES.forEach(r=>{r.slice(1).forEach(p=>FULL.push(p));TIDX.push(FULL.length-1)});
+const SEGS=ROUTES.flatMap(r=>r.slice(1).map((p,i)=>[r[i],p]));
+const PATCH=[[96,190,40,56],[200,270,40,40],[300,150,50,40],[450,190,40,40],[566,180,30,40]];
+const MOUNTS=[[600,400,100,90],[450,400,90,70],[660,250,70,70]];
+const shore=x=>x>=340?9999:352+Math.round(5*Math.sin(x/19))+Math.max(0,Math.floor((x-240)*1.3));
+const plaza=t=>t.league?[t.x-38,t.y-60,76,66]:[t.x-56,t.y-58,112,64];
+const mul=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const dk=(h,f=.75)=>{const n=parseInt(h.slice(1),16);return '#'+[16,8,0].map(s=>Math.min(255,Math.round(((n>>s)&255)*f)).toString(16).padStart(2,'0')).join('')};
+const segDist=(px,py,[[ax,ay],[bx,by]])=>{const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let t=l?((px-ax)*dx+(py-ay)*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-ax-t*dx,py-ay-t*dy)};
+const inR=(x,y,[rx,ry,rw,rh],m=0)=>x>rx-m&&x<rx+rw+m&&y>ry-m&&y<ry+rh+m;
+function blocked(x,y){if(SEGS.some(s=>segDist(x,y-4,s)<15))return 1;if(TOWNS.some(t=>inR(x,y,plaza(t),8)||inR(x,y,[t.x-50,t.y,100,26])))return 1;
+ if(y>Math.min(shore(x-7),shore(x+7))-12)return 1;if(x>488&&x<530)return 1;if(x>386&&y>64&&y<106)return 1;
+ if(MOUNTS.some(([cx,b,w,h])=>inR(x,y,[cx-w/2,b-h,w,h],6)))return 1;if(PATCH.some(p=>inR(x,y,p,8)))return 1;if(inR(x,y,[514,0,96,74]))return 1;return 0}
+const isNight=()=>{const t=document.documentElement.dataset.theme;return t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches)};
+function painter(cv){const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+ const F=(c,x,y,w=1,h=1)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))};
+ const S=(rows,pal,x,y,maxR=99)=>{const P2={...BASE,...pal};rows.forEach((row,j)=>{if(j>=maxR)return;for(let i=0;i<row.length;i++){const ch=row[i];if(ch!=='.'&&P2[ch])F(P2[ch],x+i,y+j)}})};
+ return {g,F,S}}
+function drawMap(cv){const W=640,H=400;cv.width=W;cv.height=H;const {F,S}=painter(cv),r=mul(11),WIN=[];
+ F('#78c850',0,0,W,H);for(let i=0;i<3400;i++)F(r()<.5?'#64b444':'#94dc6c',r()*W,r()*H,1,2);
+ F('#8cd060',386,0,W-386,72);for(let i=0;i<500;i++)F('#76bc4c',386+r()*(W-386),r()*70,1,2);
+ for(let x=0;x<W;x++){const s=shore(x);if(s>=H)continue;F('#f2de9c',x,s-8,1,8);F('#d9c27a',x,s-1,1,1);F('#4890e0',x,s,1,H-s);F('#3a78c8',x,Math.max(s+10,374)+((x*7)%5),1,H)}
+ for(let i=0;i<170;i++){const x=r()*330|0,s=shore(x),y=s+4+r()*(H-s);if(y<H-1)F('#bfe2ff',x,y,3,1)}
+ F('#4890e0',500,0,18,H);for(let y=0;y<H;y+=6)F('#8cc8f8',503+(y*5)%11,y+((y/6)%2)*2,3,1);F('#2f6ab8',500,0,1,H);F('#2f6ab8',517,0,1,H);
+ for(let x=386;x<W;x++){if(x>=500&&x<518)continue;F('#a37a4c',x,72,1,20);F(x%6<3?'#8a6238':'#b8905c',x,77+(x%4),1,2);F(x%9<4?'#8a6238':'#b8905c',x,84+(x%3),1,2);F('#c79e68',x,72,1,2);F('#5e4024',x,91,1,2)}
+ F('#5e4024',386,72,1,21);
+ for(let y=70;y<94;y++)for(let x=500;x<518;x++)F(((x+y*3)%7<2)?'#ffffff':((x+y)%5?'#9fd6ff':'#d8f0ff'),x,y);
+ for(let i=0;i<16;i++)F('#ffffff',496+r()*26,93+r()*9,2,1);
+ MOUNTS.forEach(([cx,b,w,h])=>{for(let j=0;j<h;j++){const hw=Math.round(w/2*j/h/2)*2;if(!hw)continue;F('#a0896a',cx-hw,b-h+j,hw,1);F('#7a6650',cx,b-h+j,hw,1);
+  if(j<h*.24){F('#f4f4f4',cx-hw,b-h+j,hw,1);F('#cfd4de',cx,b-h+j,hw,1)}if(j%6===0&&j>h*.3){F('#5e4c3a',cx-hw,b-h+j,3,1);F('#5e4c3a',cx+hw-3,b-h+j,3,1)}}});
+ PATCH.forEach(([x,y,w,h],k)=>{F('#2f8a34',x,y,w,h);F('#1e6a28',x,y+h-1,w,1);for(let j=0;j<h-3;j+=5)for(let i=(j/5%2)*3;i<w-4;i+=6){F('#5cc45c',x+i+1,y+j,1,3);F('#5cc45c',x+i+3,y+j,1,3);F('#1e6a28',x+i,y+j+3,5,1)}
+  const kk=Object.keys(CRE)[(k*2+1)%7];S(CRE[kk].r,CRE[kk].p,x+(w>>1)-6,y+(h>>1)-6,6)});
+ SEGS.forEach(([[ax,ay],[bx,by]])=>F('#b8985a',Math.min(ax,bx)-7,Math.min(ay,by)-7,Math.abs(bx-ax)+14,Math.abs(by-ay)+14));
+ TOWNS.forEach(t=>{const [x,y,w,h]=plaza(t);F('#b8985a',x-1,y-1,w+2,h+2);F('#e8d8a0',x,y,w,h);for(let i=0;i<50;i++)F('#d6c288',x+r()*w,y+r()*h,2,1)});
+ SEGS.forEach(([[ax,ay],[bx,by]])=>F('#e2cc8e',Math.min(ax,bx)-5,Math.min(ay,by)-5,Math.abs(bx-ax)+10,Math.abs(by-ay)+10));
+ for(let i=0;i<300;i++){const [[ax,ay],[bx,by]]=SEGS[i%SEGS.length],t=r();F('#cdb06e',ax+(bx-ax)*t+(r()*8-4),ay+(by-ay)*t+(r()*8-4),1,1)}
+ for(let y=72;y<93;y+=3){F('#e2cc8e',609,y,12,2);F('#9a7a48',609,y+2,12,1)}F('#5e4024',608,72,1,21);F('#5e4024',621,72,1,21);
+ F('#5a3418',494,150,30,20);F('#a06a34',495,152,28,16);for(let x=496;x<522;x+=3)F('#7a4a24',x,152,1,16);F('#3a2210',494,149,30,2);F('#3a2210',494,169,30,2);
+ F('#5a3418',183,328,14,56);for(let y=329;y<384;y+=3)F('#b07840',184,y,12,2);F('#3a2210',183,328,1,56);F('#3a2210',196,328,1,56);
+ F('#1d1d2b',213,372,26,9);F('#ffffff',214,373,24,5);F('#c0392b',214,377,24,3);F('#5a3418',225,354,2,18);F('#fdfdfd',227,356,9,12);F('#1d1d2b',227,356,9,1);
+ const trees=[];for(let y=12;y<H+6;y+=14)for(let x=4;x<W;x+=13){const cx=x+(r()*6|0),cy=y+(r()*6|0);
+  let p=.09;if(cx<230&&cy<112)p=.95;else if(cx>386&&cy<66)p=.7;else if(cx<20||cx>624||cy>392)p=.8;else if(cx>420&&cx<490&&cy>250&&cy<330)p=.5;
+  if(r()<p&&!blocked(cx,cy))trees.push([cx,cy,(cx>386&&cy<66)||(cx>400&&cy>240)])}
+ trees.sort((a,b)=>a[1]-b[1]).forEach(([x,y,pine])=>{F('rgba(0,0,0,.2)',x-5,y-1,11,2);pine?S(PINE,{g:'#2f8a46',d:'#1e5e32',b:'#6b3e1f'},x-6,y-10):S(TREE,{g:'#3f9a3f',l:'#7ad06a',d:'#2a6a32',b:'#7a4a24'},x-6,y-12)});
+ const FC=['#ff6b6b','#ffffff','#ffb3d1','#9ad0ff'];
+ for(let i=0;i<220;i++){const x=r()*W|0,y=r()*H|0;if(blocked(x,y+4)||(x>386&&y<72))continue;const c=FC[i%4];F(c,x,y,1,1);F(c,x+2,y,1,1);F(c,x+1,y-1,1,1);F(c,x+1,y+1,1,1);F('#ffe15a',x+1,y,1,1)}
+ for(let i=0;i<26;i++){const x=520+r()*110,y=230+r()*160;if(blocked(x,y)&&!MOUNTS.some(([cx,b,w,h])=>inR(x,y,[cx-w/2,b-h,w,h])))continue;if(inR(x,y,plaza(TOWNS[4]),4)||SEGS.some(s=>segDist(x,y,s)<10))continue;F('#1d1d2b',x-1,y-1,7,5);F('#9e9e9e',x,y,5,3);F('#cfcfcf',x,y,3,1)}
+ const bld=(x,y,w,h,roof,o={})=>{const rh=Math.ceil(h*.45),wall=o.wall||'#f4ecd8';F('rgba(0,0,0,.22)',x+2,y+h,w,2);
+  F('#1d1d2b',x,y,w,h);for(let j=1;j<rh;j++)F(j===1?dk(roof,1.3):(j%3===0?dk(roof):roof),x+1,y+j,w-2,1);
+  F('#1d1d2b',x-1,y+rh,w+2,1);F(wall,x+1,y+rh+1,w-2,h-rh-2);F(dk(wall,.85),x+1,y+h-3,w-2,1);
+  const dw=o.arena?8:4,dx=x+(w>>1)-(dw>>1);F('#1d1d2b',dx-1,y+h-9,dw+2,8);F('#8a5a2c',dx,y+h-8,dw,7);F('#5a3418',dx+(dw>>1),y+h-8,1,7);
+  const wy=y+rh+3,ws=o.arena?[x+3,x+10,x+w-15,x+w-8]:[x+3,x+w-8];ws.forEach(wx=>{F('#1d1d2b',wx,wy,5,4);WIN.push([wx+1,wy+1,3,2])});
+  if(o.arena)S(BADGE,{y:'#fff2a8',c:o.col},x+(w>>1)-4,y+2);
+  if(o.pharma){const cx=x+(w>>1);F('#ffffff',cx-2,y+1,5,9);F('#ffffff',cx-4,y+3,9,5);F('#2fae4f',cx-1,y+2,3,7);F('#2fae4f',cx-3,y+4,7,3)}
+  if(o.shop){F('#ffffff',x+3,y+rh-5,w-6,3);for(let i=x+4;i<x+w-4;i+=4)F('#e2403a',i,y+rh-5,2,3)}
+  if(o.lab){F('#1d1d2b',x+w-6,y-8,1,8);F('#e2403a',x+w-7,y-10,3,2);F('#9fd4ff',x+4,y+3,w-8,2)}};
+ const castle=(cx,by)=>{const x=cx-26,y=by-36;F('rgba(0,0,0,.22)',x-8,by,70,3);
+  [x-10,x+48].forEach(tx=>{F('#1d1d2b',tx,y-12,14,by-y+12);F('#dde0ea',tx+1,y-11,12,by-y+10);for(let j=y-6;j<by;j+=5)F('#b4b8c6',tx+1,j,12,1);
+   for(let j=0;j<12;j++){const hw=Math.round(j*.65)+1;F(j===11?'#1d1d2b':'#f2b705',tx+7-hw,y-24+j,hw*2,1);F('#c98a00',tx+7,y-24+j,hw,1)}
+   F('#1d1d2b',tx+7,y-32,1,9);F('#e2403a',tx+8,y-32,6,3);F('#1d1d2b',tx+5,y,4,6);WIN.push([tx+6,y+1,2,4])});
+  F('#1d1d2b',x,y,52,36);F('#cfd2dc',x+1,y+1,50,34);for(let j=y+5;j<by;j+=5){F('#a9adbb',x+1,j,50,1);for(let i=x+((j/5)%2?3:7);i<x+51;i+=8)F('#a9adbb',i,j-4,1,4)}
+  for(let i=x;i<x+52;i+=6){F('#1d1d2b',i,y-4,4,4);F('#cfd2dc',i+1,y-3,2,3)}
+  F('#1d1d2b',cx-7,by-16,14,16);F('#5a3418',cx-6,by-15,12,15);F('#3a2210',cx,by-15,1,15);F('#b71c1c',cx-3,y+3,6,9);S(BADGE,{y:'#fff2a8',c:'#f2b705'},cx-4,y+4);
+  [x+6,x+40].forEach(wx=>{F('#1d1d2b',wx,y+10,6,8);WIN.push([wx+1,y+11,4,6])})};
+ const sign=(x,y)=>{F('#5a3418',x+3,y+5,1,5);F('#1d1d2b',x,y,8,6);F('#c8a060',x+1,y+1,6,4);F('#7a5a30',x+2,y+2,4,1)};
+ const ROOF=[['#c8503c','#4a78c8'],[0,0],['#d08a3c',0],['#3fa0b0','#c8503c'],['#8d6e63','#a0522d']];
+ TOWNS.forEach((t,i)=>{const {x,y}=t;if(t.league){castle(x,y-4);return}
+  bld(x-20,y-52,40,34,t.col,{arena:1,col:t.col});
+  if(i===1){bld(x-52,y-40,24,22,'#3aa05a',{pharma:1});bld(x+28,y-40,24,22,'#2f6fc8',{shop:1})}
+  else if(i===2){bld(x-52,y-40,24,22,ROOF[2][0]);bld(x+22,y-46,34,28,'#5a8ad0',{lab:1,wall:'#ffffff'})}
+  else{bld(x-52,y-40,24,22,ROOF[i][0]);bld(x+28,y-40,24,22,ROOF[i][1])}
+  sign(x-30,y-12)});
+ const night=isNight();if(night){F('rgba(14,22,70,.52)',0,0,W,H);for(let i=0;i<40;i++)F('#ffffff',r()*W,r()*60,1,1)}
+ WIN.forEach(([x,y,w,h])=>{if(night)F('rgba(255,226,122,.28)',x-2,y-2,w+4,h+4);F(night?'#ffe27a':'#8fd0f0',x,y,w,h);if(!night)F('#ffffff',x,y,1,1)})}
+
+function drawField(cv,ti){const w=Math.max(80,Math.round(cv.clientWidth/4)),h=Math.max(40,Math.round(cv.clientHeight/4));cv.width=w;cv.height=h;
+ const {F,S}=painter(cv),r=mul(ti+5),hz=Math.round(h*.42),night=isNight();
+ const sky=[['#9fd8ff','#c8ecff'],['#7fc8ff','#bfe6ff'],['#a8def0','#dff4fa'],['#8fd0f2','#c9ebfb'],['#a8c0e0','#d0dcee'],['#2a2350','#43386e']][ti]||['#9fd8ff','#c8ecff'];
+ const gr=['#78c850','#f0dc98','#8ccc5c','#78c850','#b4a482','#8c8ca8'][ti]||'#78c850';
+ F(sky[1],0,0,w,hz);F(sky[0],0,0,w,Math.round(hz*.45));F(dk(sky[0],1.05),0,Math.round(hz*.45),w,2);
+ if(ti===0)for(let x=-4;x<w;x+=10)S(TREE,{g:'#3f9a3f',l:'#7ad06a',d:'#2a6a32',b:'#7a4a24'},x,hz-12+((x/10)%2?1:0));
+ if(ti===1){F('#4890e0',0,hz-8,w,8);F('#2f6ab8',0,hz-8,w,1);for(let i=0;i<20;i++)F('#bfe2ff',r()*w,hz-7+r()*6,3,1);F('#ffe27a',Math.round(w*.12),4,6,6)}
+ if(ti===2){for(let x=0;x<w;x++){const y=hz-6-Math.round(4*Math.sin(x/9));F('#5aa848',x,y,1,hz-y)}for(let x=2;x<w;x+=8){F('#7a4a24',x,hz-6,1,6);F('#a06a34',x,hz-5,8,1)}}
+ if(ti===3){const cx=Math.round(w*.45);F('#a37a4c',0,hz-20,w,20);for(let x=0;x<w;x+=3)F('#8a6238',x,hz-14+(x%5),2,2);for(let y=0;y<hz;y++)for(let x=cx;x<cx+12;x++)F(((x+y*3)%7<2)?'#ffffff':'#9fd6ff',x,y)}
+ if(ti===4)[[.2,22],[.5,30],[.8,24]].forEach(([fx,mh])=>{const cx=Math.round(w*fx);for(let j=0;j<mh;j++){const hw=Math.round(j*1.2);F('#9a8466',cx-hw,hz-mh+j,hw,1);F('#7a6650',cx,hz-mh+j,hw,1);if(j<6){F('#f4f4f4',cx-hw,hz-mh+j,hw*2,1)}}});
+ if(ti===5){for(let x=4;x<w;x+=18){F('#1d1d2b',x,4,7,hz-4);F('#e8e2c8',x+1,5,5,hz-6);F('#f2b705',x-1,4,9,2)}}
+ F(gr,0,hz,w,h-hz);for(let i=0;i<w*h/14;i++)F(dk(gr,r()<.5?.88:1.1),r()*w,hz+r()*(h-hz),1,1);
+ if(ti===5)F('#b71c1c',Math.round(w*.35),hz,Math.round(w*.3),h-hz);
+ const ell=(cx,cy,rx,ry)=>{for(let j=-ry;j<=ry;j++){const hw=Math.round(rx*Math.sqrt(1-(j/ry)**2));F(j>ry/3?dk(gr,.7):dk(gr,.85),cx-hw,cy+j,hw*2,1)}F(dk(gr,1.15),cx-Math.round(rx*.6),cy-ry,Math.round(rx*1.2),1)};
+ ell(Math.round(w*.8),Math.round(h*.47),Math.round(w*.15),Math.max(3,Math.round(h*.07)));ell(Math.round(w*.2),Math.round(h*.9),Math.round(w*.17),Math.max(3,Math.round(h*.08)));
+ if(night)F('rgba(14,22,70,.35)',0,0,w,h)}
+
+let WALK=0;
+function walkTo(i){const tok=document.getElementById('tok');const a=TIDX[SEL],b=TIDX[i];SEL=i;renderPanel();if(!tok)return;cancelAnimationFrame(WALK);
+ const pts=a<=b?FULL.slice(a,b+1):FULL.slice(b,a+1).reverse(),D=[0];for(let k=1;k<pts.length;k++)D.push(D[k-1]+Math.hypot(pts[k][0]-pts[k-1][0],pts[k][1]-pts[k-1][1]));
+ const tot=D[D.length-1],place=([x,y])=>{tok.style.left=x/6.4+'%';tok.style.top=y/4+'%'};
+ if(!tot||matchMedia('(prefers-reduced-motion:reduce)').matches){place(pts[pts.length-1]);return}
+ tok.classList.add('walk');const t0=performance.now(),dur=Math.min(2600,tot/0.24);
+ const step=now=>{const d=Math.min(1,(now-t0)/dur)*tot;let k=1;while(k<D.length-1&&D[k]<d)k++;const f=(d-D[k-1])/((D[k]-D[k-1])||1);
+  place([Math.round((pts[k-1][0]+(pts[k][0]-pts[k-1][0])*f)/2)*2,Math.round((pts[k-1][1]+(pts[k][1]-pts[k-1][1])*f)/2)*2]);
+  if(d<tot)WALK=requestAnimationFrame(step);else tok.classList.remove('walk')};WALK=requestAnimationFrame(step)}
+
+function mapScreen(){const p=me();if(!p)return title();
+ show(hud(p)+`<div class="map"><canvas id="mc" width="640" height="400" role="img" aria-label="Carte de la région Proportia"></canvas>
+ ${TOWNS.map((t,i)=>{const [x,y,w,h]=plaza(t),o=townOpen(p,i);return `<button class="tz" data-a="sel" data-i="${i}" style="left:${x/6.4}%;top:${y/4}%;width:${w/6.4}%;height:${h/4}%" aria-label="${esc(t.name)}"></button><span class="lbl ${o?'':'lk'}" style="left:${t.x/6.4}%;top:${(t.y+9)/4}%">${esc(t.name)}</span>`}).join('')}
+ <div class="token" id="tok" style="left:${TOWNS[SEL].x/6.4}%;top:${TOWNS[SEL].y/4}%">${bigTrainer(p.g,outfit(p),1)}</div></div>
+ <div class="mapwrap"><div><h3 style="margin-top:14px">Voyager</h3><div class="towns" id="tbtns">${TOWNS.map((t,i)=>`<button class="btn" data-a="sel" data-i="${i}">${i<5?i+1+'. ':''}${esc(t.name)}</button>`).join('')}</div><p class="note">Clique sur une ville de la carte (ou utilise les flèches ← →) : ton dresseur s'y rend en suivant la route.</p></div><div class="box" id="panel" style="margin-top:14px"></div></div>`);
+ drawMap(document.getElementById('mc'));renderPanel()}
+function renderPanel(){const el=document.getElementById('panel');if(!el)return;const p=me(),t=TOWNS[SEL],open=townOpen(p,SEL),v=comp(p,t.id);
+ el.innerHTML=`<div class="row" style="gap:14px">${champBust(SEL,2)}<div><h2 style="margin-bottom:6px">${esc(t.name)}</h2><b>${esc(t.theme)}</b><br><span class="note">${esc(CTITLE[SEL])}</span></div></div>
+ <div class="row" style="margin-top:10px">${badgeSvg(t.col,p.badges.includes(t.id),4)}<span>${esc(t.badge)} ${p.badges.includes(t.id)?'— obtenu !':''}</span></div>
+ <p style="margin-bottom:0"><b>Compréhension</b></p>${meter(v)}
+ <div class="row" style="margin-top:14px">${open?`<button class="btn main" data-a="enter">Entrer</button>`:`<span class="note">${SEL===5?'Gagne les 5 badges pour ouvrir la Ligue.':'Gagne le badge de la ville précédente pour ouvrir cette ville.'}</span>`}</div>`;
+ document.querySelectorAll('.tz').forEach((b,i)=>b.classList.toggle('on',i===SEL));document.querySelectorAll('#tbtns .btn').forEach((b,i)=>b.classList.toggle('on',i===SEL))}
+
+/* ---------- ENTRÉE EN COMBAT ---------- */
+let INTRO_CB=null;
+function intro(ti,li,cb){const t=TOWNS[ti],l=t.lv[li],p=me(),el=document.getElementById('intro'),rm=matchMedia('(prefers-reduced-motion:reduce)').matches,ci=ti===5&&!l.council?5:ti;
+ const vs=l.boss?`<div class="vs" style="--c:${t.col}"><div class="vsband"></div><div class="vsP">${trainerBust(p.g,outfit(p),5)}<span>${esc(p.name)}</span></div><div class="vsT px">VS</div>
+ <div class="vsC"><div class="row ${l.council?'crew':''}" style="justify-content:center">${l.council?[0,1,2,3,4].map(k=>champBust(k,3)).join(''):champBust(ci,5)}</div><span>${l.council?'Le Conseil des Champions':esc(CTITLE[ci])}</span></div>
+ <div class="vsQ box"><p style="margin-top:0">« ${esc(l.council?'Nous sommes cinq, et chacun te posera deux questions. Prêt ?':QUOTES[ci])} »</p><button class="btn main" data-a="fight">Combattre !</button></div></div>`:'';
+ el.innerHTML=(rm?'':`<div class="fl"></div><div class="bars">${Array.from({length:10},(_,k)=>`<i style="animation-delay:${(.8+k*.05).toFixed(2)}s"></i>`).join('')}</div>`)+vs;
+ el.className='intro on'+(rm?' rm':'');INTRO_CB=cb;
+ if(!l.boss)setTimeout(()=>{cb();closeIntro()},rm?0:1500);else setTimeout(()=>{const b=el.querySelector('[data-a=fight]');b&&b.focus()},rm?0:2500)}
+function closeIntro(){const el=document.getElementById('intro');el.classList.add('out');setTimeout(()=>{el.className='intro';el.innerHTML=''},350)}
+
+function townScreen(ti,withMethod){CT=ti;const p=me(),t=TOWNS[ti],v=comp(p,t.id);
+ const cards=t.lv.map((l,li)=>{const o=lvlOpen(p,ti,li),st=p.done[lkey(ti,li)]||0;return `<button class="btn lvl ${l.boss?'boss':''}" data-a="play" data-l="${li}" ${o?'':'disabled'}><span class="sk">${l.sk}</span><b>${esc(l.n)}</b><span class="row">${foeSpr(l.boss?l.foe:HAB[ti][li%HAB[ti].length],3)}<span>${[1,2,3].map(i=>`<span style="color:${i<=st?'var(--gold)':'#999'}">★</span>`).join('')}</span></span><small>${o?(st?'Terminé — rejouer':'À faire'):'Verrouillé'}${l.boss?' · Badge':''}</small></button>`}).join('');
+ show(hud(p)+`<div class="banner" style="background:${t.col}">${champBust(ti===5?5:ti,3)}<div><h1>${esc(t.name)}</h1><p style="margin:0"><b>${esc(t.theme)}</b> — Champion ${esc(t.champ)}</p></div></div>
+ <div class="box"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Les épreuves</h2><button class="btn gold" data-a="meth" data-t="${ti}">Méthode du cours</button></div>
+ <div class="lvls">${cards}</div><p style="margin-bottom:0"><b>Ma compréhension de cette ville</b></p>${meter(v)}
+ <p class="note">Chaque épreuve : 3 vies. 1re erreur → un indice. 2e erreur → tu perds une vie. Plus de vies → tu es éjecté de la ville et tu peux recommencer.</p></div>`);
+ if(withMethod)methodModal(ti,true)}
+function methodModal(ti,start){openModal(`<h2>${start?'Avant de commencer : ':''}la méthode</h2><p><b>${esc(TOWNS[ti].name)} — ${esc(TOWNS[ti].theme)}</b></p>${METH[ti]}<div class="row" style="margin-top:12px"><button class="btn main" data-a="close">${start?'Commencer':'Fermer'}</button></div>`)}
+
+function play(ti,li){const qs=buildLevel(ti,li),l=TOWNS[ti].lv[li],foe=l.boss?l.foe:P(HAB[ti]),p=me();S={ti,li,qs,i:0,lives:3,tries:0,done:false,scores:[],xp:0,foe};
+ if(!l.boss){p.seen=p.seen||{};p.seen[foe]=1;save()}renderQ()}
+function renderQ(){const p=me(),t=TOWNS[S.ti],l=t.lv[S.li],q=S.qs[S.i],foe=q.foe||S.foe,n=S.qs.length;
+ const fname=/^champ\d$/.test(foe)?(q.who||t.champ):BX[foe].n+' sauvage';
+ show(`<div class="row" style="justify-content:space-between;margin-bottom:10px"><button class="btn" data-a="quit">Fuir</button><span class="chip">${esc(t.name)} · ${esc(l.n)}</span></div>
+ <div class="field" id="fld"><canvas id="fc" aria-hidden="true"></canvas>
+ <div class="foe ${/^champ\d$/.test(foe)?'ch':''}" id="foe">${foeSpr(foe,/^champ\d$/.test(foe)?6:7)}</div><div class="bud">${crSpr(p.buddy,3)}</div>
+ <div class="stat top">${esc(fname)}<div class="hp"><i style="width:${(n-S.i)/n*100}%"></i></div></div>
+ <div class="stat bot">${esc(p.name)} · Q ${S.i+1}/${n}<div class="hearts">${[0,1,2].map(i=>heart(i<S.lives)).join('')}</div></div></div>
+ <div class="dialog"><div class="qhead"><span class="tag">${esc(q.sk||l.sk)}</span><button class="btn gold" data-a="meth" data-t="${S.ti}" style="font-size:10px">Aide</button></div>
+ <div class="qtext">${q.q}</div><div id="zone">${zone(q)}</div><div id="fb"></div></div>`);
+ drawField(document.getElementById('fc'),S.ti);const f=app.querySelector('#zone input');f&&f.focus();bindGrid()}
+function zone(q){if(q.t==='num')return `<div class="ans"><input id="in" type="text" inputmode="decimal" autocomplete="off" aria-label="Ta réponse">${q.u?`<span class="unit">${esc(q.u)}</span>`:''}<button class="btn main" data-a="ok">Valider</button></div><p class="note">Tu peux écrire 12,5 ou 12.5 ou une fraction comme 1/8.</p>`;
+ if(q.t==='qcm')return `<div class="choices">${q.choices.map((c,i)=>`<button class="choice" data-a="ch" data-i="${i}">${c}</button>`).join('')}</div>`;
+ if(q.t==='multi')return `<div class="mf">${q.fields.map((f,i)=>`<label>${f.l} <input type="text" inputmode="decimal" autocomplete="off" data-f="${i}"> ${f.u?`<span class="unit">${esc(f.u)}</span>`:''}</label>`).join('')}</div><button class="btn main" data-a="ok">Valider</button>`;
+ if(q.t==='grid')return `<div class="grid" id="grid">${Array.from({length:100},(_,i)=>`<button class="cell ${i<q.pre?'pre':''}" data-c="${i}" aria-label="case ${i+1}"></button>`).join('')}</div><div class="row"><span class="chip" id="cnt">Cases coloriées : 0</span><button class="btn" data-a="clr">Effacer</button><button class="btn main" data-a="ok">Valider</button></div>`}
+let paint=null;
+function bindGrid(){const g=document.getElementById('grid');if(!g)return;
+ const set=(c,v)=>{if(S.done)return;c.classList.toggle('on',v);document.getElementById('cnt').textContent='Cases coloriées : '+g.querySelectorAll('.on').length};
+ g.addEventListener('pointerdown',e=>{const c=e.target.closest('.cell');if(!c)return;e.preventDefault();paint=!c.classList.contains('on');set(c,paint)});
+ g.addEventListener('pointerover',e=>{if(paint===null)return;const c=e.target.closest('.cell');if(c)set(c,paint)});
+ g.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('cell')){e.preventDefault();set(e.target,!e.target.classList.contains('on'))}});
+ window.addEventListener('pointerup',()=>paint=null)}
+
+function answer(ch){if(S.done)return;const q=S.qs[S.i];let res='no',extra='';
+ if(q.t==='num'){const v=parseNum(document.getElementById('in').value);res=judge(v,q.ans,tolOf(q),q.u,q.alt);if(res==='nan'){fb('hint','Écris un nombre',`Je n'ai pas compris ta réponse. Écris seulement un nombre (exemple : 12,5).`);return}
+  if(res==='okpct'){res='ok';extra=`<br><i>Juste ! Pense à l'écrire en pourcentage : ${pct(rd(q.ans,4))}.</i>`}}
+ else if(q.t==='qcm'){res=q.choices[ch]===q.good?'ok':'no';const b=app.querySelectorAll('.choice')[ch];b.classList.add(res==='ok'?'yes':'no');if(res!=='ok')b.disabled=true}
+ else if(q.t==='multi'){const ins=[...app.querySelectorAll('.mf input')];let all=true,any=false;
+  ins.forEach((el,i)=>{const f=q.fields[i],v=parseNum(el.value),r=judge(v,f.ans,f.tol??Math.max(1e-6,Math.abs(f.ans)*1e-6),f.u);const g=r==='ok'||r==='okpct';el.classList.toggle('good',g);el.classList.toggle('wrong',!g);if(!g)all=false;if(el.value.trim())any=true});
+  if(!any){fb('hint','Complète les cases','Remplis toutes les cases avant de valider.');return}res=all?'ok':'no';if(!all)extra='<br>Les cases bordées de rouge sont fausses, les vertes sont justes.'}
+ else if(q.t==='grid'){const on=[...app.querySelectorAll('.cell.on')].map(c=>+c.dataset.c);const inB=on.every(i=>i<q.pre);
+  if(on.length===q.ans&&inB)res='ok';else if(on.length===q.ans&&!inB){res='no';extra='<br>Le bon nombre de cases, mais C doit être <b>à l’intérieur</b> de la zone verte (B).'}}
+ if(res==='ok'){const sc=S.tries===0?1:0.5;S.scores.push(sc);S.xp+=S.tries===0?10:5;S.done=true;const fo=document.getElementById('foe');fo&&fo.classList.add('shake');
+  fb('ok',S.tries===0?'Super efficace !':'Bien rattrapé !',(q.sol?'Correction : '+q.sol:'')+extra,true);return}
+ if(S.tries===0){S.tries=1;const h=res==='sign'?'Attention au signe : une baisse donne un taux négatif (et une hausse un taux positif).':q.hint;fb('hint','Indice',h+extra);return}
+ S.lives--;S.scores.push(0);S.done=true;const fl=document.getElementById('fld');fl&&fl.classList.add('flash');
+ if(q.t==='qcm'){const gb=app.querySelectorAll('.choice')[q.choices.indexOf(q.good)];gb&&gb.classList.add('yes')}
+ const sol=q.t==='num'?`La bonne réponse était <b>${fr(rd(q.ans,4))}${q.u?' '+esc(q.u):''}</b>. `:'';
+ fb('bad','Tu perds une vie',sol+(q.sol?'Correction : '+q.sol:'')+extra,true)}
+function fb(k,t,h,next){const el=document.getElementById('fb');el.innerHTML=`<div class="fb ${k}" role="status"><b>${t}</b>${h}</div>${next?`<div class="row" style="margin-top:12px"><button class="btn main" data-a="next">${S.lives<=0?'Continuer':S.i+1<S.qs.length?'Question suivante':'Terminer'}</button></div>`:''}`;tex(el);
+ if(next){app.querySelectorAll('#zone input,#zone button:not(.choice),.choice').forEach(b=>b.disabled=true);const n=el.querySelector('[data-a=next]');n&&n.focus()}}
+function next(){if(S.lives<=0)return endLevel(false);S.i++;S.tries=0;S.done=false;if(S.i>=S.qs.length)return endLevel(true);renderQ()}
+function endLevel(win){const p=me(),t=TOWNS[S.ti],l=t.lv[S.li],k=lkey(S.ti,S.li);
+ p.stats[t.id]=(p.stats[t.id]||[]).concat(S.scores).slice(-20);
+ if(S.ti===5){/* la Ligue compte aussi pour chaque ville */}
+ p.xp+=S.xp;let coins=0,newBadge=false;
+ if(win&&!l.boss){p.beaten=p.beaten||{};p.beaten[S.foe]=1}
+ if(win){const first=!p.done[k];coins=(l.boss?30:10)+5*S.lives;if(!first)coins=Math.ceil(coins/2);p.coins+=coins;p.done[k]=Math.max(p.done[k]||0,S.lives);
+  if(l.boss&&(!t.league||l.d===CHEF)&&!p.badges.includes(t.id)){p.badges.push(t.id);newBadge=true}}
+ save();const v=comp(p,t.id);
+ show(hud(p)+`<div class="box" style="text-align:center"><div class="row" style="justify-content:center">${win?foeSpr(S.foe,5):crSpr(p.buddy,3)}</div>
+ <h1>${win?(newBadge?(t.league?'Tu es Maître de Proportia !':'Tu gagnes le '+esc(t.badge)+' !'):'Victoire !'):'Tu es éjecté de '+esc(t.name)+' !'}</h1>
+ ${newBadge?`<div class="row" style="justify-content:center">${badgeSvg(t.col,1,8)}</div>`:''}
+ <p>${win?`${'★'.repeat(S.lives)} · +${coins} pièces · +${S.xp} XP`:`Tes vies sont épuisées. Relis la méthode, puis recommence : tu gardes ton XP (+${S.xp}).`}</p>
+ <div style="max-width:420px;margin:0 auto;text-align:left"><b>Compréhension de ${esc(t.name)}</b>${meter(v)}</div>
+ <div class="row" style="justify-content:center;margin-top:16px"><button class="btn main" data-a="replay">${win?'Rejouer':'Recommencer'}</button><button class="btn" data-a="town" data-t="${S.ti}">Retour à la ville</button>${!win?`<button class="btn gold" data-a="meth" data-t="${S.ti}">Revoir la méthode</button>`:''}</div></div>`)}
+
+function bestScreen(){const p=me(),seen=p.seen||{},beat=p.beaten||{};const nSeen=BEST.filter(b=>seen[b.id]||STARTERS.includes(b.id)&&p.buddy===b.id).length;
+ show(hud(p)+`<div class="box"><div class="row" style="justify-content:space-between"><h1 style="margin:0">Bestiaire de Proportia</h1><span class="chip">Vus ${nSeen}/${BEST.length} · Vaincus ${Object.keys(beat).length}</span></div>
+ <p>Chaque épreuve fait apparaître une créature sauvage de la ville. Rencontre-les toutes pour remplir ton bestiaire !</p>
+ <div class="bgrid">${BEST.map((b,i)=>{const k=seen[b.id]||p.buddy===b.id;return `<div class="bcard ${k?'':'unk'}"><span class="bno px">n°${String(i+1).padStart(2,'0')}</span>${k?crSpr(b.id,2):crSil(b.id,2)}
+ <b class="px">${k?esc(b.n):'???'}</b>${k?`<span class="btype">${esc(b.t)}</span><small>${esc(b.d)}</small><small class="note">Habitat : ${esc(habOf(b.id)||'—')}${STARTERS.includes(b.id)?' · Compagnon de départ':''}</small>${beat[b.id]?'<span class="chip" style="font-size:9px">Vaincu</span>':''}`:`<small class="note">Pas encore rencontré${habOf(b.id)?' · Indice : '+esc(habOf(b.id).split(',')[0]):''}</small>`}</div>`}).join('')}</div></div>`)}
+function profileScreen(){const p=me();
+ show(hud(p)+`<div class="box"><div class="row" style="gap:20px">${bigTrainer(p.g,outfit(p),4)}${crSpr(p.buddy,3)}<div><h1>${esc(p.name)}</h1><p>${p.g==='f'?'Dresseuse':'Dresseur'} · Niveau ${lvlOf(p)} · ${p.xp} XP · ${p.coins} pièces</p><div class="meter" style="max-width:260px"><i style="width:${p.xp%100}%"></i></div><p class="note">${100-p.xp%100} XP avant le niveau ${lvlOf(p)+1}</p></div></div>
+ <h2 style="margin-top:18px">Ma compréhension, ville par ville</h2>
+ <div class="lvls">${TOWNS.map((t,i)=>`<div class="box" style="padding:12px"><div class="row">${badgeSvg(t.col,p.badges.includes(t.id),3)}<b>${esc(t.name)}</b></div><p class="note" style="margin:6px 0">${esc(t.theme)}</p>${meter(comp(p,t.id))}</div>`).join('')}</div>
+ <h3>Compagnon de départ</h3><div class="pick">${STARTERS.map(k=>`<button class="btn" data-a="setbud" data-v="${k}" aria-pressed="${p.buddy===k}">${crSpr(k,2)}${BX[k].n}</button>`).join('')}</div>
+ <div class="row"><button class="btn" data-a="home">Changer de joueur</button></div></div>`)}
+
+function shopScreen(){const p=me();
+ show(hud(p)+`<div class="box"><h1>Boutique de tenues</h1><p>Gagne des pièces en terminant les épreuves, puis change de style !</p><div class="shop">${OUTFITS.map(o=>{const own=p.owned.includes(o.id),on=p.outfit===o.id;
+ return `<div class="box">${bigTrainer(p.g,o,3)}<b class="px" style="font-size:11px">${esc(o.n)}</b><span>${o.pr?o.pr+' pièces':'Gratuit'}</span>${on?'<span class="chip">Portée</span>':own?`<button class="btn" data-a="wear" data-v="${o.id}">Porter</button>`:`<button class="btn main" data-a="buy" data-v="${o.id}" ${p.coins<o.pr?'disabled':''}>Acheter</button>`}</div>`}).join('')}</div></div>`)}
+
+function teachLogin(){openModal(`<h2>Mode prof</h2><label for="code">Code d'accès</label><br><input id="code" type="password" autocomplete="off"><p id="cerr" class="note"></p><div class="row"><button class="btn main" data-a="tcheck">Valider</button><button class="btn" data-a="close">Annuler</button></div>`)}
+function teachPanel(){const rows=DB.profiles.map(p=>`<tr><td><b>${esc(p.name)}</b><br><span class="note">Niv. ${lvlOf(p)} · ${p.badges.filter(b=>b!=='lg').length} badges</span></td>${TOWNS.map(t=>{const v=comp(p,t.id);return `<td>${v===null?'—':`<span class="mini"><i style="width:${v}%;background:${v<40?'var(--bad)':v<70?'var(--warn)':'var(--ok)'}"></i></span> ${v} %`}</td>`}).join('')}<td><button class="btn" data-a="del" data-id="${esc(p.id)}" style="font-size:9px;min-height:36px;padding:6px 8px">Supprimer</button></td></tr>`).join('');
+ openModal(`<h2>Mode prof activé</h2><p>Toutes les villes et épreuves sont ouvertes pour ce navigateur jusqu'à ce que tu quittes le mode prof.</p>
+ <h3>Profils sur cet appareil</h3><div class="scroll"><table class="ptable"><tr><th>Élève</th>${TOWNS.map((t,i)=>`<th>${i<5?'V'+(i+1):'Ligue'}</th>`).join('')}<th></th></tr>${rows||'<tr><td colspan="8">Aucun profil.</td></tr>'}</table></div>
+ <p class="note">V1 Emboîtés · V2 Coefficients · V3 Variations · V4 Successives · V5 Réciproque</p>
+ <div class="row"><button class="btn main" data-a="tgo">Explorer le jeu</button></div>`)}
+function teachProfile(){if(!DB.profiles.some(p=>p.id==='prof')){DB.profiles.push(newP('Prof','f','spiralo','prof'));save()}if(!me())DB.cur='prof'}
+function newP(name,g,buddy,id){return {id:id||('p'+Date.now().toString(36)),name,g,buddy,outfit:'classique',owned:['classique'],coins:0,xp:0,badges:[],done:{},stats:{}}}
+
+/* ---------- ÉVÉNEMENTS ---------- */
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a,p=me();
+ switch(a){
+ case 'home':title();break;case 'new':draft={g:'m',buddy:'pousserave',name:''};create();break;
+ case 'dg':draft.g=b.dataset.v;create();break;case 'db':draft.buddy=b.dataset.v;create();break;
+ case 'mk':{const n=draft.name.trim();if(!n){document.getElementById('err').textContent='Écris ton prénom pour continuer.';return}const np=newP(n,draft.g,draft.buddy);DB.profiles.push(np);DB.cur=np.id;save();SEL=0;mapScreen();break}
+ case 'pick':DB.cur=b.dataset.id;save();SEL=0;mapScreen();break;
+ case 'map':mapScreen();break;case 'profile':profileScreen();break;case 'shop':shopScreen();break;case 'best':bestScreen();break;
+ case 'sel':walkTo(+b.dataset.i);break;
+ case 'enter':townScreen(SEL,true);break;case 'town':townScreen(+b.dataset.t);break;
+ case 'meth':methodModal(+b.dataset.t,false);break;case 'close':closeModal();break;
+ case 'play':{const li=+b.dataset.l,ti=CT;intro(ti,li,()=>play(ti,li));break}
+ case 'fight':{const cb=INTRO_CB;INTRO_CB=null;cb&&cb();closeIntro();break}
+ case 'ok':answer();break;case 'ch':answer(+b.dataset.i);break;case 'next':next();break;
+ case 'clr':if(!S.done){app.querySelectorAll('.cell.on').forEach(c=>c.classList.remove('on'));document.getElementById('cnt').textContent='Cases coloriées : 0'}break;
+ case 'quit':openModal(`<h2>Fuir le combat ?</h2><p>Ta progression dans cette épreuve sera perdue.</p><div class="row"><button class="btn main" data-a="quitok">Fuir</button><button class="btn" data-a="close">Rester</button></div>`);break;
+ case 'quitok':closeModal();townScreen(S.ti);break;
+ case 'replay':{const ti=S.ti,li=S.li;intro(ti,li,()=>play(ti,li));break}
+ case 'setbud':p.buddy=b.dataset.v;save();profileScreen();break;
+ case 'buy':{const o=OUTFITS.find(x=>x.id===b.dataset.v);if(p.coins>=o.pr){p.coins-=o.pr;p.owned.push(o.id);p.outfit=o.id;save()}shopScreen();break}
+ case 'wear':p.outfit=b.dataset.v;save();shopScreen();break;
+ case 'teach':teachLogin();break;
+ case 'tcheck':{const c=document.getElementById('code').value.trim().toUpperCase();if(c==='TSITSEL'){TEACH=true;teachPanel()}else document.getElementById('cerr').textContent='Code incorrect.';break}
+ case 'tgo':closeModal();teachProfile();mapScreen();break;
+ case 'teachoff':TEACH=false;me()?mapScreen():title();break;
+ case 'del':{const id=b.dataset.id;if(b.dataset.sure){DB.profiles=DB.profiles.filter(x=>x.id!==id);if(DB.cur===id)DB.cur=null;save();teachPanel()}else{b.dataset.sure=1;b.textContent='Confirmer ?'}break}
+ }});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(e.target.id==='code'){e.preventDefault();document.querySelector('[data-a=tcheck]').click()}else if(e.target.matches('#zone input')){e.preventDefault();const n=document.querySelector('[data-a=next]');(n||document.querySelector('#zone [data-a=ok]')).click()}}
+ if(app.querySelector('.map')&&!modal.classList.contains('open')&&(e.key==='ArrowRight'||e.key==='ArrowLeft')&&!e.target.matches('input')){walkTo((SEL+(e.key==='ArrowRight'?1:5))%6)}});
+title();
+}
+</script>
+</body>
+</html>

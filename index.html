@@ -101,6 +101,20 @@
             font-weight: normal;
             margin-top: 3px;
         }
+        #visitor-box {
+            display: none; /* affiché seulement si le compteur répond */
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            color: #666;
+            border: 1px solid #e1e4e8;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            z-index: 9999;
+        }
     </style>
 </head>
 <body>
@@ -125,7 +139,7 @@
     </section>
 
     <div class="columns">
-        <!-- Bloc gauche : 2nde générale (trié par chapitre : Ch. 6, Ch. 7, Ch. 9, Ch. 13) -->
+        <!-- Bloc gauche : 2nde générale -->
         <section class="level-box">
             <h2>2nde générale</h2>
             <ul class="app-list">
@@ -152,7 +166,7 @@
                         <span class="emoji">🕸️</span>
                         <span class="app-info">
                             <span class="app-title">Spider-vecteur</span>
-                            <span class="app-chapter">Chapitre 7.Vecteurs dans une base orthonormée</span> 
+                            <span class="app-chapter">Chapitre 7.Vecteurs dans une base orthonormée</span>
                         </span>
                     </a>
                 </li>
@@ -195,7 +209,7 @@
             </ul>
         </section>
 
-        <!-- Bloc droit : 1re technologique (trié par chapitre : Ch. 2, puis Année entière) -->
+        <!-- Bloc droit : 1re technologique -->
         <section class="level-box">
             <h2>1re technologique</h2>
             <ul class="app-list">
@@ -226,22 +240,24 @@
         <p>© 2026 François Gleyzon — Tous droits réservés. Usage pédagogique autorisé.</p>
     </footer>
 
-    <!-- Compteur local sans cookie (évite l'API countapi.xyz souvent indisponible ou bloquée) -->
-    <div id="visitor-box" style="position: fixed; bottom: 10px; right: 15px; background: rgba(255, 255, 255, 0.85); padding: 5px 10px; border-radius: 6px; font-size: 0.75em; color: #666; border: 1px solid #e1e4e8; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 9999;">
-        Ouvertures (ce poste) : <span id="visitor-count">1</span>
-    </div>
+    <!-- ===== Compteur de visites public (GoatCounter, sans cookie, RGPD-friendly) ===== -->
+    <div id="visitor-box">👀 <span id="visitor-count">…</span> visites</div>
 
+    <!-- 1) Enregistre la visite -->
+    <script data-goatcounter="https://gleyzon-maths.goatcounter.com/count"
+            async src="//gc.zgo.at/count.js"></script>
+
+    <!-- 2) Affiche le total, identique pour tout le monde -->
     <script>
         (function () {
-            try {
-                const key = 'portail_maths_visites_gleyzon';
-                const current = parseInt(localStorage.getItem(key) || '0', 10) + 1;
-                localStorage.setItem(key, String(current));
-                document.getElementById('visitor-count').textContent = current;
-            } catch (e) {
-                const box = document.getElementById('visitor-box');
-                if (box) box.style.display = 'none';
-            }
+            const GC = 'https://gleyzon-maths.goatcounter.com';
+            fetch(GC + '/counter/TOTAL.json')
+                .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                .then(data => {
+                    document.getElementById('visitor-count').textContent = data.count;
+                    document.getElementById('visitor-box').style.display = 'block';
+                })
+                .catch(() => { /* service injoignable : on n'affiche rien */ });
         })();
     </script>
 
